@@ -6,9 +6,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import Tickets from "./pages/Tickets";
+import TicketDetail from "./pages/TicketDetail";
 import FeatureRequests from "./pages/FeatureRequests";
 import CustomerQuotes from "./pages/CustomerQuotes";
+import QuoteDetail from "./pages/QuoteDetail";
 import Feedback from "./pages/Feedback";
 import Emails from "./pages/Emails";
 import Settings from "./pages/Settings";
@@ -40,10 +43,26 @@ const App = () => (
             }
           />
           <Route
+            path="/projects/:projectId"
+            element={
+              <AppLayout>
+                <ProjectDetail />
+              </AppLayout>
+            }
+          />
+          <Route
             path="/tickets"
             element={
               <AppLayout>
                 <Tickets />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/tickets/:ticketId"
+            element={
+              <AppLayout>
+                <TicketDetail />
               </AppLayout>
             }
           />
@@ -60,6 +79,14 @@ const App = () => (
             element={
               <AppLayout>
                 <CustomerQuotes />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/quotes/:quoteId"
+            element={
+              <AppLayout>
+                <QuoteDetail />
               </AppLayout>
             }
           />
