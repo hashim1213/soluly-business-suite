@@ -1048,49 +1048,47 @@ export default function CRM() {
 
         {/* Pipeline View */}
         <TabsContent value="pipeline" className="space-y-4">
-          <div className="overflow-x-auto pb-2">
-            <div className="flex gap-3 min-w-max">
-              {pipelineStages.map(stage => {
-                const stageDeals = getDealsByStage(stage.id);
-                const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
-                return (
-                  <div key={stage.id} className="w-[180px] sm:w-[200px] shrink-0">
-                    <div className={`p-2 sm:p-3 border-2 border-border mb-2 ${stage.color}`}>
-                      <div className="flex items-center justify-between gap-1">
-                        <span className={`font-semibold text-sm ${stage.textDark ? "text-white" : "text-black"}`}>{stage.name}</span>
-                        <Badge variant="secondary" className={`text-xs ${stage.textDark ? "bg-white/20 text-white" : "bg-black/10 text-black"}`}>{stageDeals.length}</Badge>
-                      </div>
-                      <div className={`text-xs font-mono mt-1 ${stage.textDark ? "text-white/80" : "text-black/60"}`}>
-                        ${stageValue.toLocaleString()}
-                      </div>
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+            {pipelineStages.map(stage => {
+              const stageDeals = getDealsByStage(stage.id);
+              const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
+              return (
+                <div key={stage.id} className="min-w-0">
+                  <div className={`p-2 border-2 border-border mb-2 ${stage.color}`}>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`font-semibold text-xs sm:text-sm truncate ${stage.textDark ? "text-white" : "text-black"}`}>{stage.name}</span>
+                      <Badge variant="secondary" className={`text-xs shrink-0 ${stage.textDark ? "bg-white/20 text-white" : "bg-black/10 text-black"}`}>{stageDeals.length}</Badge>
                     </div>
-                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                      {stageDeals.map(deal => (
-                        <Card
-                          key={deal.id}
-                          className="border-2 border-border cursor-pointer hover:shadow-md transition-shadow"
-                          onClick={() => setSelectedDeal(deal)}
-                        >
-                          <CardContent className="p-2 sm:p-3">
-                            <div className="font-medium text-xs sm:text-sm mb-1 line-clamp-2">{deal.title}</div>
-                            <div className="text-xs text-muted-foreground mb-1 truncate">{deal.companyName}</div>
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono font-bold text-xs sm:text-sm">${deal.value.toLocaleString()}</span>
-                              <span className="text-xs text-muted-foreground">{deal.probability}%</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                      {stageDeals.length === 0 && (
-                        <div className="border-2 border-dashed border-border p-3 text-center text-muted-foreground text-xs">
-                          No deals
-                        </div>
-                      )}
+                    <div className={`text-xs font-mono mt-1 ${stage.textDark ? "text-white/80" : "text-black/60"}`}>
+                      ${stageValue.toLocaleString()}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {stageDeals.map(deal => (
+                      <Card
+                        key={deal.id}
+                        className="border-2 border-border cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setSelectedDeal(deal)}
+                      >
+                        <CardContent className="p-2">
+                          <div className="font-medium text-xs mb-1 line-clamp-2">{deal.title}</div>
+                          <div className="text-xs text-muted-foreground mb-1 truncate">{deal.companyName}</div>
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono font-bold text-xs">${(deal.value / 1000).toFixed(0)}k</span>
+                            <span className="text-xs text-muted-foreground">{deal.probability}%</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {stageDeals.length === 0 && (
+                      <div className="border-2 border-dashed border-border p-2 text-center text-muted-foreground text-xs">
+                        No deals
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </TabsContent>
 
