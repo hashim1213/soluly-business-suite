@@ -4,16 +4,13 @@ import {
   Users,
   Plus,
   Search,
-  Mail,
-  Phone,
-  Building,
   Clock,
   DollarSign,
   MoreVertical,
   Pencil,
   Trash2,
-  FileSignature,
   Briefcase,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,42 +46,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import {
+  useTeamMembersWithProjects,
+  useCreateTeamMember,
+  useUpdateTeamMember,
+  useDeleteTeamMember,
+  TeamMemberWithProjects,
+} from "@/hooks/useTeamMembers";
+import { Database } from "@/integrations/supabase/types";
 
-// All team members across the organization
-const initialTeamMembers = [
-  { id: "1", name: "You", email: "you@company.com", phone: "+1 555-0100", role: "Project Lead", department: "Management", hourlyRate: 150, salary: 120000, contractType: "Full-time", status: "active", projects: ["PRJ-001", "PRJ-002", "PRJ-003", "PRJ-004", "PRJ-005", "PRJ-006"], totalHours: 160, avatar: "Y" },
-  { id: "2", name: "Sarah Chen", email: "sarah@company.com", phone: "+1 555-0101", role: "Senior Developer", department: "Engineering", hourlyRate: 95, salary: 95000, contractType: "Full-time", status: "active", projects: ["PRJ-001", "PRJ-005"], totalHours: 120, avatar: "SC" },
-  { id: "3", name: "Mike Johnson", email: "mike@company.com", phone: "+1 555-0102", role: "Designer", department: "Design", hourlyRate: 85, salary: 0, contractType: "Contractor", status: "active", projects: ["PRJ-001", "PRJ-005"], totalHours: 80, avatar: "MJ" },
-  { id: "4", name: "Emma Wilson", email: "emma@company.com", phone: "+1 555-0103", role: "Developer", department: "Engineering", hourlyRate: 90, salary: 90000, contractType: "Full-time", status: "active", projects: ["PRJ-002", "PRJ-005"], totalHours: 60, avatar: "EW" },
-  { id: "5", name: "David Brown", email: "david@company.com", phone: "+1 555-0104", role: "QA Engineer", department: "Quality", hourlyRate: 75, salary: 75000, contractType: "Full-time", status: "active", projects: ["PRJ-003", "PRJ-006"], totalHours: 40, avatar: "DB" },
-  { id: "6", name: "Lisa Park", email: "lisa@company.com", phone: "+1 555-0105", role: "Business Analyst", department: "Operations", hourlyRate: 80, salary: 80000, contractType: "Full-time", status: "active", projects: ["PRJ-003"], totalHours: 30, avatar: "LP" },
-  { id: "7", name: "James Lee", email: "james@company.com", phone: "+1 555-0106", role: "DevOps Engineer", department: "Engineering", hourlyRate: 100, salary: 100000, contractType: "Full-time", status: "active", projects: [], totalHours: 0, avatar: "JL" },
-  { id: "8", name: "Anna Martinez", email: "anna@company.com", phone: "+1 555-0107", role: "UI Designer", department: "Design", hourlyRate: 80, salary: 0, contractType: "Contractor", status: "inactive", projects: [], totalHours: 45, avatar: "AM" },
-];
-
-const projectsMap: Record<string, string> = {
-  "PRJ-001": "Acme Corp",
-  "PRJ-002": "TechStart Inc",
-  "PRJ-003": "Global Solutions",
-  "PRJ-004": "DataFlow Ltd",
-  "PRJ-005": "CloudNine Systems",
-  "PRJ-006": "InnovateTech",
-};
+type ContractType = Database["public"]["Enums"]["contract_type"];
+type MemberStatus = Database["public"]["Enums"]["member_status"];
 
 const departments = ["Management", "Engineering", "Design", "Quality", "Operations"];
-const contractTypes = ["Full-time", "Part-time", "Contractor"];
+const contractTypes: ContractType[] = ["Full-time", "Part-time", "Contractor"];
 
 export default function TeamMembers() {
   const navigate = useNavigate();
-  const [teamMembers, setTeamMembers] = useState(initialTeamMembers);
+  const { data: teamMembers, isLoading, error } = useTeamMembersWithProjects();
+  const createTeamMember = useCreateTeamMember();
+  const updateTeamMember = useUpdateTeamMember();
+  const deleteTeamMember = useDeleteTeamMember();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
   const [filterContract, setFilterContract] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<typeof initialTeamMembers[0] | null>(null);
+  const [editingMember, setEditingMember] = useState<TeamMemberWithProjects | null>(null);
   const [newMember, setNewMember] = useState({
     name: "",
     email: "",
@@ -93,83 +83,112 @@ export default function TeamMembers() {
     department: "Engineering",
     hourlyRate: "",
     salary: "",
-    contractType: "Full-time",
+    contractType: "Full-time" as ContractType,
   });
 
-  const filteredMembers = teamMembers.filter(member => {
+  const filteredMembers = teamMembers?.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          member.role.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesDepartment = filterDepartment === "all" || member.department === filterDepartment;
-    const matchesContract = filterContract === "all" || member.contractType === filterContract;
+    const matchesContract = filterContract === "all" || member.contract_type === filterContract;
     return matchesSearch && matchesDepartment && matchesContract;
-  });
+  }) || [];
 
-  const activeMembers = teamMembers.filter(m => m.status === "active").length;
-  const totalHours = teamMembers.reduce((sum, m) => sum + m.totalHours, 0);
-  const totalLaborCost = teamMembers.reduce((sum, m) => sum + (m.totalHours * m.hourlyRate), 0);
-  const contractors = teamMembers.filter(m => m.contractType === "Contractor").length;
+  const activeMembers = teamMembers?.filter(m => m.status === "active").length || 0;
+  const totalHours = teamMembers?.reduce((sum, m) => sum + m.total_hours, 0) || 0;
+  const totalLaborCost = teamMembers?.reduce((sum, m) => sum + (m.total_hours * m.hourly_rate), 0) || 0;
+  const contractors = teamMembers?.filter(m => m.contract_type === "Contractor").length || 0;
 
-  const handleAddMember = () => {
+  const handleAddMember = async () => {
     if (!newMember.name || !newMember.email || !newMember.role) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const member = {
-      id: String(Date.now()),
-      name: newMember.name,
-      email: newMember.email,
-      phone: newMember.phone,
-      role: newMember.role,
-      department: newMember.department,
-      hourlyRate: parseInt(newMember.hourlyRate) || 0,
-      salary: parseInt(newMember.salary) || 0,
-      contractType: newMember.contractType,
-      status: "active",
-      projects: [],
-      totalHours: 0,
-      avatar: newMember.name.split(" ").map(n => n[0]).join("").toUpperCase(),
-    };
+    try {
+      await createTeamMember.mutateAsync({
+        name: newMember.name,
+        email: newMember.email,
+        phone: newMember.phone || null,
+        role: newMember.role,
+        department: newMember.department,
+        hourly_rate: parseFloat(newMember.hourlyRate) || 0,
+        salary: parseFloat(newMember.salary) || 0,
+        contract_type: newMember.contractType,
+      });
 
-    setTeamMembers([...teamMembers, member]);
-    setNewMember({
-      name: "",
-      email: "",
-      phone: "",
-      role: "",
-      department: "Engineering",
-      hourlyRate: "",
-      salary: "",
-      contractType: "Full-time",
-    });
-    setIsAddDialogOpen(false);
-    toast.success("Team member added successfully");
+      setNewMember({
+        name: "",
+        email: "",
+        phone: "",
+        role: "",
+        department: "Engineering",
+        hourlyRate: "",
+        salary: "",
+        contractType: "Full-time",
+      });
+      setIsAddDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const handleEditMember = () => {
+  const handleEditMember = async () => {
     if (!editingMember) return;
-    setTeamMembers(teamMembers.map(m => m.id === editingMember.id ? editingMember : m));
-    setEditingMember(null);
-    setIsEditDialogOpen(false);
-    toast.success("Team member updated");
+
+    try {
+      await updateTeamMember.mutateAsync({
+        id: editingMember.id,
+        name: editingMember.name,
+        email: editingMember.email,
+        phone: editingMember.phone,
+        role: editingMember.role,
+        department: editingMember.department,
+        hourly_rate: editingMember.hourly_rate,
+        salary: editingMember.salary,
+        contract_type: editingMember.contract_type,
+      });
+      setEditingMember(null);
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const handleDeleteMember = (id: string) => {
-    if (id === "1") {
+  const handleDeleteMember = async (id: string, name: string) => {
+    if (name === "You") {
       toast.error("Cannot delete your own account");
       return;
     }
-    setTeamMembers(teamMembers.filter(m => m.id !== id));
-    toast.success("Team member removed");
+    deleteTeamMember.mutate(id);
   };
 
-  const toggleMemberStatus = (id: string) => {
-    setTeamMembers(teamMembers.map(m =>
-      m.id === id ? { ...m, status: m.status === "active" ? "inactive" : "active" } : m
-    ));
-    toast.success("Status updated");
+  const toggleMemberStatus = (id: string, currentStatus: MemberStatus) => {
+    updateTeamMember.mutate({
+      id,
+      status: currentStatus === "active" ? "inactive" : "active",
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-destructive">Failed to load team members</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -251,7 +270,7 @@ export default function TeamMembers() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="contract">Contract Type</Label>
-                  <Select value={newMember.contractType} onValueChange={(value) => setNewMember({ ...newMember, contractType: value })}>
+                  <Select value={newMember.contractType} onValueChange={(value: ContractType) => setNewMember({ ...newMember, contractType: value })}>
                     <SelectTrigger className="border-2">
                       <SelectValue />
                     </SelectTrigger>
@@ -292,7 +311,8 @@ export default function TeamMembers() {
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-2">
                 Cancel
               </Button>
-              <Button onClick={handleAddMember} className="border-2">
+              <Button onClick={handleAddMember} className="border-2" disabled={createTeamMember.isPending}>
+                {createTeamMember.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Add Member
               </Button>
             </div>
@@ -415,7 +435,7 @@ export default function TeamMembers() {
                   <TableCell>
                     <Link to={`/team/${member.id}`} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                       <Avatar className="h-8 w-8 border-2 border-border">
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar}</AvatarFallback>
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-medium text-primary hover:underline">{member.name}</div>
@@ -426,19 +446,19 @@ export default function TeamMembers() {
                   <TableCell>{member.role}</TableCell>
                   <TableCell>{member.department}</TableCell>
                   <TableCell>
-                    <Badge variant={member.contractType === "Full-time" ? "default" : member.contractType === "Contractor" ? "secondary" : "outline"} className="border-2 border-border">
-                      {member.contractType}
+                    <Badge variant={member.contract_type === "Full-time" ? "default" : member.contract_type === "Contractor" ? "secondary" : "outline"} className="border-2 border-border">
+                      {member.contract_type}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right font-mono">${member.hourlyRate}</TableCell>
-                  <TableCell className="text-right font-mono">{member.totalHours}h</TableCell>
+                  <TableCell className="text-right font-mono">${member.hourly_rate}</TableCell>
+                  <TableCell className="text-right font-mono">{member.total_hours}h</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {member.projects.length > 0 ? (
-                        member.projects.slice(0, 2).map((projectId) => (
-                          <Link key={projectId} to={`/projects/${projectId}`}>
+                        member.projects.slice(0, 2).map((p) => (
+                          <Link key={p.project_id} to={`/projects/${p.project?.display_id}`} onClick={(e) => e.stopPropagation()}>
                             <Badge variant="outline" className="border-2 cursor-pointer hover:bg-accent text-xs">
-                              {projectsMap[projectId] || projectId}
+                              {p.project?.name || p.project_id}
                             </Badge>
                           </Link>
                         ))
@@ -459,24 +479,31 @@ export default function TeamMembers() {
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border-2 border-transparent hover:border-border">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="border-2">
-                        <DropdownMenuItem onClick={() => {
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
                           setEditingMember(member);
                           setIsEditDialogOpen(true);
                         }}>
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleMemberStatus(member.id)}>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMemberStatus(member.id, member.status);
+                        }}>
                           <Users className="h-4 w-4 mr-2" />
                           {member.status === "active" ? "Deactivate" : "Activate"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteMember(member.id)}>
+                        <DropdownMenuItem className="text-destructive" onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteMember(member.id, member.name);
+                        }}>
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
@@ -526,7 +553,7 @@ export default function TeamMembers() {
                 <div className="grid gap-2">
                   <Label>Phone</Label>
                   <Input
-                    value={editingMember.phone}
+                    value={editingMember.phone || ""}
                     onChange={(e) => setEditingMember({ ...editingMember, phone: e.target.value })}
                     className="border-2"
                   />
@@ -556,7 +583,7 @@ export default function TeamMembers() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Contract Type</Label>
-                  <Select value={editingMember.contractType} onValueChange={(value) => setEditingMember({ ...editingMember, contractType: value })}>
+                  <Select value={editingMember.contract_type} onValueChange={(value: ContractType) => setEditingMember({ ...editingMember, contract_type: value })}>
                     <SelectTrigger className="border-2">
                       <SelectValue />
                     </SelectTrigger>
@@ -573,8 +600,8 @@ export default function TeamMembers() {
                   <Label>Hourly Rate ($)</Label>
                   <Input
                     type="number"
-                    value={editingMember.hourlyRate}
-                    onChange={(e) => setEditingMember({ ...editingMember, hourlyRate: parseInt(e.target.value) || 0 })}
+                    value={editingMember.hourly_rate}
+                    onChange={(e) => setEditingMember({ ...editingMember, hourly_rate: parseFloat(e.target.value) || 0 })}
                     className="border-2"
                   />
                 </div>
@@ -583,7 +610,7 @@ export default function TeamMembers() {
                   <Input
                     type="number"
                     value={editingMember.salary}
-                    onChange={(e) => setEditingMember({ ...editingMember, salary: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => setEditingMember({ ...editingMember, salary: parseFloat(e.target.value) || 0 })}
                     className="border-2"
                   />
                 </div>
@@ -594,7 +621,8 @@ export default function TeamMembers() {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border-2">
               Cancel
             </Button>
-            <Button onClick={handleEditMember} className="border-2">
+            <Button onClick={handleEditMember} className="border-2" disabled={updateTeamMember.isPending}>
+              {updateTeamMember.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes
             </Button>
           </div>
