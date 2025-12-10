@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Lightbulb, FileText, MessageSquare, Search } from "lucide-react";
+import { Plus, Lightbulb, FileText, MessageSquare, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,98 +31,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useTickets, useCreateTicket } from "@/hooks/useTickets";
+import { useProjects } from "@/hooks/useProjects";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { Database } from "@/integrations/supabase/types";
 
-const initialTickets = [
-  {
-    id: "TKT-001",
-    title: "Add export functionality to reports",
-    category: "feature",
-    project: "Acme Corp",
-    priority: "high",
-    status: "open",
-    assignee: "You",
-    created: "Dec 8, 2024",
-  },
-  {
-    id: "TKT-002",
-    title: "Quote request for enterprise package",
-    category: "quote",
-    project: "TechStart Inc",
-    priority: "medium",
-    status: "in-progress",
-    assignee: "You",
-    created: "Dec 8, 2024",
-  },
-  {
-    id: "TKT-003",
-    title: "Dashboard loading speed issue",
-    category: "feedback",
-    project: "Global Solutions",
-    priority: "high",
-    status: "open",
-    assignee: "You",
-    created: "Dec 7, 2024",
-  },
-  {
-    id: "TKT-004",
-    title: "Integration with Salesforce CRM",
-    category: "feature",
-    project: "Acme Corp",
-    priority: "low",
-    status: "open",
-    assignee: "You",
-    created: "Dec 7, 2024",
-  },
-  {
-    id: "TKT-005",
-    title: "Annual contract renewal discussion",
-    category: "quote",
-    project: "DataFlow Ltd",
-    priority: "medium",
-    status: "pending",
-    assignee: "You",
-    created: "Dec 6, 2024",
-  },
-  {
-    id: "TKT-006",
-    title: "Mobile app feature request",
-    category: "feature",
-    project: "TechStart Inc",
-    priority: "medium",
-    status: "open",
-    assignee: "You",
-    created: "Dec 5, 2024",
-  },
-  {
-    id: "TKT-007",
-    title: "Positive feedback on new UI",
-    category: "feedback",
-    project: "Global Solutions",
-    priority: "low",
-    status: "closed",
-    assignee: "You",
-    created: "Dec 4, 2024",
-  },
-  {
-    id: "TKT-008",
-    title: "Extended support package quote",
-    category: "quote",
-    project: "Acme Corp",
-    priority: "high",
-    status: "in-progress",
-    assignee: "You",
-    created: "Dec 3, 2024",
-  },
-];
-
-const projectOptions = [
-  "Acme Corp",
-  "TechStart Inc",
-  "Global Solutions",
-  "DataFlow Ltd",
-  "CloudNine Systems",
-  "InnovateTech",
-];
+type TicketCategory = Database["public"]["Enums"]["ticket_category"];
+type TicketPriority = Database["public"]["Enums"]["ticket_priority"];
+type TicketStatus = Database["public"]["Enums"]["ticket_status"];
 
 const categoryIcons = {
   feature: Lightbulb,
@@ -130,19 +46,19 @@ const categoryIcons = {
   feedback: MessageSquare,
 };
 
-const categoryLabels = {
+const categoryLabels: Record<TicketCategory, string> = {
   feature: "Feature Request",
   quote: "Customer Quote",
   feedback: "Feedback",
 };
 
-const priorityStyles = {
+const priorityStyles: Record<TicketPriority, string> = {
   high: "bg-destructive text-destructive-foreground",
   medium: "bg-chart-4 text-foreground",
   low: "bg-secondary text-secondary-foreground border-2 border-border",
 };
 
-const statusStyles = {
+const statusStyles: Record<TicketStatus, string> = {
   open: "bg-chart-1 text-background",
   "in-progress": "bg-chart-2 text-background",
   pending: "bg-chart-4 text-foreground",
@@ -151,60 +67,87 @@ const statusStyles = {
 
 export default function Tickets() {
   const navigate = useNavigate();
-  const [tickets, setTickets] = useState(initialTickets);
+  const { data: tickets, isLoading, error } = useTickets();
+  const { data: projects } = useProjects();
+  const { data: teamMembers } = useTeamMembers();
+  const createTicket = useCreateTicket();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTicket, setNewTicket] = useState({
     title: "",
     description: "",
-    category: "feature",
-    project: "",
-    priority: "medium",
+    category: "feature" as TicketCategory,
+    project_id: "",
+    priority: "medium" as TicketPriority,
+    assignee_id: "",
   });
 
-  const filteredTickets = tickets.filter((ticket) => {
-    const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.project.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredTickets = tickets?.filter((ticket) => {
+    const matchesSearch =
+      ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.project?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeTab === "all" || ticket.category === activeTab;
     return matchesSearch && matchesCategory;
-  });
+  }) || [];
 
-  const handleCreateTicket = () => {
-    if (!newTicket.title || !newTicket.project) {
+  const handleCreateTicket = async () => {
+    if (!newTicket.title || !newTicket.project_id) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const ticketId = `TKT-${String(tickets.length + 1).padStart(3, "0")}`;
-    const today = new Date().toLocaleDateString("en-US", {
+    try {
+      await createTicket.mutateAsync({
+        title: newTicket.title,
+        description: newTicket.description || null,
+        category: newTicket.category,
+        project_id: newTicket.project_id,
+        priority: newTicket.priority,
+        assignee_id: newTicket.assignee_id || null,
+      });
+
+      setNewTicket({
+        title: "",
+        description: "",
+        category: "feature",
+        project_id: "",
+        priority: "medium",
+        assignee_id: "",
+      });
+      setIsDialogOpen(false);
+    } catch (error) {
+      // Error is handled by the hook
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-
-    const ticket = {
-      id: ticketId,
-      title: newTicket.title,
-      category: newTicket.category,
-      project: newTicket.project,
-      priority: newTicket.priority,
-      status: "open",
-      assignee: "You",
-      created: today,
-    };
-
-    setTickets([ticket, ...tickets]);
-    setNewTicket({
-      title: "",
-      description: "",
-      category: "feature",
-      project: "",
-      priority: "medium",
-    });
-    setIsDialogOpen(false);
-    toast.success("Ticket created successfully");
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-destructive">Failed to load tickets</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -250,7 +193,7 @@ export default function Tickets() {
                   <Label htmlFor="category">Category</Label>
                   <Select
                     value={newTicket.category}
-                    onValueChange={(value) => setNewTicket({ ...newTicket, category: value })}
+                    onValueChange={(value: TicketCategory) => setNewTicket({ ...newTicket, category: value })}
                   >
                     <SelectTrigger className="border-2">
                       <SelectValue />
@@ -265,45 +208,72 @@ export default function Tickets() {
                 <div className="grid gap-2">
                   <Label htmlFor="project">Project *</Label>
                   <Select
-                    value={newTicket.project}
-                    onValueChange={(value) => setNewTicket({ ...newTicket, project: value })}
+                    value={newTicket.project_id}
+                    onValueChange={(value) => setNewTicket({ ...newTicket, project_id: value })}
                   >
                     <SelectTrigger className="border-2">
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
                     <SelectContent className="border-2">
-                      {projectOptions.map((project) => (
-                        <SelectItem key={project} value={project}>
-                          {project}
+                      {projects?.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select
-                  value={newTicket.priority}
-                  onValueChange={(value) => setNewTicket({ ...newTicket, priority: value })}
-                >
-                  <SelectTrigger className="border-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="border-2">
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select
+                    value={newTicket.priority}
+                    onValueChange={(value: TicketPriority) => setNewTicket({ ...newTicket, priority: value })}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="assignee">Assignee</Label>
+                  <Select
+                    value={newTicket.assignee_id}
+                    onValueChange={(value) => setNewTicket({ ...newTicket, assignee_id: value })}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Select assignee" />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      {teamMembers?.filter(m => m.status === "active").map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-2">
                 Cancel
               </Button>
-              <Button onClick={handleCreateTicket} className="border-2">
-                Create Ticket
+              <Button onClick={handleCreateTicket} className="border-2" disabled={createTicket.isPending}>
+                {createTicket.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Ticket"
+                )}
               </Button>
             </div>
           </DialogContent>
@@ -344,52 +314,58 @@ export default function Tickets() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-b-2 hover:bg-transparent">
-                <TableHead className="font-bold uppercase text-xs">ID</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Title</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Category</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Project</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Priority</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Created</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTickets.map((ticket) => {
-                const CategoryIcon = categoryIcons[ticket.category as keyof typeof categoryIcons];
-                return (
-                  <TableRow
-                    key={ticket.id}
-                    className="border-b-2 cursor-pointer hover:bg-accent/50"
-                    onClick={() => navigate(`/tickets/${ticket.id}`)}
-                  >
-                    <TableCell className="font-mono text-sm">{ticket.id}</TableCell>
-                    <TableCell className="font-medium">{ticket.title}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <CategoryIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{categoryLabels[ticket.category as keyof typeof categoryLabels]}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{ticket.project}</TableCell>
-                    <TableCell>
-                      <Badge className={priorityStyles[ticket.priority as keyof typeof priorityStyles]}>
-                        {ticket.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusStyles[ticket.status as keyof typeof statusStyles]}>
-                        {ticket.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{ticket.created}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          {filteredTickets.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {tickets?.length === 0 ? "No tickets yet" : "No tickets match your search"}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b-2 hover:bg-transparent">
+                  <TableHead className="font-bold uppercase text-xs">ID</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Title</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Category</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Project</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Priority</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Status</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTickets.map((ticket) => {
+                  const CategoryIcon = categoryIcons[ticket.category];
+                  return (
+                    <TableRow
+                      key={ticket.id}
+                      className="border-b-2 cursor-pointer hover:bg-accent/50"
+                      onClick={() => navigate(`/tickets/${ticket.display_id}`)}
+                    >
+                      <TableCell className="font-mono text-sm">{ticket.display_id}</TableCell>
+                      <TableCell className="font-medium">{ticket.title}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <CategoryIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{categoryLabels[ticket.category]}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{ticket.project?.name || "—"}</TableCell>
+                      <TableCell>
+                        <Badge className={priorityStyles[ticket.priority]}>
+                          {ticket.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusStyles[ticket.status]}>
+                          {ticket.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(ticket.created_at)}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

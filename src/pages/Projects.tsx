@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, MoreVertical, Users, Ticket } from "lucide-react";
+import { Plus, MoreVertical, Users, Ticket, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,77 +28,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useProjects, useCreateProject, useDeleteProject } from "@/hooks/useProjects";
+import { useTickets } from "@/hooks/useTickets";
+import { Database } from "@/integrations/supabase/types";
 
-const initialProjects = [
-  {
-    id: "PRJ-001",
-    name: "Acme Corp",
-    description: "Enterprise software implementation and consulting",
-    status: "active",
-    progress: 75,
-    tickets: 12,
-    value: "$45,000",
-    client: "John Smith",
-    startDate: "Jan 15, 2024",
-  },
-  {
-    id: "PRJ-002",
-    name: "TechStart Inc",
-    description: "Digital transformation strategy and execution",
-    status: "active",
-    progress: 40,
-    tickets: 8,
-    value: "$28,000",
-    client: "Sarah Johnson",
-    startDate: "Feb 1, 2024",
-  },
-  {
-    id: "PRJ-003",
-    name: "Global Solutions",
-    description: "Process optimization and automation project",
-    status: "active",
-    progress: 90,
-    tickets: 5,
-    value: "$62,000",
-    client: "Mike Chen",
-    startDate: "Dec 10, 2023",
-  },
-  {
-    id: "PRJ-004",
-    name: "DataFlow Ltd",
-    description: "Data analytics platform development",
-    status: "pending",
-    progress: 15,
-    tickets: 3,
-    value: "$35,000",
-    client: "Emma Wilson",
-    startDate: "Mar 1, 2024",
-  },
-  {
-    id: "PRJ-005",
-    name: "CloudNine Systems",
-    description: "Cloud migration and infrastructure setup",
-    status: "completed",
-    progress: 100,
-    tickets: 0,
-    value: "$52,000",
-    client: "David Brown",
-    startDate: "Nov 5, 2023",
-  },
-  {
-    id: "PRJ-006",
-    name: "InnovateTech",
-    description: "Product development consulting",
-    status: "active",
-    progress: 55,
-    tickets: 7,
-    value: "$38,000",
-    client: "Lisa Anderson",
-    startDate: "Jan 20, 2024",
-  },
-];
+type ProjectStatus = Database["public"]["Enums"]["project_status"];
 
-const statusStyles = {
+const statusStyles: Record<ProjectStatus, string> = {
   active: "bg-chart-2 text-background",
   pending: "bg-chart-4 text-foreground",
   completed: "bg-primary text-primary-foreground",
@@ -107,7 +42,11 @@ const statusStyles = {
 
 export default function Projects() {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState(initialProjects);
+  const { data: projects, isLoading, error } = useProjects();
+  const { data: tickets } = useTickets();
+  const createProject = useCreateProject();
+  const deleteProject = useDeleteProject();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newProject, setNewProject] = useState({
     name: "",
@@ -115,46 +54,79 @@ export default function Projects() {
     client: "",
     clientEmail: "",
     value: "",
-    status: "pending",
+    status: "pending" as ProjectStatus,
   });
 
-  const handleCreateProject = () => {
+  // Count open tickets per project
+  const getOpenTicketCount = (projectId: string) => {
+    return tickets?.filter(t => t.project_id === projectId && t.status !== "closed").length || 0;
+  };
+
+  const handleCreateProject = async () => {
     if (!newProject.name || !newProject.client) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const projectId = `PRJ-${String(projects.length + 1).padStart(3, "0")}`;
-    const today = new Date().toLocaleDateString("en-US", {
+    try {
+      await createProject.mutateAsync({
+        name: newProject.name,
+        description: newProject.description || null,
+        client_name: newProject.client,
+        client_email: newProject.clientEmail || null,
+        value: parseFloat(newProject.value.replace(/[$,]/g, "")) || 0,
+        status: newProject.status,
+      });
+
+      setNewProject({
+        name: "",
+        description: "",
+        client: "",
+        clientEmail: "",
+        value: "",
+        status: "pending",
+      });
+      setIsDialogOpen(false);
+    } catch (error) {
+      // Error is handled by the hook
+    }
+  };
+
+  const formatValue = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-
-    const project = {
-      id: projectId,
-      name: newProject.name,
-      description: newProject.description,
-      status: newProject.status,
-      progress: 0,
-      tickets: 0,
-      value: newProject.value ? `$${newProject.value.replace(/[$,]/g, "")}` : "$0",
-      client: newProject.client,
-      startDate: today,
-    };
-
-    setProjects([project, ...projects]);
-    setNewProject({
-      name: "",
-      description: "",
-      client: "",
-      clientEmail: "",
-      value: "",
-      status: "pending",
-    });
-    setIsDialogOpen(false);
-    toast.success("Project created successfully");
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-destructive">Failed to load projects</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -233,7 +205,7 @@ export default function Projects() {
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={newProject.status}
-                    onValueChange={(value) => setNewProject({ ...newProject, status: value })}
+                    onValueChange={(value: ProjectStatus) => setNewProject({ ...newProject, status: value })}
                   >
                     <SelectTrigger className="border-2">
                       <SelectValue />
@@ -250,85 +222,109 @@ export default function Projects() {
               <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-2">
                 Cancel
               </Button>
-              <Button onClick={handleCreateProject} className="border-2">
-                Create Project
+              <Button onClick={handleCreateProject} className="border-2" disabled={createProject.isPending}>
+                {createProject.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Project"
+                )}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {projects.map((project) => (
-          <Card key={project.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="border-b-2 border-border pb-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-xs text-muted-foreground">{project.id}</span>
-                    <span
-                      className={`inline-block px-2 py-0.5 text-xs font-bold uppercase ${
-                        statusStyles[project.status as keyof typeof statusStyles]
-                      }`}
-                    >
-                      {project.status}
-                    </span>
+      {projects?.length === 0 ? (
+        <Card className="border-2 border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-muted-foreground mb-4">No projects yet</p>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create your first project
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {projects?.map((project) => (
+            <Card key={project.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="border-b-2 border-border pb-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-mono text-xs text-muted-foreground">{project.display_id}</span>
+                      <span
+                        className={`inline-block px-2 py-0.5 text-xs font-bold uppercase ${
+                          statusStyles[project.status]
+                        }`}
+                      >
+                        {project.status}
+                      </span>
+                    </div>
+                    <CardTitle className="text-lg">{project.name}</CardTitle>
                   </div>
-                  <CardTitle className="text-lg">{project.name}</CardTitle>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 border-2 border-transparent hover:border-border">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="border-2">
+                      <DropdownMenuItem onClick={() => navigate(`/projects/${project.display_id}`)}>
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/projects/${project.display_id}`)}>
+                        Edit Project
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate("/tickets")}>
+                        View Tickets
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => deleteProject.mutate(project.id)}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 border-2 border-transparent hover:border-border">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="border-2">
-                    <DropdownMenuItem onClick={() => navigate(`/projects/${project.id}`)}>
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate(`/projects/${project.id}`)}>
-                      Edit Project
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/tickets")}>
-                      View Tickets
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">Archive</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent
-              className="pt-4 cursor-pointer"
-              onClick={() => navigate(`/projects/${project.id}`)}
-            >
-              <p className="text-sm text-muted-foreground mb-4">{project.description}</p>
+              </CardHeader>
+              <CardContent
+                className="pt-4 cursor-pointer"
+                onClick={() => navigate(`/projects/${project.display_id}`)}
+              >
+                <p className="text-sm text-muted-foreground mb-4">{project.description}</p>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{project.client}</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>{project.client_name}</span>
+                    </div>
+                    <span className="font-mono font-bold">{formatValue(project.value)}</span>
                   </div>
-                  <span className="font-mono font-bold">{project.value}</span>
-                </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <Ticket className="h-4 w-4 text-muted-foreground" />
-                    <span>{project.tickets} open tickets</span>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-muted-foreground" />
+                      <span>{getOpenTicketCount(project.id)} open tickets</span>
+                    </div>
+                    <span className="text-muted-foreground">{formatDate(project.start_date)}</span>
                   </div>
-                  <span className="text-muted-foreground">{project.startDate}</span>
-                </div>
 
-                <div className="flex items-center gap-3 pt-2">
-                  <Progress value={project.progress} className="h-2 flex-1" />
-                  <span className="text-sm font-mono font-medium w-12 text-right">{project.progress}%</span>
+                  <div className="flex items-center gap-3 pt-2">
+                    <Progress value={project.progress} className="h-2 flex-1" />
+                    <span className="text-sm font-mono font-medium w-12 text-right">{project.progress}%</span>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
