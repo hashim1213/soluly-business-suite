@@ -10,6 +10,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -38,6 +39,7 @@ const ticketCategories = [
   { title: "Feature Requests", url: "/tickets/features", icon: Lightbulb },
   { title: "Customer Quotes", url: "/tickets/quotes", icon: FileText },
   { title: "Feedback", url: "/tickets/feedback", icon: MessageSquare },
+  { title: "Team Members", url: "/tickets/team", icon: Users },
 ];
 
 const systemItems = [
