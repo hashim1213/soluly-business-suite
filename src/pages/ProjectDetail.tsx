@@ -18,6 +18,10 @@ import {
   Circle,
   ChevronLeft,
   ChevronRight,
+  Building,
+  UserPlus,
+  X,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +31,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -57,6 +63,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
+// Company team members (internal)
+const companyTeamMembers = [
+  { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y" },
+  { id: "2", name: "Sarah Chen", email: "sarah@company.com", role: "Developer", avatar: "SC" },
+  { id: "3", name: "Mike Johnson", email: "mike@company.com", role: "Designer", avatar: "MJ" },
+  { id: "4", name: "Emma Wilson", email: "emma@company.com", role: "Developer", avatar: "EW" },
+  { id: "5", name: "David Brown", email: "david@company.com", role: "QA Engineer", avatar: "DB" },
+  { id: "6", name: "Lisa Park", email: "lisa@company.com", role: "Business Analyst", avatar: "LP" },
+];
+
 // Mock data - in a real app this would come from API/state management
 const projectsData: Record<string, {
   id: string;
@@ -65,12 +81,12 @@ const projectsData: Record<string, {
   status: string;
   progress: number;
   tickets: number;
-  value: string;
   client: string;
   clientEmail: string;
   startDate: string;
   endDate: string;
-  team: string[];
+  internalTeam: Array<{ id: string; name: string; email: string; role: string; avatar: string }>;
+  externalTeam: Array<{ id: string; name: string; email: string; role: string; company: string; avatar: string }>;
 }> = {
   "PRJ-001": {
     id: "PRJ-001",
@@ -79,12 +95,19 @@ const projectsData: Record<string, {
     status: "active",
     progress: 75,
     tickets: 12,
-    value: "$45,000",
     client: "John Smith",
     clientEmail: "john@acmecorp.com",
     startDate: "Jan 15, 2024",
     endDate: "Apr 30, 2024",
-    team: ["You", "Sarah", "Mike"],
+    internalTeam: [
+      { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y" },
+      { id: "2", name: "Sarah Chen", email: "sarah@company.com", role: "Developer", avatar: "SC" },
+      { id: "3", name: "Mike Johnson", email: "mike@company.com", role: "Designer", avatar: "MJ" },
+    ],
+    externalTeam: [
+      { id: "e1", name: "John Smith", email: "john@acmecorp.com", role: "Product Owner", company: "Acme Corp", avatar: "JS" },
+      { id: "e2", name: "Alice Wang", email: "alice@acmecorp.com", role: "Technical Lead", company: "Acme Corp", avatar: "AW" },
+    ],
   },
   "PRJ-002": {
     id: "PRJ-002",
@@ -93,12 +116,17 @@ const projectsData: Record<string, {
     status: "active",
     progress: 40,
     tickets: 8,
-    value: "$28,000",
     client: "Sarah Johnson",
     clientEmail: "sarah@techstart.io",
     startDate: "Feb 1, 2024",
     endDate: "May 15, 2024",
-    team: ["You", "Emma"],
+    internalTeam: [
+      { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y" },
+      { id: "4", name: "Emma Wilson", email: "emma@company.com", role: "Developer", avatar: "EW" },
+    ],
+    externalTeam: [
+      { id: "e1", name: "Sarah Johnson", email: "sarah@techstart.io", role: "CEO", company: "TechStart Inc", avatar: "SJ" },
+    ],
   },
   "PRJ-003": {
     id: "PRJ-003",
@@ -107,12 +135,18 @@ const projectsData: Record<string, {
     status: "active",
     progress: 90,
     tickets: 5,
-    value: "$62,000",
     client: "Mike Chen",
     clientEmail: "mike@globalsol.com",
     startDate: "Dec 10, 2023",
     endDate: "Mar 1, 2024",
-    team: ["You", "David", "Lisa"],
+    internalTeam: [
+      { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y" },
+      { id: "5", name: "David Brown", email: "david@company.com", role: "QA Engineer", avatar: "DB" },
+      { id: "6", name: "Lisa Park", email: "lisa@company.com", role: "Business Analyst", avatar: "LP" },
+    ],
+    externalTeam: [
+      { id: "e1", name: "Mike Chen", email: "mike@globalsol.com", role: "Operations Director", company: "Global Solutions", avatar: "MC" },
+    ],
   },
   "PRJ-004": {
     id: "PRJ-004",
@@ -121,12 +155,16 @@ const projectsData: Record<string, {
     status: "pending",
     progress: 15,
     tickets: 3,
-    value: "$35,000",
     client: "Emma Wilson",
     clientEmail: "emma@dataflow.io",
     startDate: "Mar 1, 2024",
     endDate: "Jun 30, 2024",
-    team: ["You"],
+    internalTeam: [
+      { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y" },
+    ],
+    externalTeam: [
+      { id: "e1", name: "Emma Davis", email: "emma@dataflow.io", role: "CTO", company: "DataFlow Ltd", avatar: "ED" },
+    ],
   },
   "PRJ-005": {
     id: "PRJ-005",
@@ -135,12 +173,20 @@ const projectsData: Record<string, {
     status: "completed",
     progress: 100,
     tickets: 0,
-    value: "$52,000",
     client: "David Brown",
     clientEmail: "david@cloudnine.io",
     startDate: "Nov 5, 2023",
     endDate: "Feb 15, 2024",
-    team: ["You", "Sarah", "Mike", "Emma"],
+    internalTeam: [
+      { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y" },
+      { id: "2", name: "Sarah Chen", email: "sarah@company.com", role: "Developer", avatar: "SC" },
+      { id: "3", name: "Mike Johnson", email: "mike@company.com", role: "Designer", avatar: "MJ" },
+      { id: "4", name: "Emma Wilson", email: "emma@company.com", role: "Developer", avatar: "EW" },
+    ],
+    externalTeam: [
+      { id: "e1", name: "David Lee", email: "david@cloudnine.io", role: "IT Director", company: "CloudNine Systems", avatar: "DL" },
+      { id: "e2", name: "Rachel Kim", email: "rachel@cloudnine.io", role: "System Admin", company: "CloudNine Systems", avatar: "RK" },
+    ],
   },
   "PRJ-006": {
     id: "PRJ-006",
@@ -149,12 +195,17 @@ const projectsData: Record<string, {
     status: "active",
     progress: 55,
     tickets: 7,
-    value: "$38,000",
     client: "Lisa Anderson",
     clientEmail: "lisa@innovatetech.com",
     startDate: "Jan 20, 2024",
     endDate: "Apr 20, 2024",
-    team: ["You", "David"],
+    internalTeam: [
+      { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y" },
+      { id: "5", name: "David Brown", email: "david@company.com", role: "QA Engineer", avatar: "DB" },
+    ],
+    externalTeam: [
+      { id: "e1", name: "Lisa Anderson", email: "lisa@innovatetech.com", role: "Product Manager", company: "InnovateTech", avatar: "LA" },
+    ],
   },
 };
 
@@ -172,14 +223,14 @@ const initialInvoices = [
 ];
 
 const initialTodos = [
-  { id: "1", text: "Complete requirements documentation", completed: true, priority: "high" },
-  { id: "2", text: "Set up development environment", completed: true, priority: "medium" },
-  { id: "3", text: "Design system architecture", completed: true, priority: "high" },
-  { id: "4", text: "Implement user authentication", completed: false, priority: "high" },
-  { id: "5", text: "Build dashboard components", completed: false, priority: "medium" },
-  { id: "6", text: "Integrate CRM APIs", completed: false, priority: "medium" },
-  { id: "7", text: "Write unit tests", completed: false, priority: "low" },
-  { id: "8", text: "Client UAT session", completed: false, priority: "high" },
+  { id: "1", text: "Complete requirements documentation", completed: true, priority: "high", assignee: "You" },
+  { id: "2", text: "Set up development environment", completed: true, priority: "medium", assignee: "Sarah Chen" },
+  { id: "3", text: "Design system architecture", completed: true, priority: "high", assignee: "You" },
+  { id: "4", text: "Implement user authentication", completed: false, priority: "high", assignee: "Sarah Chen" },
+  { id: "5", text: "Build dashboard components", completed: false, priority: "medium", assignee: "Mike Johnson" },
+  { id: "6", text: "Integrate CRM APIs", completed: false, priority: "medium", assignee: "You" },
+  { id: "7", text: "Write unit tests", completed: false, priority: "low", assignee: "Emma Wilson" },
+  { id: "8", text: "Client UAT session", completed: false, priority: "high", assignee: "You" },
 ];
 
 const timelineEvents = [
@@ -225,8 +276,20 @@ export default function ProjectDetail() {
   const [todos, setTodos] = useState(initialTodos);
   const [invoices, setInvoices] = useState(initialInvoices);
   const [newTodo, setNewTodo] = useState("");
+  const [newTodoDescription, setNewTodoDescription] = useState("");
   const [newTodoPriority, setNewTodoPriority] = useState("medium");
+  const [newTodoAssignee, setNewTodoAssignee] = useState("You");
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
+  const [addMemberType, setAddMemberType] = useState<"internal" | "external">("internal");
+  const [newExternalMember, setNewExternalMember] = useState({
+    name: "",
+    email: "",
+    role: "",
+    company: "",
+  });
   const [newInvoice, setNewInvoice] = useState({
     description: "",
     amount: "",
@@ -234,9 +297,11 @@ export default function ProjectDetail() {
   });
   const [calendarMonth, setCalendarMonth] = useState(new Date(2024, 0)); // January 2024
 
-  const project = projectsData[projectId || ""];
+  const projectData = projectsData[projectId || ""];
+  const [internalTeam, setInternalTeam] = useState(projectData?.internalTeam || []);
+  const [externalTeam, setExternalTeam] = useState(projectData?.externalTeam || []);
 
-  if (!project) {
+  if (!projectData) {
     return (
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => navigate("/projects")} className="border-2 border-transparent hover:border-border">
@@ -253,23 +318,37 @@ export default function ProjectDetail() {
     );
   }
 
+  const project = { ...projectData, internalTeam, externalTeam };
+
   const toggleTodo = (id: string) => {
     setTodos(todos.map(todo =>
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ));
+    const todo = todos.find(t => t.id === id);
+    if (todo) {
+      toast.success(todo.completed ? "Task marked as incomplete" : "Task completed!");
+    }
   };
 
   const addTodo = () => {
-    if (!newTodo.trim()) return;
+    if (!newTodo.trim()) {
+      toast.error("Please enter a task title");
+      return;
+    }
     const todo = {
-      id: String(todos.length + 1),
+      id: String(Date.now()),
       text: newTodo,
       completed: false,
       priority: newTodoPriority,
+      assignee: newTodoAssignee,
     };
     setTodos([...todos, todo]);
     setNewTodo("");
-    toast.success("Task added");
+    setNewTodoDescription("");
+    setNewTodoPriority("medium");
+    setNewTodoAssignee("You");
+    setIsTaskDialogOpen(false);
+    toast.success("Task added successfully");
   };
 
   const deleteTodo = (id: string) => {
@@ -313,10 +392,63 @@ export default function ProjectDetail() {
     toast.success("Invoice marked as paid");
   };
 
-  // Calculate invoice totals
+  const addInternalMember = (member: typeof companyTeamMembers[0]) => {
+    if (internalTeam.find(m => m.id === member.id)) {
+      toast.error("Team member already added");
+      return;
+    }
+    setInternalTeam([...internalTeam, member]);
+    toast.success(`${member.name} added to the project`);
+  };
+
+  const removeInternalMember = (memberId: string) => {
+    if (memberId === "1") {
+      toast.error("Cannot remove the project lead");
+      return;
+    }
+    setInternalTeam(internalTeam.filter(m => m.id !== memberId));
+    toast.success("Team member removed");
+  };
+
+  const addExternalMember = () => {
+    if (!newExternalMember.name || !newExternalMember.email) {
+      toast.error("Please fill in name and email");
+      return;
+    }
+    const member = {
+      id: `e${Date.now()}`,
+      name: newExternalMember.name,
+      email: newExternalMember.email,
+      role: newExternalMember.role || "Stakeholder",
+      company: newExternalMember.company || project.name,
+      avatar: newExternalMember.name.split(" ").map(n => n[0]).join("").toUpperCase(),
+    };
+    setExternalTeam([...externalTeam, member]);
+    setNewExternalMember({ name: "", email: "", role: "", company: "" });
+    setIsAddMemberDialogOpen(false);
+    toast.success(`${member.name} added as external team member`);
+  };
+
+  const removeExternalMember = (memberId: string) => {
+    setExternalTeam(externalTeam.filter(m => m.id !== memberId));
+    toast.success("External team member removed");
+  };
+
+  // Calculate invoice totals - Project value is total invoiced
   const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.amount, 0);
   const totalPaid = invoices.filter(inv => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0);
   const totalOutstanding = invoices.filter(inv => inv.status === "sent").reduce((sum, inv) => sum + inv.amount, 0);
+
+  // Project value is the total invoiced amount
+  const projectValue = `$${totalInvoiced.toLocaleString()}`;
+
+  // Total team members
+  const totalTeamMembers = internalTeam.length + externalTeam.length;
+
+  // Available company members to add (not already in project)
+  const availableCompanyMembers = companyTeamMembers.filter(
+    m => !internalTeam.find(t => t.id === m.id)
+  );
 
   // Calendar helpers
   const getDaysInMonth = (date: Date) => {
@@ -388,7 +520,7 @@ export default function ProjectDetail() {
   };
 
   const completedTodos = todos.filter(t => t.completed).length;
-  const todoProgress = Math.round((completedTodos / todos.length) * 100);
+  const todoProgress = todos.length > 0 ? Math.round((completedTodos / todos.length) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -438,7 +570,7 @@ export default function ProjectDetail() {
                 <DollarSign className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">{project.value}</div>
+                <div className="text-2xl font-bold font-mono">{projectValue}</div>
                 <div className="text-sm text-muted-foreground">Project Value</div>
               </div>
             </div>
@@ -457,14 +589,17 @@ export default function ProjectDetail() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card
+          className="border-2 border-border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setIsTeamDialogOpen(true)}
+        >
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{project.team.length}</div>
+                <div className="text-2xl font-bold">{totalTeamMembers}</div>
                 <div className="text-sm text-muted-foreground">Team Members</div>
               </div>
             </div>
@@ -484,6 +619,191 @@ export default function ProjectDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Team Members Dialog */}
+      <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+        <DialogContent className="border-2 sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Project Team</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            {/* Internal Team */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="font-semibold">Company Team</h4>
+                  <Badge variant="secondary" className="border-2 border-border">{internalTeam.length}</Badge>
+                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="border-2" onClick={() => setAddMemberType("internal")}>
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Add
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="border-2 sm:max-w-[400px]">
+                    <DialogHeader className="border-b-2 border-border pb-4">
+                      <DialogTitle>Add Company Team Member</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2 max-h-[300px] overflow-y-auto">
+                      {availableCompanyMembers.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4">All company members are already on this project</p>
+                      ) : (
+                        availableCompanyMembers.map((member) => (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between p-3 border-2 border-border hover:bg-accent/50 cursor-pointer"
+                            onClick={() => addInternalMember(member)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8 border-2 border-border">
+                                <AvatarFallback className="bg-secondary text-xs">{member.avatar}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{member.name}</div>
+                                <div className="text-xs text-muted-foreground">{member.role}</div>
+                              </div>
+                            </div>
+                            <Plus className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <div className="space-y-2">
+                {internalTeam.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-3 border-2 border-border">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8 border-2 border-border">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{member.name}</div>
+                        <div className="text-xs text-muted-foreground">{member.role} • {member.email}</div>
+                      </div>
+                    </div>
+                    {member.id !== "1" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                        onClick={() => removeInternalMember(member.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* External Team */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="font-semibold">Client Team ({project.name})</h4>
+                  <Badge variant="secondary" className="border-2 border-border">{externalTeam.length}</Badge>
+                </div>
+                <Dialog open={isAddMemberDialogOpen} onOpenChange={setIsAddMemberDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="border-2">
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Add
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="border-2 sm:max-w-[400px]">
+                    <DialogHeader className="border-b-2 border-border pb-4">
+                      <DialogTitle>Add External Team Member</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="ext-name">Name *</Label>
+                        <Input
+                          id="ext-name"
+                          placeholder="Full name"
+                          value={newExternalMember.name}
+                          onChange={(e) => setNewExternalMember({ ...newExternalMember, name: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="ext-email">Email *</Label>
+                        <Input
+                          id="ext-email"
+                          type="email"
+                          placeholder="email@company.com"
+                          value={newExternalMember.email}
+                          onChange={(e) => setNewExternalMember({ ...newExternalMember, email: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="ext-role">Role</Label>
+                        <Input
+                          id="ext-role"
+                          placeholder="e.g., Product Owner, Technical Lead"
+                          value={newExternalMember.role}
+                          onChange={(e) => setNewExternalMember({ ...newExternalMember, role: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="ext-company">Company</Label>
+                        <Input
+                          id="ext-company"
+                          placeholder={project.name}
+                          value={newExternalMember.company}
+                          onChange={(e) => setNewExternalMember({ ...newExternalMember, company: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsAddMemberDialogOpen(false)} className="border-2">
+                        Cancel
+                      </Button>
+                      <Button onClick={addExternalMember} className="border-2">
+                        Add Member
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <div className="space-y-2">
+                {externalTeam.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4 border-2 border-dashed border-border">No external team members</p>
+                ) : (
+                  externalTeam.map((member) => (
+                    <div key={member.id} className="flex items-center justify-between p-3 border-2 border-border">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8 border-2 border-border">
+                          <AvatarFallback className="bg-chart-1 text-background text-xs">{member.avatar}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{member.name}</div>
+                          <div className="text-xs text-muted-foreground">{member.role} • {member.company}</div>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                        onClick={() => removeExternalMember(member.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="border-2 border-border p-1">
@@ -579,13 +899,28 @@ export default function ProjectDetail() {
                     <div className="font-medium">{project.startDate} - {project.endDate}</div>
                   </div>
                   <div className="border-t-2 border-border pt-4">
-                    <div className="text-sm text-muted-foreground mb-1">Team</div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-muted-foreground">Team</div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs border-2 border-transparent hover:border-border"
+                        onClick={() => setIsTeamDialogOpen(true)}
+                      >
+                        Manage
+                      </Button>
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {project.team.map((member) => (
-                        <Badge key={member} variant="secondary" className="border-2 border-border">
-                          {member}
+                      {internalTeam.slice(0, 3).map((member) => (
+                        <Badge key={member.id} variant="secondary" className="border-2 border-border">
+                          {member.name}
                         </Badge>
                       ))}
+                      {internalTeam.length > 3 && (
+                        <Badge variant="secondary" className="border-2 border-border">
+                          +{internalTeam.length - 3} more
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="border-t-2 border-border pt-4">
@@ -610,7 +945,7 @@ export default function ProjectDetail() {
                   </div>
                   <div>
                     <div className="text-2xl font-bold font-mono">${totalInvoiced.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">Total Invoiced</div>
+                    <div className="text-sm text-muted-foreground">Total Invoiced (Project Value)</div>
                   </div>
                 </div>
               </CardContent>
@@ -778,32 +1113,72 @@ export default function ProjectDetail() {
                         {completedTodos} of {todos.length} tasks completed
                       </p>
                     </div>
+                    <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="border-2">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Task
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="border-2 sm:max-w-[425px]">
+                        <DialogHeader className="border-b-2 border-border pb-4">
+                          <DialogTitle>Add New Task</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="task-title">Task Title *</Label>
+                            <Input
+                              id="task-title"
+                              placeholder="What needs to be done?"
+                              value={newTodo}
+                              onChange={(e) => setNewTodo(e.target.value)}
+                              className="border-2"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="task-priority">Priority</Label>
+                              <Select value={newTodoPriority} onValueChange={setNewTodoPriority}>
+                                <SelectTrigger className="border-2">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="border-2">
+                                  <SelectItem value="high">High</SelectItem>
+                                  <SelectItem value="medium">Medium</SelectItem>
+                                  <SelectItem value="low">Low</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="task-assignee">Assignee</Label>
+                              <Select value={newTodoAssignee} onValueChange={setNewTodoAssignee}>
+                                <SelectTrigger className="border-2">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="border-2">
+                                  {internalTeam.map((member) => (
+                                    <SelectItem key={member.id} value={member.name}>
+                                      {member.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                          <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)} className="border-2">
+                            Cancel
+                          </Button>
+                          <Button onClick={addTodo} className="border-2">
+                            Add Task
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <div className="flex gap-2 mb-4">
-                    <Input
-                      placeholder="Add a new task..."
-                      value={newTodo}
-                      onChange={(e) => setNewTodo(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addTodo()}
-                      className="border-2"
-                    />
-                    <Select value={newTodoPriority} onValueChange={setNewTodoPriority}>
-                      <SelectTrigger className="w-32 border-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="border-2">
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={addTodo} className="border-2">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-
                   <div className="space-y-2">
                     {todos.map((todo) => (
                       <div
@@ -817,9 +1192,14 @@ export default function ProjectDetail() {
                           onCheckedChange={() => toggleTodo(todo.id)}
                           className="border-2"
                         />
-                        <span className={`flex-1 ${todo.completed ? "line-through text-muted-foreground" : ""}`}>
-                          {todo.text}
-                        </span>
+                        <div className="flex-1">
+                          <span className={`${todo.completed ? "line-through text-muted-foreground" : ""}`}>
+                            {todo.text}
+                          </span>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Assigned to {todo.assignee}
+                          </div>
+                        </div>
                         <Badge className={priorityStyles[todo.priority as keyof typeof priorityStyles]}>
                           {todo.priority}
                         </Badge>
@@ -829,10 +1209,15 @@ export default function ProjectDetail() {
                           className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
                           onClick={() => deleteTodo(todo.id)}
                         >
-                          ×
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
+                    {todos.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border">
+                        No tasks yet. Add one to get started!
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
