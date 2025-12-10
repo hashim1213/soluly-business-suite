@@ -9,6 +9,7 @@ import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
+import TeamMembers from "./pages/TeamMembers";
 import FeatureRequests from "./pages/FeatureRequests";
 import CustomerQuotes from "./pages/CustomerQuotes";
 import QuoteDetail from "./pages/QuoteDetail";
@@ -67,6 +68,22 @@ const App = () => (
             }
           />
           <Route
+            path="/tickets/team"
+            element={
+              <AppLayout>
+                <TeamMembers />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/team"
+            element={
+              <AppLayout>
+                <TeamMembers />
+              </AppLayout>
+            }
+          />
+          <Route
             path="/tickets/features"
             element={
               <AppLayout>
@@ -75,7 +92,23 @@ const App = () => (
             }
           />
           <Route
+            path="/features"
+            element={
+              <AppLayout>
+                <FeatureRequests />
+              </AppLayout>
+            }
+          />
+          <Route
             path="/tickets/quotes"
+            element={
+              <AppLayout>
+                <CustomerQuotes />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/quotes"
             element={
               <AppLayout>
                 <CustomerQuotes />

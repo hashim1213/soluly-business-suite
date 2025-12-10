@@ -272,12 +272,11 @@ const initialContracts = [
   { id: "CON-004", name: "Contractor Agreement - Mike Johnson", type: "contractor", uploadDate: "Jan 18, 2024", size: "195 KB", status: "active" },
 ];
 
+// Non-labor costs only - labor is auto-calculated from time entries
 const initialCosts = [
-  { id: "COST-001", description: "Development Labor", category: "labor", amount: 18000, date: "Jan 2024", recurring: true },
-  { id: "COST-002", description: "Design Services", category: "labor", amount: 5000, date: "Jan 2024", recurring: false },
-  { id: "COST-003", description: "AWS Cloud Services", category: "infrastructure", amount: 1200, date: "Feb 2024", recurring: true },
-  { id: "COST-004", description: "Software Licenses", category: "software", amount: 800, date: "Jan 2024", recurring: true },
-  { id: "COST-005", description: "Third-party API Integration", category: "external", amount: 2500, date: "Feb 2024", recurring: false },
+  { id: "COST-001", description: "AWS Cloud Services", category: "infrastructure", amount: 1200, date: "Feb 2024", recurring: true },
+  { id: "COST-002", description: "Software Licenses", category: "software", amount: 800, date: "Jan 2024", recurring: true },
+  { id: "COST-003", description: "Third-party API Integration", category: "external", amount: 2500, date: "Feb 2024", recurring: false },
 ];
 
 const statusStyles = {
@@ -697,8 +696,16 @@ export default function ProjectDetail() {
   const totalPaid = invoices.filter(inv => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0);
   const totalOutstanding = invoices.filter(inv => inv.status === "sent").reduce((sum, inv) => sum + inv.amount, 0);
 
-  // Calculate costs
-  const totalCosts = costs.reduce((sum, cost) => sum + cost.amount, 0);
+  // Calculate labor costs from time entries
+  const laborCosts = timeEntries.reduce((sum, entry) => {
+    const memberData = companyTeamMembers.find(m => m.id === entry.memberId);
+    const hourlyRate = memberData?.hourlyRate || 0;
+    return sum + (entry.hours * hourlyRate);
+  }, 0);
+
+  // Calculate total costs (non-labor + auto-calculated labor)
+  const nonLaborCosts = costs.reduce((sum, cost) => sum + cost.amount, 0);
+  const totalCosts = nonLaborCosts + laborCosts;
 
   // Calculate profit
   const projectProfit = totalInvoiced - totalCosts;
@@ -1777,8 +1784,19 @@ export default function ProjectDetail() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label>Current Date</Label>
-                    <p className="text-sm text-muted-foreground">{editingMilestone.date}</p>
+                    <Label htmlFor="edit-milestone-date">Due Date</Label>
+                    <Input
+                      id="edit-milestone-date"
+                      type="date"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const formattedDate = new Date(e.target.value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                          setEditingMilestone({ ...editingMilestone, date: formattedDate });
+                        }
+                      }}
+                      className="border-2"
+                    />
+                    <p className="text-xs text-muted-foreground">Current: {editingMilestone.date}</p>
                   </div>
                 </div>
               )}
@@ -2272,7 +2290,21 @@ export default function ProjectDetail() {
                 <CardTitle>Cost Breakdown by Category</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
-                {Object.entries(costCategoryLabels).map(([key, label]) => {
+                {/* Labor costs - auto-calculated from time entries */}
+                {laborCosts > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        Labor
+                        <Badge variant="secondary" className="text-xs border-2 border-border">Auto-calculated</Badge>
+                      </span>
+                      <span className="font-mono font-bold">${laborCosts.toLocaleString()} ({totalCosts > 0 ? Math.round((laborCosts / totalCosts) * 100) : 0}%)</span>
+                    </div>
+                    <Progress value={totalCosts > 0 ? Math.round((laborCosts / totalCosts) * 100) : 0} className="h-2" />
+                  </div>
+                )}
+                {/* Other costs from manual entries */}
+                {Object.entries(costCategoryLabels).filter(([key]) => key !== "labor").map(([key, label]) => {
                   const categoryTotal = costs.filter(c => c.category === key).reduce((sum, c) => sum + c.amount, 0);
                   const percentage = totalCosts > 0 ? Math.round((categoryTotal / totalCosts) * 100) : 0;
                   return categoryTotal > 0 ? (
@@ -2299,8 +2331,12 @@ export default function ProjectDetail() {
                     <span className="font-mono font-bold">${totalInvoiced.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Costs</span>
-                    <span className="font-mono font-bold text-destructive">-${totalCosts.toLocaleString()}</span>
+                    <span className="text-muted-foreground">Labor Costs (from time entries)</span>
+                    <span className="font-mono font-bold text-destructive">-${laborCosts.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Other Costs</span>
+                    <span className="font-mono font-bold text-destructive">-${nonLaborCosts.toLocaleString()}</span>
                   </div>
                   <div className="border-t-2 border-border pt-3 flex justify-between">
                     <span className="font-semibold">Net Profit</span>

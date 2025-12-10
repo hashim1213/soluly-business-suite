@@ -18,7 +18,6 @@ export default function Dashboard() {
           description="3 starting this month"
           icon={FolderKanban}
           href="/projects"
-          trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Open Tickets"
@@ -26,14 +25,13 @@ export default function Dashboard() {
           description="6 high priority"
           icon={Ticket}
           href="/tickets"
-          trend={{ value: 8, isPositive: false }}
         />
         <StatsCard
           title="Feature Requests"
           value={15}
           description="4 in progress"
           icon={Lightbulb}
-          href="/feature-requests"
+          href="/features"
         />
         <StatsCard
           title="Pipeline Value"
@@ -41,7 +39,6 @@ export default function Dashboard() {
           description="From active quotes"
           icon={DollarSign}
           href="/quotes"
-          trend={{ value: 23, isPositive: true }}
         />
       </div>
 
