@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Plus, Filter, Lightbulb, FileText, MessageSquare, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Lightbulb, FileText, MessageSquare, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -13,8 +16,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
-const allTickets = [
+const initialTickets = [
   {
     id: "TKT-001",
     title: "Add export functionality to reports",
@@ -97,6 +115,15 @@ const allTickets = [
   },
 ];
 
+const projectOptions = [
+  "Acme Corp",
+  "TechStart Inc",
+  "Global Solutions",
+  "DataFlow Ltd",
+  "CloudNine Systems",
+  "InnovateTech",
+];
+
 const categoryIcons = {
   feature: Lightbulb,
   quote: FileText,
@@ -123,15 +150,61 @@ const statusStyles = {
 };
 
 export default function Tickets() {
+  const navigate = useNavigate();
+  const [tickets, setTickets] = useState(initialTickets);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTicket, setNewTicket] = useState({
+    title: "",
+    description: "",
+    category: "feature",
+    project: "",
+    priority: "medium",
+  });
 
-  const filteredTickets = allTickets.filter((ticket) => {
+  const filteredTickets = tickets.filter((ticket) => {
     const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.project.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeTab === "all" || ticket.category === activeTab;
     return matchesSearch && matchesCategory;
   });
+
+  const handleCreateTicket = () => {
+    if (!newTicket.title || !newTicket.project) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const ticketId = `TKT-${String(tickets.length + 1).padStart(3, "0")}`;
+    const today = new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const ticket = {
+      id: ticketId,
+      title: newTicket.title,
+      category: newTicket.category,
+      project: newTicket.project,
+      priority: newTicket.priority,
+      status: "open",
+      assignee: "You",
+      created: today,
+    };
+
+    setTickets([ticket, ...tickets]);
+    setNewTicket({
+      title: "",
+      description: "",
+      category: "feature",
+      project: "",
+      priority: "medium",
+    });
+    setIsDialogOpen(false);
+    toast.success("Ticket created successfully");
+  };
 
   return (
     <div className="space-y-6">
@@ -140,10 +213,101 @@ export default function Tickets() {
           <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
           <p className="text-muted-foreground">Manage all your project tickets</p>
         </div>
-        <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
-          <Plus className="h-4 w-4 mr-2" />
-          New Ticket
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
+              <Plus className="h-4 w-4 mr-2" />
+              New Ticket
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="border-2 sm:max-w-[500px]">
+            <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogTitle>Create New Ticket</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  placeholder="Enter ticket title"
+                  value={newTicket.title}
+                  onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe the ticket in detail"
+                  value={newTicket.description}
+                  onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={newTicket.category}
+                    onValueChange={(value) => setNewTicket({ ...newTicket, category: value })}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="feature">Feature Request</SelectItem>
+                      <SelectItem value="quote">Customer Quote</SelectItem>
+                      <SelectItem value="feedback">Feedback</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="project">Project *</Label>
+                  <Select
+                    value={newTicket.project}
+                    onValueChange={(value) => setNewTicket({ ...newTicket, project: value })}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      {projectOptions.map((project) => (
+                        <SelectItem key={project} value={project}>
+                          {project}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select
+                  value={newTicket.priority}
+                  onValueChange={(value) => setNewTicket({ ...newTicket, priority: value })}
+                >
+                  <SelectTrigger className="border-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-2">
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-2">
+                Cancel
+              </Button>
+              <Button onClick={handleCreateTicket} className="border-2">
+                Create Ticket
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card className="border-2 border-border shadow-sm">
@@ -196,7 +360,11 @@ export default function Tickets() {
               {filteredTickets.map((ticket) => {
                 const CategoryIcon = categoryIcons[ticket.category as keyof typeof categoryIcons];
                 return (
-                  <TableRow key={ticket.id} className="border-b-2 cursor-pointer hover:bg-accent/50">
+                  <TableRow
+                    key={ticket.id}
+                    className="border-b-2 cursor-pointer hover:bg-accent/50"
+                    onClick={() => navigate(`/tickets/${ticket.id}`)}
+                  >
                     <TableCell className="font-mono text-sm">{ticket.id}</TableCell>
                     <TableCell className="font-medium">{ticket.title}</TableCell>
                     <TableCell>
