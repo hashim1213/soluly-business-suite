@@ -1,4 +1,5 @@
 import { LucideIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatsCardProps {
@@ -6,15 +7,16 @@ interface StatsCardProps {
   value: string | number;
   description?: string;
   icon: LucideIcon;
+  href?: string;
   trend?: {
     value: number;
     isPositive: boolean;
   };
 }
 
-export function StatsCard({ title, value, description, icon: Icon, trend }: StatsCardProps) {
-  return (
-    <Card className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+export function StatsCard({ title, value, description, icon: Icon, href, trend }: StatsCardProps) {
+  const cardContent = (
+    <Card className={`border-2 border-border shadow-sm hover:shadow-md transition-shadow ${href ? "cursor-pointer hover:border-primary" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
           {title}
@@ -36,4 +38,10 @@ export function StatsCard({ title, value, description, icon: Icon, trend }: Stat
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return <Link to={href}>{cardContent}</Link>;
+  }
+
+  return cardContent;
 }

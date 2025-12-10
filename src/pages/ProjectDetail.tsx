@@ -27,6 +27,10 @@ import {
   FileSignature,
   TrendingUp,
   Wallet,
+  AlertTriangle,
+  Pencil,
+  Timer,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,14 +72,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-// Company team members (internal)
+// Company team members (internal) with salary and hours tracking
 const companyTeamMembers = [
-  { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y" },
-  { id: "2", name: "Sarah Chen", email: "sarah@company.com", role: "Developer", avatar: "SC" },
-  { id: "3", name: "Mike Johnson", email: "mike@company.com", role: "Designer", avatar: "MJ" },
-  { id: "4", name: "Emma Wilson", email: "emma@company.com", role: "Developer", avatar: "EW" },
-  { id: "5", name: "David Brown", email: "david@company.com", role: "QA Engineer", avatar: "DB" },
-  { id: "6", name: "Lisa Park", email: "lisa@company.com", role: "Business Analyst", avatar: "LP" },
+  { id: "1", name: "You", email: "you@company.com", role: "Project Lead", avatar: "Y", hourlyRate: 150, salary: 120000, hoursWorked: 160, totalPaid: 24000, contractType: "Full-time" },
+  { id: "2", name: "Sarah Chen", email: "sarah@company.com", role: "Developer", avatar: "SC", hourlyRate: 95, salary: 95000, hoursWorked: 120, totalPaid: 11400, contractType: "Full-time" },
+  { id: "3", name: "Mike Johnson", email: "mike@company.com", role: "Designer", avatar: "MJ", hourlyRate: 85, salary: 0, hoursWorked: 80, totalPaid: 6800, contractType: "Contractor" },
+  { id: "4", name: "Emma Wilson", email: "emma@company.com", role: "Developer", avatar: "EW", hourlyRate: 90, salary: 90000, hoursWorked: 60, totalPaid: 5400, contractType: "Full-time" },
+  { id: "5", name: "David Brown", email: "david@company.com", role: "QA Engineer", avatar: "DB", hourlyRate: 75, salary: 75000, hoursWorked: 40, totalPaid: 3000, contractType: "Full-time" },
+  { id: "6", name: "Lisa Park", email: "lisa@company.com", role: "Business Analyst", avatar: "LP", hourlyRate: 80, salary: 80000, hoursWorked: 30, totalPaid: 2400, contractType: "Full-time" },
 ];
 
 // Mock data - in a real app this would come from API/state management
@@ -228,25 +232,37 @@ const initialInvoices = [
 ];
 
 const initialTodos = [
-  { id: "1", text: "Complete requirements documentation", completed: true, priority: "high", assignee: "You" },
-  { id: "2", text: "Set up development environment", completed: true, priority: "medium", assignee: "Sarah Chen" },
-  { id: "3", text: "Design system architecture", completed: true, priority: "high", assignee: "You" },
-  { id: "4", text: "Implement user authentication", completed: false, priority: "high", assignee: "Sarah Chen" },
-  { id: "5", text: "Build dashboard components", completed: false, priority: "medium", assignee: "Mike Johnson" },
-  { id: "6", text: "Integrate CRM APIs", completed: false, priority: "medium", assignee: "You" },
-  { id: "7", text: "Write unit tests", completed: false, priority: "low", assignee: "Emma Wilson" },
-  { id: "8", text: "Client UAT session", completed: false, priority: "high", assignee: "You" },
+  { id: "1", text: "Complete requirements documentation", completed: true, priority: "high", assignee: "You", dueDate: "Jan 20, 2024" },
+  { id: "2", text: "Set up development environment", completed: true, priority: "medium", assignee: "Sarah Chen", dueDate: "Jan 25, 2024" },
+  { id: "3", text: "Design system architecture", completed: true, priority: "high", assignee: "You", dueDate: "Feb 1, 2024" },
+  { id: "4", text: "Implement user authentication", completed: false, priority: "high", assignee: "Sarah Chen", dueDate: "Mar 15, 2024" },
+  { id: "5", text: "Build dashboard components", completed: false, priority: "medium", assignee: "Mike Johnson", dueDate: "Mar 20, 2024" },
+  { id: "6", text: "Integrate CRM APIs", completed: false, priority: "medium", assignee: "You", dueDate: "Mar 25, 2024" },
+  { id: "7", text: "Write unit tests", completed: false, priority: "low", assignee: "Emma Wilson", dueDate: "Apr 10, 2024" },
+  { id: "8", text: "Client UAT session", completed: false, priority: "high", assignee: "You", dueDate: "Apr 15, 2024" },
 ];
 
-const timelineEvents = [
-  { id: "1", date: "Jan 15, 2024", title: "Project Kickoff", description: "Initial meeting with stakeholders", type: "milestone", completed: true },
-  { id: "2", date: "Jan 22, 2024", title: "Discovery Phase Complete", description: "Requirements gathered and documented", type: "milestone", completed: true },
-  { id: "3", date: "Feb 5, 2024", title: "Design Approval", description: "UI/UX designs approved by client", type: "milestone", completed: true },
-  { id: "4", date: "Feb 20, 2024", title: "Development Sprint 1", description: "Core functionality implemented", type: "milestone", completed: true },
-  { id: "5", date: "Mar 10, 2024", title: "Development Sprint 2", description: "Integration features", type: "milestone", completed: false },
-  { id: "6", date: "Mar 25, 2024", title: "Testing Phase", description: "QA and bug fixes", type: "milestone", completed: false },
-  { id: "7", date: "Apr 15, 2024", title: "UAT", description: "User acceptance testing", type: "milestone", completed: false },
-  { id: "8", date: "Apr 30, 2024", title: "Go Live", description: "Production deployment", type: "milestone", completed: false },
+const initialTimelineEvents = [
+  { id: "1", date: "Jan 15, 2024", title: "Project Kickoff", description: "Initial meeting with stakeholders", type: "milestone", completed: true, missed: false },
+  { id: "2", date: "Jan 22, 2024", title: "Discovery Phase Complete", description: "Requirements gathered and documented", type: "milestone", completed: true, missed: false },
+  { id: "3", date: "Feb 5, 2024", title: "Design Approval", description: "UI/UX designs approved by client", type: "milestone", completed: true, missed: false },
+  { id: "4", date: "Feb 20, 2024", title: "Development Sprint 1", description: "Core functionality implemented", type: "milestone", completed: true, missed: false },
+  { id: "5", date: "Mar 10, 2024", title: "Development Sprint 2", description: "Integration features", type: "milestone", completed: false, missed: true },
+  { id: "6", date: "Mar 25, 2024", title: "Testing Phase", description: "QA and bug fixes", type: "milestone", completed: false, missed: false },
+  { id: "7", date: "Apr 15, 2024", title: "UAT", description: "User acceptance testing", type: "milestone", completed: false, missed: false },
+  { id: "8", date: "Apr 30, 2024", title: "Go Live", description: "Production deployment", type: "milestone", completed: false, missed: false },
+];
+
+// Employee time entries for hours tracking
+const initialTimeEntries = [
+  { id: "1", memberId: "1", memberName: "You", date: "Mar 1, 2024", hours: 8, description: "Project planning and client call", billable: true },
+  { id: "2", memberId: "2", memberName: "Sarah Chen", date: "Mar 1, 2024", hours: 6, description: "Authentication module development", billable: true },
+  { id: "3", memberId: "3", memberName: "Mike Johnson", date: "Mar 1, 2024", hours: 4, description: "Dashboard UI mockups", billable: true },
+  { id: "4", memberId: "1", memberName: "You", date: "Mar 2, 2024", hours: 7, description: "Code review and architecture", billable: true },
+  { id: "5", memberId: "2", memberName: "Sarah Chen", date: "Mar 2, 2024", hours: 8, description: "API integration work", billable: true },
+  { id: "6", memberId: "4", memberName: "Emma Wilson", date: "Mar 2, 2024", hours: 5, description: "Database schema design", billable: true },
+  { id: "7", memberId: "5", memberName: "David Brown", date: "Mar 3, 2024", hours: 6, description: "Test case preparation", billable: true },
+  { id: "8", memberId: "1", memberName: "You", date: "Mar 3, 2024", hours: 4, description: "Sprint planning", billable: false },
 ];
 
 const initialContracts = [
@@ -367,6 +383,26 @@ export default function ProjectDetail() {
     amount: "",
     recurring: false,
   });
+  const [milestones, setMilestones] = useState(initialTimelineEvents);
+  const [timeEntries, setTimeEntries] = useState(initialTimeEntries);
+  const [isMilestoneDialogOpen, setIsMilestoneDialogOpen] = useState(false);
+  const [isEditMilestoneDialogOpen, setIsEditMilestoneDialogOpen] = useState(false);
+  const [isCalendarDetailOpen, setIsCalendarDetailOpen] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
+  const [isTimeEntryDialogOpen, setIsTimeEntryDialogOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<typeof initialTimelineEvents[0] | null>(null);
+  const [newMilestone, setNewMilestone] = useState({
+    title: "",
+    description: "",
+    date: "",
+  });
+  const [newTimeEntry, setNewTimeEntry] = useState({
+    memberId: "",
+    hours: "",
+    description: "",
+    billable: true,
+  });
+  const [newTodoDueDate, setNewTodoDueDate] = useState("");
 
   const projectData = projectsData[projectId || ""];
   const [internalTeam, setInternalTeam] = useState(projectData?.internalTeam || []);
@@ -412,12 +448,14 @@ export default function ProjectDetail() {
       completed: false,
       priority: newTodoPriority,
       assignee: newTodoAssignee,
+      dueDate: newTodoDueDate || "TBD",
     };
     setTodos([...todos, todo]);
     setNewTodo("");
     setNewTodoDescription("");
     setNewTodoPriority("medium");
     setNewTodoAssignee("You");
+    setNewTodoDueDate("");
     setIsTaskDialogOpen(false);
     toast.success("Task added successfully");
   };
@@ -557,6 +595,103 @@ export default function ProjectDetail() {
     toast.success("Cost removed");
   };
 
+  // Milestone functions
+  const addMilestone = () => {
+    if (!newMilestone.title || !newMilestone.date) {
+      toast.error("Please fill in title and date");
+      return;
+    }
+    const milestone = {
+      id: String(Date.now()),
+      title: newMilestone.title,
+      description: newMilestone.description,
+      date: new Date(newMilestone.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      type: "milestone",
+      completed: false,
+      missed: false,
+    };
+    setMilestones([...milestones, milestone].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+    setNewMilestone({ title: "", description: "", date: "" });
+    setIsMilestoneDialogOpen(false);
+    toast.success("Milestone added");
+  };
+
+  const updateMilestone = () => {
+    if (!editingMilestone) return;
+    setMilestones(milestones.map(m => m.id === editingMilestone.id ? editingMilestone : m));
+    setEditingMilestone(null);
+    setIsEditMilestoneDialogOpen(false);
+    toast.success("Milestone updated");
+  };
+
+  const deleteMilestone = (id: string) => {
+    setMilestones(milestones.filter(m => m.id !== id));
+    toast.success("Milestone deleted");
+  };
+
+  const toggleMilestoneComplete = (id: string) => {
+    setMilestones(milestones.map(m =>
+      m.id === id ? { ...m, completed: !m.completed, missed: false } : m
+    ));
+    const milestone = milestones.find(m => m.id === id);
+    toast.success(milestone?.completed ? "Milestone marked incomplete" : "Milestone completed!");
+  };
+
+  const toggleMilestoneMissed = (id: string) => {
+    setMilestones(milestones.map(m =>
+      m.id === id ? { ...m, missed: !m.missed, completed: false } : m
+    ));
+    const milestone = milestones.find(m => m.id === id);
+    toast.success(milestone?.missed ? "Deadline unmarked" : "Deadline marked as missed");
+  };
+
+  // Time entry functions
+  const addTimeEntry = () => {
+    if (!newTimeEntry.memberId || !newTimeEntry.hours) {
+      toast.error("Please select a team member and enter hours");
+      return;
+    }
+    const member = internalTeam.find(m => m.id === newTimeEntry.memberId);
+    const entry = {
+      id: String(Date.now()),
+      memberId: newTimeEntry.memberId,
+      memberName: member?.name || "Unknown",
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      hours: parseFloat(newTimeEntry.hours),
+      description: newTimeEntry.description,
+      billable: newTimeEntry.billable,
+    };
+    setTimeEntries([entry, ...timeEntries]);
+    setNewTimeEntry({ memberId: "", hours: "", description: "", billable: true });
+    setIsTimeEntryDialogOpen(false);
+    toast.success("Time entry added");
+  };
+
+  const deleteTimeEntry = (id: string) => {
+    setTimeEntries(timeEntries.filter(e => e.id !== id));
+    toast.success("Time entry removed");
+  };
+
+  // Get milestones for a specific date
+  const getMilestonesForDate = (date: Date) => {
+    return milestones.filter(event => {
+      const parts = event.date.split(" ");
+      const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+      const eventDate = new Date(parseInt(parts[2]), months[parts[0]], parseInt(parts[1].replace(",", "")));
+      return eventDate.toDateString() === date.toDateString();
+    });
+  };
+
+  // Handle calendar day click
+  const handleCalendarDayClick = (day: number) => {
+    const clickedDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
+    const dayMilestones = getMilestonesForDate(clickedDate);
+    if (dayMilestones.length > 0 || isDateInProjectRange(day)) {
+      setSelectedCalendarDate(clickedDate);
+      setIsCalendarDetailOpen(true);
+    }
+  };
+
   // Calculate invoice totals - Project value is total invoiced
   const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.amount, 0);
   const totalPaid = invoices.filter(inv => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0);
@@ -607,14 +742,18 @@ export default function ProjectDetail() {
     return checkDate >= startDate && checkDate <= endDate;
   };
 
-  const hasMilestone = (day: number) => {
+  const getMilestoneForDay = (day: number) => {
     const checkDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
-    return timelineEvents.some(event => {
+    return milestones.find(event => {
       const parts = event.date.split(" ");
       const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
       const eventDate = new Date(parseInt(parts[2]), months[parts[0]], parseInt(parts[1].replace(",", "")));
       return eventDate.getTime() === checkDate.getTime();
     });
+  };
+
+  const hasMilestone = (day: number) => {
+    return getMilestoneForDay(day) !== undefined;
   };
 
   const renderCalendar = () => {
@@ -630,17 +769,25 @@ export default function ProjectDetail() {
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const inRange = isDateInProjectRange(day);
-      const milestone = hasMilestone(day);
+      const milestone = getMilestoneForDay(day);
+      const hasMilestoneOnDay = milestone !== undefined;
       days.push(
         <div
           key={day}
-          className={`h-10 flex items-center justify-center text-sm relative ${
+          onClick={() => handleCalendarDayClick(day)}
+          className={`h-10 flex items-center justify-center text-sm relative cursor-pointer hover:bg-accent/50 transition-colors ${
             inRange ? "bg-chart-2/20 font-medium" : ""
-          } ${milestone ? "ring-2 ring-primary" : ""}`}
+          } ${hasMilestoneOnDay ? (
+            milestone.completed ? "ring-2 ring-chart-2" :
+            milestone.missed ? "ring-2 ring-destructive" : "ring-2 ring-primary"
+          ) : ""}`}
         >
           {day}
-          {milestone && (
-            <div className="absolute bottom-1 w-1 h-1 bg-primary rounded-full" />
+          {hasMilestoneOnDay && (
+            <div className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
+              milestone.completed ? "bg-chart-2" :
+              milestone.missed ? "bg-destructive" : "bg-primary"
+            }`} />
           )}
         </div>
       );
@@ -651,6 +798,25 @@ export default function ProjectDetail() {
 
   const completedTodos = todos.filter(t => t.completed).length;
   const todoProgress = todos.length > 0 ? Math.round((completedTodos / todos.length) * 100) : 0;
+
+  // Calculate total hours and billable amount
+  const totalHours = timeEntries.reduce((sum, e) => sum + e.hours, 0);
+  const billableHours = timeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0);
+
+  // Calculate hours by team member
+  const hoursByMember = internalTeam.map(member => {
+    const memberEntries = timeEntries.filter(e => e.memberId === member.id);
+    const hours = memberEntries.reduce((sum, e) => sum + e.hours, 0);
+    const memberData = companyTeamMembers.find(m => m.id === member.id);
+    return {
+      ...member,
+      hoursOnProject: hours,
+      hourlyRate: memberData?.hourlyRate || 0,
+      totalPaid: memberData?.totalPaid || 0,
+      salary: memberData?.salary || 0,
+      contractType: memberData?.contractType || "Unknown",
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -965,6 +1131,10 @@ export default function ProjectDetail() {
           <TabsTrigger value="costs" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Wallet className="h-4 w-4 mr-1" />
             Costs
+          </TabsTrigger>
+          <TabsTrigger value="team" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Briefcase className="h-4 w-4 mr-1" />
+            Team
           </TabsTrigger>
         </TabsList>
 
@@ -1305,6 +1475,16 @@ export default function ProjectDetail() {
                               </Select>
                             </div>
                           </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="task-due">Due Date</Label>
+                            <Input
+                              id="task-due"
+                              type="date"
+                              value={newTodoDueDate}
+                              onChange={(e) => setNewTodoDueDate(e.target.value ? new Date(e.target.value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "")}
+                              className="border-2"
+                            />
+                          </div>
                         </div>
                         <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
                           <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)} className="border-2">
@@ -1336,8 +1516,17 @@ export default function ProjectDetail() {
                           <span className={`${todo.completed ? "line-through text-muted-foreground" : ""}`}>
                             {todo.text}
                           </span>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            Assigned to {todo.assignee}
+                          <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                            <span>Assigned to {todo.assignee}</span>
+                            {todo.dueDate && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <CalendarIcon className="h-3 w-3" />
+                                  Due: {todo.dueDate}
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                         <Badge className={priorityStyles[todo.priority as keyof typeof priorityStyles]}>
@@ -1417,7 +1606,67 @@ export default function ProjectDetail() {
         <TabsContent value="timeline" className="space-y-6">
           <Card className="border-2 border-border shadow-sm">
             <CardHeader className="border-b-2 border-border">
-              <CardTitle>Project Timeline</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Project Timeline</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {milestones.filter(m => m.completed).length} of {milestones.length} milestones completed
+                  </p>
+                </div>
+                <Dialog open={isMilestoneDialogOpen} onOpenChange={setIsMilestoneDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="border-2">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Milestone
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="border-2 sm:max-w-[425px]">
+                    <DialogHeader className="border-b-2 border-border pb-4">
+                      <DialogTitle>Add Milestone</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="milestone-title">Title *</Label>
+                        <Input
+                          id="milestone-title"
+                          placeholder="Milestone title"
+                          value={newMilestone.title}
+                          onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="milestone-desc">Description</Label>
+                        <Textarea
+                          id="milestone-desc"
+                          placeholder="Brief description"
+                          value={newMilestone.description}
+                          onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="milestone-date">Date *</Label>
+                        <Input
+                          id="milestone-date"
+                          type="date"
+                          value={newMilestone.date}
+                          onChange={(e) => setNewMilestone({ ...newMilestone, date: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsMilestoneDialogOpen(false)} className="border-2">
+                        Cancel
+                      </Button>
+                      <Button onClick={addMilestone} className="border-2">
+                        Add Milestone
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent className="p-6">
               <div className="relative">
@@ -1425,39 +1674,124 @@ export default function ProjectDetail() {
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
 
                 <div className="space-y-6">
-                  {timelineEvents.map((event, index) => (
+                  {milestones.map((event, index) => (
                     <div key={event.id} className="relative flex gap-4 pl-10">
                       {/* Timeline dot */}
                       <div
                         className={`absolute left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           event.completed
                             ? "bg-chart-2 border-chart-2"
+                            : event.missed
+                            ? "bg-destructive border-destructive"
                             : "bg-background border-border"
                         }`}
                       >
                         {event.completed ? (
                           <Check className="h-3 w-3 text-background" />
+                        ) : event.missed ? (
+                          <AlertTriangle className="h-3 w-3 text-destructive-foreground" />
                         ) : (
                           <Circle className="h-2 w-2 text-muted-foreground" />
                         )}
                       </div>
 
-                      <div className={`flex-1 pb-6 ${index === timelineEvents.length - 1 ? "pb-0" : ""}`}>
-                        <div className="flex items-center gap-3 mb-1">
-                          <span className="font-mono text-sm text-muted-foreground">{event.date}</span>
-                          {event.completed && (
-                            <Badge className="bg-chart-2 text-background">Completed</Badge>
-                          )}
+                      <div className={`flex-1 pb-6 ${index === milestones.length - 1 ? "pb-0" : ""}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="font-mono text-sm text-muted-foreground">{event.date}</span>
+                            {event.completed && (
+                              <Badge className="bg-chart-2 text-background">Completed</Badge>
+                            )}
+                            {event.missed && (
+                              <Badge className="bg-destructive text-destructive-foreground">Missed</Badge>
+                            )}
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border-2 border-transparent hover:border-border">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="border-2">
+                              <DropdownMenuItem onClick={() => toggleMilestoneComplete(event.id)}>
+                                <Check className="h-4 w-4 mr-2" />
+                                {event.completed ? "Mark Incomplete" : "Mark Complete"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => toggleMilestoneMissed(event.id)}>
+                                <AlertTriangle className="h-4 w-4 mr-2" />
+                                {event.missed ? "Unmark Missed" : "Mark as Missed"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setEditingMilestone(event);
+                                setIsEditMilestoneDialogOpen(true);
+                              }}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => deleteMilestone(event.id)}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                         <h4 className="font-semibold">{event.title}</h4>
                         <p className="text-sm text-muted-foreground">{event.description}</p>
                       </div>
                     </div>
                   ))}
+                  {milestones.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border ml-10">
+                      No milestones yet. Add one to get started!
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Edit Milestone Dialog */}
+          <Dialog open={isEditMilestoneDialogOpen} onOpenChange={setIsEditMilestoneDialogOpen}>
+            <DialogContent className="border-2 sm:max-w-[425px]">
+              <DialogHeader className="border-b-2 border-border pb-4">
+                <DialogTitle>Edit Milestone</DialogTitle>
+              </DialogHeader>
+              {editingMilestone && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-milestone-title">Title *</Label>
+                    <Input
+                      id="edit-milestone-title"
+                      value={editingMilestone.title}
+                      onChange={(e) => setEditingMilestone({ ...editingMilestone, title: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-milestone-desc">Description</Label>
+                    <Textarea
+                      id="edit-milestone-desc"
+                      value={editingMilestone.description}
+                      onChange={(e) => setEditingMilestone({ ...editingMilestone, description: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Current Date</Label>
+                    <p className="text-sm text-muted-foreground">{editingMilestone.date}</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                <Button variant="outline" onClick={() => setIsEditMilestoneDialogOpen(false)} className="border-2">
+                  Cancel
+                </Button>
+                <Button onClick={updateMilestone} className="border-2">
+                  Save Changes
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Calendar Tab */}
@@ -1491,14 +1825,22 @@ export default function ProjectDetail() {
                 {renderCalendar()}
               </div>
 
-              <div className="flex items-center gap-6 mt-4 pt-4 border-t-2 border-border">
+              <div className="flex flex-wrap items-center gap-6 mt-4 pt-4 border-t-2 border-border">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-chart-2/20" />
                   <span className="text-sm text-muted-foreground">Project Duration</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 ring-2 ring-primary" />
-                  <span className="text-sm text-muted-foreground">Milestone</span>
+                  <span className="text-sm text-muted-foreground">Pending Milestone</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 ring-2 ring-chart-2" />
+                  <span className="text-sm text-muted-foreground">Completed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 ring-2 ring-destructive" />
+                  <span className="text-sm text-muted-foreground">Missed Deadline</span>
                 </div>
               </div>
 
@@ -1519,6 +1861,51 @@ export default function ProjectDetail() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Calendar Day Detail Dialog */}
+          <Dialog open={isCalendarDetailOpen} onOpenChange={setIsCalendarDetailOpen}>
+            <DialogContent className="border-2 sm:max-w-[425px]">
+              <DialogHeader className="border-b-2 border-border pb-4">
+                <DialogTitle>
+                  {selectedCalendarDate?.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                {selectedCalendarDate && getMilestonesForDate(selectedCalendarDate).length > 0 ? (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm text-muted-foreground uppercase">Milestones</h4>
+                    {getMilestonesForDate(selectedCalendarDate).map((milestone) => (
+                      <div key={milestone.id} className="p-3 border-2 border-border">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h5 className="font-semibold">{milestone.title}</h5>
+                          {milestone.completed && (
+                            <Badge className="bg-chart-2 text-background text-xs">Completed</Badge>
+                          )}
+                          {milestone.missed && (
+                            <Badge className="bg-destructive text-destructive-foreground text-xs">Missed</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{milestone.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    {selectedCalendarDate && isDateInProjectRange(selectedCalendarDate.getDate()) ? (
+                      <p>No milestones scheduled for this date. This day is within the project duration.</p>
+                    ) : (
+                      <p>No events on this date.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end border-t-2 border-border pt-4">
+                <Button variant="outline" onClick={() => setIsCalendarDetailOpen(false)} className="border-2">
+                  Close
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Contracts Tab */}
@@ -1940,6 +2327,260 @@ export default function ProjectDetail() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Team Tab */}
+        <TabsContent value="team" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                    <Timer className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-mono">{totalHours}</div>
+                    <div className="text-sm text-muted-foreground">Total Hours</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
+                    <Clock className="h-5 w-5 text-background" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-mono">{billableHours}</div>
+                    <div className="text-sm text-muted-foreground">Billable Hours</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
+                    <Users className="h-5 w-5 text-background" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{internalTeam.length}</div>
+                    <div className="text-sm text-muted-foreground">Team Members</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-primary">
+                    <DollarSign className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-mono">
+                      ${hoursByMember.reduce((sum, m) => sum + m.totalPaid, 0).toLocaleString()}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Total Paid</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Team Members Breakdown */}
+          <Card className="border-2 border-border shadow-sm">
+            <CardHeader className="border-b-2 border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Team Members</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Hours worked, rates, and payment breakdown
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" className="border-2" onClick={() => setIsTeamDialogOpen(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Manage Team
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b-2 hover:bg-transparent">
+                    <TableHead className="font-bold uppercase text-xs">Member</TableHead>
+                    <TableHead className="font-bold uppercase text-xs">Role</TableHead>
+                    <TableHead className="font-bold uppercase text-xs">Contract</TableHead>
+                    <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
+                    <TableHead className="font-bold uppercase text-xs text-right">Rate/Hr</TableHead>
+                    <TableHead className="font-bold uppercase text-xs text-right">Salary</TableHead>
+                    <TableHead className="font-bold uppercase text-xs text-right">Paid</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {hoursByMember.map((member) => (
+                    <TableRow key={member.id} className="border-b-2">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8 border-2 border-border">
+                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{member.name}</div>
+                            <div className="text-xs text-muted-foreground">{member.email}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{member.role}</TableCell>
+                      <TableCell>
+                        <Badge variant={member.contractType === "Full-time" ? "default" : "secondary"} className="border-2 border-border">
+                          {member.contractType}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">{member.hoursOnProject}h</TableCell>
+                      <TableCell className="text-right font-mono">${member.hourlyRate}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        {member.salary > 0 ? `$${member.salary.toLocaleString()}` : "-"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-bold">${member.totalPaid.toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Time Entries */}
+          <Card className="border-2 border-border shadow-sm">
+            <CardHeader className="border-b-2 border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Time Entries</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Recent hours logged on this project
+                  </p>
+                </div>
+                <Dialog open={isTimeEntryDialogOpen} onOpenChange={setIsTimeEntryDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="border-2">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Log Time
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="border-2 sm:max-w-[425px]">
+                    <DialogHeader className="border-b-2 border-border pb-4">
+                      <DialogTitle>Log Time Entry</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="time-member">Team Member *</Label>
+                        <Select value={newTimeEntry.memberId} onValueChange={(value) => setNewTimeEntry({ ...newTimeEntry, memberId: value })}>
+                          <SelectTrigger className="border-2">
+                            <SelectValue placeholder="Select member" />
+                          </SelectTrigger>
+                          <SelectContent className="border-2">
+                            {internalTeam.map((member) => (
+                              <SelectItem key={member.id} value={member.id}>
+                                {member.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="time-hours">Hours *</Label>
+                        <Input
+                          id="time-hours"
+                          type="number"
+                          step="0.5"
+                          placeholder="8"
+                          value={newTimeEntry.hours}
+                          onChange={(e) => setNewTimeEntry({ ...newTimeEntry, hours: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="time-desc">Description</Label>
+                        <Textarea
+                          id="time-desc"
+                          placeholder="What did you work on?"
+                          value={newTimeEntry.description}
+                          onChange={(e) => setNewTimeEntry({ ...newTimeEntry, description: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="time-billable"
+                          checked={newTimeEntry.billable}
+                          onCheckedChange={(checked) => setNewTimeEntry({ ...newTimeEntry, billable: checked as boolean })}
+                          className="border-2"
+                        />
+                        <Label htmlFor="time-billable" className="text-sm cursor-pointer">
+                          Billable hours
+                        </Label>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsTimeEntryDialogOpen(false)} className="border-2">
+                        Cancel
+                      </Button>
+                      <Button onClick={addTimeEntry} className="border-2">
+                        Log Time
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {timeEntries.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No time entries yet
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b-2 hover:bg-transparent">
+                      <TableHead className="font-bold uppercase text-xs">Date</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Member</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Description</TableHead>
+                      <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Type</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {timeEntries.map((entry) => (
+                      <TableRow key={entry.id} className="border-b-2">
+                        <TableCell className="text-muted-foreground">{entry.date}</TableCell>
+                        <TableCell className="font-medium">{entry.memberName}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">{entry.description || "-"}</TableCell>
+                        <TableCell className="text-right font-mono font-bold">{entry.hours}h</TableCell>
+                        <TableCell>
+                          {entry.billable ? (
+                            <Badge className="bg-chart-2 text-background">Billable</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="border-2 border-border">Non-billable</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                            onClick={() => deleteTimeEntry(entry.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
