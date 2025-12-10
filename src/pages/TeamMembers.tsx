@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Users,
   Plus,
@@ -77,6 +77,7 @@ const departments = ["Management", "Engineering", "Design", "Quality", "Operatio
 const contractTypes = ["Full-time", "Part-time", "Contractor"];
 
 export default function TeamMembers() {
+  const navigate = useNavigate();
   const [teamMembers, setTeamMembers] = useState(initialTeamMembers);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
@@ -410,7 +411,7 @@ export default function TeamMembers() {
             </TableHeader>
             <TableBody>
               {filteredMembers.map((member) => (
-                <TableRow key={member.id} className="border-b-2 cursor-pointer hover:bg-accent/50" onClick={() => window.location.href = `/team/${member.id}`}>
+                <TableRow key={member.id} className="border-b-2 cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/team/${member.id}`)}>
                   <TableCell>
                     <Link to={`/team/${member.id}`} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                       <Avatar className="h-8 w-8 border-2 border-border">
