@@ -72,12 +72,12 @@ import { toast } from "sonner";
 
 // Pipeline stages
 const pipelineStages = [
-  { id: "lead", name: "Lead", color: "bg-muted" },
-  { id: "qualified", name: "Qualified", color: "bg-chart-4" },
-  { id: "proposal", name: "Proposal", color: "bg-chart-1" },
-  { id: "negotiation", name: "Negotiation", color: "bg-chart-3" },
-  { id: "won", name: "Won", color: "bg-chart-2" },
-  { id: "lost", name: "Lost", color: "bg-destructive" },
+  { id: "lead", name: "Lead", color: "bg-slate-200", textDark: false },
+  { id: "qualified", name: "Qualified", color: "bg-amber-400", textDark: false },
+  { id: "proposal", name: "Proposal", color: "bg-blue-500", textDark: true },
+  { id: "negotiation", name: "Negotiation", color: "bg-purple-500", textDark: true },
+  { id: "won", name: "Won", color: "bg-green-500", textDark: true },
+  { id: "lost", name: "Lost", color: "bg-red-500", textDark: true },
 ];
 
 // Mock deals data
@@ -373,7 +373,9 @@ export default function CRM() {
   };
 
   const getStageColor = (stage: string) => {
-    return pipelineStages.find(s => s.id === stage)?.color || "bg-muted";
+    const stageData = pipelineStages.find(s => s.id === stage);
+    if (!stageData) return "bg-muted";
+    return `${stageData.color} ${stageData.textDark ? "text-white" : "text-black"}`;
   };
 
   const getPriorityStyle = (priority: string) => {
@@ -958,15 +960,14 @@ export default function CRM() {
             {pipelineStages.map(stage => {
               const stageDeals = getDealsByStage(stage.id);
               const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
-              const needsDarkText = stage.id === "won" || stage.id === "lost" || stage.id === "negotiation" || stage.id === "proposal";
               return (
                 <div key={stage.id} className="min-w-[200px]">
                   <div className={`p-3 border-2 border-border mb-3 ${stage.color}`}>
                     <div className="flex items-center justify-between">
-                      <span className={`font-semibold ${needsDarkText ? "text-white" : "text-foreground"}`}>{stage.name}</span>
-                      <Badge variant="secondary" className={needsDarkText ? "bg-white/20 text-white" : ""}>{stageDeals.length}</Badge>
+                      <span className={`font-semibold ${stage.textDark ? "text-white" : "text-black"}`}>{stage.name}</span>
+                      <Badge variant="secondary" className={stage.textDark ? "bg-white/20 text-white" : "bg-black/10 text-black"}>{stageDeals.length}</Badge>
                     </div>
-                    <div className={`text-sm font-mono mt-1 ${needsDarkText ? "text-white/80" : "text-muted-foreground"}`}>
+                    <div className={`text-sm font-mono mt-1 ${stage.textDark ? "text-white/80" : "text-black/60"}`}>
                       ${stageValue.toLocaleString()}
                     </div>
                   </div>
