@@ -410,17 +410,17 @@ export default function TeamMembers() {
             </TableHeader>
             <TableBody>
               {filteredMembers.map((member) => (
-                <TableRow key={member.id} className="border-b-2">
+                <TableRow key={member.id} className="border-b-2 cursor-pointer hover:bg-accent/50" onClick={() => window.location.href = `/team/${member.id}`}>
                   <TableCell>
-                    <div className="flex items-center gap-3">
+                    <Link to={`/team/${member.id}`} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                       <Avatar className="h-8 w-8 border-2 border-border">
                         <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{member.name}</div>
+                        <div className="font-medium text-primary hover:underline">{member.name}</div>
                         <div className="text-xs text-muted-foreground">{member.email}</div>
                       </div>
-                    </div>
+                    </Link>
                   </TableCell>
                   <TableCell>{member.role}</TableCell>
                   <TableCell>{member.department}</TableCell>

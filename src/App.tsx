@@ -10,6 +10,8 @@ import ProjectDetail from "./pages/ProjectDetail";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import TeamMembers from "./pages/TeamMembers";
+import TeamMemberDetail from "./pages/TeamMemberDetail";
+import CRM from "./pages/CRM";
 import FeatureRequests from "./pages/FeatureRequests";
 import CustomerQuotes from "./pages/CustomerQuotes";
 import QuoteDetail from "./pages/QuoteDetail";
@@ -80,6 +82,22 @@ const App = () => (
             element={
               <AppLayout>
                 <TeamMembers />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/team/:memberId"
+            element={
+              <AppLayout>
+                <TeamMemberDetail />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/crm"
+            element={
+              <AppLayout>
+                <CRM />
               </AppLayout>
             }
           />
