@@ -958,14 +958,15 @@ export default function CRM() {
             {pipelineStages.map(stage => {
               const stageDeals = getDealsByStage(stage.id);
               const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
+              const needsDarkText = stage.id === "won" || stage.id === "lost" || stage.id === "negotiation" || stage.id === "proposal";
               return (
                 <div key={stage.id} className="min-w-[200px]">
                   <div className={`p-3 border-2 border-border mb-3 ${stage.color}`}>
                     <div className="flex items-center justify-between">
-                      <span className={`font-semibold ${stage.id === "won" || stage.id === "lost" || stage.id === "negotiation" || stage.id === "proposal" ? "text-background" : ""}`}>{stage.name}</span>
-                      <Badge variant="secondary" className="bg-background/20">{stageDeals.length}</Badge>
+                      <span className={`font-semibold ${needsDarkText ? "text-white" : "text-foreground"}`}>{stage.name}</span>
+                      <Badge variant="secondary" className={needsDarkText ? "bg-white/20 text-white" : ""}>{stageDeals.length}</Badge>
                     </div>
-                    <div className={`text-sm font-mono mt-1 ${stage.id === "won" || stage.id === "lost" || stage.id === "negotiation" || stage.id === "proposal" ? "text-background/80" : "text-muted-foreground"}`}>
+                    <div className={`text-sm font-mono mt-1 ${needsDarkText ? "text-white/80" : "text-muted-foreground"}`}>
                       ${stageValue.toLocaleString()}
                     </div>
                   </div>
