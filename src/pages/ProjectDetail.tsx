@@ -22,6 +22,11 @@ import {
   UserPlus,
   X,
   Trash2,
+  Upload,
+  Download,
+  FileSignature,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -244,6 +249,21 @@ const timelineEvents = [
   { id: "8", date: "Apr 30, 2024", title: "Go Live", description: "Production deployment", type: "milestone", completed: false },
 ];
 
+const initialContracts = [
+  { id: "CON-001", name: "Non-Disclosure Agreement", type: "nda", uploadDate: "Jan 10, 2024", size: "245 KB", status: "signed" },
+  { id: "CON-002", name: "Master Service Agreement", type: "service", uploadDate: "Jan 12, 2024", size: "512 KB", status: "signed" },
+  { id: "CON-003", name: "Developer Contract - Sarah Chen", type: "employee", uploadDate: "Jan 15, 2024", size: "180 KB", status: "active" },
+  { id: "CON-004", name: "Contractor Agreement - Mike Johnson", type: "contractor", uploadDate: "Jan 18, 2024", size: "195 KB", status: "active" },
+];
+
+const initialCosts = [
+  { id: "COST-001", description: "Development Labor", category: "labor", amount: 18000, date: "Jan 2024", recurring: true },
+  { id: "COST-002", description: "Design Services", category: "labor", amount: 5000, date: "Jan 2024", recurring: false },
+  { id: "COST-003", description: "AWS Cloud Services", category: "infrastructure", amount: 1200, date: "Feb 2024", recurring: true },
+  { id: "COST-004", description: "Software Licenses", category: "software", amount: 800, date: "Jan 2024", recurring: true },
+  { id: "COST-005", description: "Third-party API Integration", category: "external", amount: 2500, date: "Feb 2024", recurring: false },
+];
+
 const statusStyles = {
   active: "bg-chart-2 text-background",
   pending: "bg-chart-4 text-foreground",
@@ -268,6 +288,43 @@ const invoiceStatusStyles = {
   sent: "bg-chart-1 text-background",
   paid: "bg-chart-2 text-background",
   overdue: "bg-destructive text-destructive-foreground",
+};
+
+const contractTypeStyles = {
+  nda: "bg-chart-1 text-background",
+  service: "bg-chart-2 text-background",
+  employee: "bg-primary text-primary-foreground",
+  contractor: "bg-chart-4 text-foreground",
+};
+
+const contractTypeLabels = {
+  nda: "NDA",
+  service: "Service Agreement",
+  employee: "Employee Contract",
+  contractor: "Contractor Agreement",
+};
+
+const contractStatusStyles = {
+  signed: "bg-chart-2 text-background",
+  active: "bg-primary text-primary-foreground",
+  pending: "bg-chart-4 text-foreground",
+  expired: "bg-muted text-muted-foreground",
+};
+
+const costCategoryStyles = {
+  labor: "bg-chart-1 text-background",
+  infrastructure: "bg-chart-2 text-background",
+  software: "bg-primary text-primary-foreground",
+  external: "bg-chart-4 text-foreground",
+  other: "bg-secondary text-secondary-foreground border-2 border-border",
+};
+
+const costCategoryLabels = {
+  labor: "Labor",
+  infrastructure: "Infrastructure",
+  software: "Software",
+  external: "External Services",
+  other: "Other",
 };
 
 export default function ProjectDetail() {
@@ -296,6 +353,20 @@ export default function ProjectDetail() {
     dueDate: "",
   });
   const [calendarMonth, setCalendarMonth] = useState(new Date(2024, 0)); // January 2024
+  const [contracts, setContracts] = useState(initialContracts);
+  const [costs, setCosts] = useState(initialCosts);
+  const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
+  const [isCostDialogOpen, setIsCostDialogOpen] = useState(false);
+  const [newContract, setNewContract] = useState({
+    name: "",
+    type: "nda",
+  });
+  const [newCost, setNewCost] = useState({
+    description: "",
+    category: "labor",
+    amount: "",
+    recurring: false,
+  });
 
   const projectData = projectsData[projectId || ""];
   const [internalTeam, setInternalTeam] = useState(projectData?.internalTeam || []);
@@ -434,10 +505,69 @@ export default function ProjectDetail() {
     toast.success("External team member removed");
   };
 
+  const handleUploadContract = () => {
+    if (!newContract.name) {
+      toast.error("Please enter a contract name");
+      return;
+    }
+
+    const contract = {
+      id: `CON-${String(contracts.length + 1).padStart(3, "0")}`,
+      name: newContract.name,
+      type: newContract.type,
+      uploadDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      size: `${Math.floor(Math.random() * 400 + 100)} KB`,
+      status: "pending",
+    };
+
+    setContracts([...contracts, contract]);
+    setNewContract({ name: "", type: "nda" });
+    setIsContractDialogOpen(false);
+    toast.success("Contract uploaded successfully");
+  };
+
+  const deleteContract = (contractId: string) => {
+    setContracts(contracts.filter(c => c.id !== contractId));
+    toast.success("Contract deleted");
+  };
+
+  const handleAddCost = () => {
+    if (!newCost.description || !newCost.amount) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const cost = {
+      id: `COST-${String(costs.length + 1).padStart(3, "0")}`,
+      description: newCost.description,
+      category: newCost.category,
+      amount: parseInt(newCost.amount),
+      date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      recurring: newCost.recurring,
+    };
+
+    setCosts([...costs, cost]);
+    setNewCost({ description: "", category: "labor", amount: "", recurring: false });
+    setIsCostDialogOpen(false);
+    toast.success("Cost added successfully");
+  };
+
+  const deleteCost = (costId: string) => {
+    setCosts(costs.filter(c => c.id !== costId));
+    toast.success("Cost removed");
+  };
+
   // Calculate invoice totals - Project value is total invoiced
   const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.amount, 0);
   const totalPaid = invoices.filter(inv => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0);
   const totalOutstanding = invoices.filter(inv => inv.status === "sent").reduce((sum, inv) => sum + inv.amount, 0);
+
+  // Calculate costs
+  const totalCosts = costs.reduce((sum, cost) => sum + cost.amount, 0);
+
+  // Calculate profit
+  const projectProfit = totalInvoiced - totalCosts;
+  const profitMargin = totalInvoiced > 0 ? Math.round((projectProfit / totalInvoiced) * 100) : 0;
 
   // Project value is the total invoiced amount
   const projectValue = `$${totalInvoiced.toLocaleString()}`;
@@ -608,12 +738,14 @@ export default function ProjectDetail() {
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
-                <CalendarIcon className="h-5 w-5 text-background" />
+              <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-chart-2" : "bg-destructive"}`}>
+                <TrendingUp className={`h-5 w-5 ${projectProfit >= 0 ? "text-background" : "text-destructive-foreground"}`} />
               </div>
               <div>
-                <div className="text-2xl font-bold">{project.progress}%</div>
-                <div className="text-sm text-muted-foreground">Progress</div>
+                <div className={`text-2xl font-bold font-mono ${projectProfit >= 0 ? "text-chart-2" : "text-destructive"}`}>
+                  ${projectProfit.toLocaleString()}
+                </div>
+                <div className="text-sm text-muted-foreground">Profit ({profitMargin}%)</div>
               </div>
             </div>
           </CardContent>
@@ -825,6 +957,14 @@ export default function ProjectDetail() {
           <TabsTrigger value="calendar" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <CalendarIcon className="h-4 w-4 mr-1" />
             Calendar
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <FileSignature className="h-4 w-4 mr-1" />
+            Contracts
+          </TabsTrigger>
+          <TabsTrigger value="costs" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Wallet className="h-4 w-4 mr-1" />
+            Costs
           </TabsTrigger>
         </TabsList>
 
@@ -1379,6 +1519,427 @@ export default function ProjectDetail() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Contracts Tab */}
+        <TabsContent value="contracts" className="space-y-6">
+          <Card className="border-2 border-border shadow-sm">
+            <CardHeader className="border-b-2 border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Project Contracts</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Manage NDAs, service agreements, and employee contracts
+                  </p>
+                </div>
+                <Dialog open={isContractDialogOpen} onOpenChange={setIsContractDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="border-2">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Contract
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="border-2 sm:max-w-[425px]">
+                    <DialogHeader className="border-b-2 border-border pb-4">
+                      <DialogTitle>Upload Contract</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="contract-name">Contract Name *</Label>
+                        <Input
+                          id="contract-name"
+                          placeholder="e.g., Non-Disclosure Agreement"
+                          value={newContract.name}
+                          onChange={(e) => setNewContract({ ...newContract, name: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="contract-type">Contract Type</Label>
+                        <Select value={newContract.type} onValueChange={(value) => setNewContract({ ...newContract, type: value })}>
+                          <SelectTrigger className="border-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="border-2">
+                            <SelectItem value="nda">NDA</SelectItem>
+                            <SelectItem value="service">Service Agreement</SelectItem>
+                            <SelectItem value="employee">Employee Contract</SelectItem>
+                            <SelectItem value="contractor">Contractor Agreement</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>File</Label>
+                        <div className="border-2 border-dashed border-border p-6 text-center cursor-pointer hover:bg-accent/50 transition-colors">
+                          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
+                          <p className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX up to 10MB</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsContractDialogOpen(false)} className="border-2">
+                        Cancel
+                      </Button>
+                      <Button onClick={handleUploadContract} className="border-2">
+                        Upload
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {contracts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No contracts uploaded yet
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b-2 hover:bg-transparent">
+                      <TableHead className="font-bold uppercase text-xs">ID</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Name</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Type</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Status</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Uploaded</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Size</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contracts.map((contract) => (
+                      <TableRow key={contract.id} className="border-b-2">
+                        <TableCell className="font-mono text-sm">{contract.id}</TableCell>
+                        <TableCell className="font-medium">{contract.name}</TableCell>
+                        <TableCell>
+                          <Badge className={contractTypeStyles[contract.type as keyof typeof contractTypeStyles]}>
+                            {contractTypeLabels[contract.type as keyof typeof contractTypeLabels]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={contractStatusStyles[contract.status as keyof typeof contractStatusStyles]}>
+                            {contract.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{contract.uploadDate}</TableCell>
+                        <TableCell className="text-muted-foreground">{contract.size}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 px-2 border-2 border-transparent hover:border-border"
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Download
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                              onClick={() => deleteContract(contract.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold">{contracts.length}</div>
+                <div className="text-sm text-muted-foreground">Total Contracts</div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold">{contracts.filter(c => c.type === "nda").length}</div>
+                <div className="text-sm text-muted-foreground">NDAs</div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold">{contracts.filter(c => c.type === "employee" || c.type === "contractor").length}</div>
+                <div className="text-sm text-muted-foreground">Team Contracts</div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold">{contracts.filter(c => c.status === "signed" || c.status === "active").length}</div>
+                <div className="text-sm text-muted-foreground">Active</div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Costs Tab */}
+        <TabsContent value="costs" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-mono">${totalCosts.toLocaleString()}</div>
+                    <div className="text-sm text-muted-foreground">Total Costs</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
+                    <DollarSign className="h-5 w-5 text-background" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-mono">${totalInvoiced.toLocaleString()}</div>
+                    <div className="text-sm text-muted-foreground">Revenue</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-chart-2" : "bg-destructive"}`}>
+                    <TrendingUp className={`h-5 w-5 ${projectProfit >= 0 ? "text-background" : "text-destructive-foreground"}`} />
+                  </div>
+                  <div>
+                    <div className={`text-2xl font-bold font-mono ${projectProfit >= 0 ? "text-chart-2" : "text-destructive"}`}>
+                      ${projectProfit.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Net Profit</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${profitMargin >= 20 ? "bg-chart-2" : profitMargin >= 0 ? "bg-chart-4" : "bg-destructive"}`}>
+                    <span className={`text-sm font-bold ${profitMargin >= 20 ? "text-background" : profitMargin >= 0 ? "text-foreground" : "text-destructive-foreground"}`}>%</span>
+                  </div>
+                  <div>
+                    <div className={`text-2xl font-bold font-mono ${profitMargin >= 20 ? "text-chart-2" : profitMargin >= 0 ? "" : "text-destructive"}`}>
+                      {profitMargin}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Profit Margin</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-2 border-border shadow-sm">
+            <CardHeader className="border-b-2 border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Project Costs</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Track labor, infrastructure, and other project expenses
+                  </p>
+                </div>
+                <Dialog open={isCostDialogOpen} onOpenChange={setIsCostDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="border-2">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Cost
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="border-2 sm:max-w-[425px]">
+                    <DialogHeader className="border-b-2 border-border pb-4">
+                      <DialogTitle>Add Project Cost</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="cost-desc">Description *</Label>
+                        <Input
+                          id="cost-desc"
+                          placeholder="e.g., Development Labor"
+                          value={newCost.description}
+                          onChange={(e) => setNewCost({ ...newCost, description: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="cost-category">Category</Label>
+                          <Select value={newCost.category} onValueChange={(value) => setNewCost({ ...newCost, category: value })}>
+                            <SelectTrigger className="border-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border-2">
+                              <SelectItem value="labor">Labor</SelectItem>
+                              <SelectItem value="infrastructure">Infrastructure</SelectItem>
+                              <SelectItem value="software">Software</SelectItem>
+                              <SelectItem value="external">External Services</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="cost-amount">Amount ($) *</Label>
+                          <Input
+                            id="cost-amount"
+                            type="number"
+                            placeholder="0"
+                            value={newCost.amount}
+                            onChange={(e) => setNewCost({ ...newCost, amount: e.target.value })}
+                            className="border-2"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="cost-recurring"
+                          checked={newCost.recurring}
+                          onCheckedChange={(checked) => setNewCost({ ...newCost, recurring: checked as boolean })}
+                          className="border-2"
+                        />
+                        <Label htmlFor="cost-recurring" className="text-sm cursor-pointer">
+                          Recurring monthly cost
+                        </Label>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsCostDialogOpen(false)} className="border-2">
+                        Cancel
+                      </Button>
+                      <Button onClick={handleAddCost} className="border-2">
+                        Add Cost
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {costs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No costs recorded yet
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b-2 hover:bg-transparent">
+                      <TableHead className="font-bold uppercase text-xs">ID</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Description</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Category</TableHead>
+                      <TableHead className="font-bold uppercase text-xs text-right">Amount</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Date</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Type</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {costs.map((cost) => (
+                      <TableRow key={cost.id} className="border-b-2">
+                        <TableCell className="font-mono text-sm">{cost.id}</TableCell>
+                        <TableCell className="font-medium">{cost.description}</TableCell>
+                        <TableCell>
+                          <Badge className={costCategoryStyles[cost.category as keyof typeof costCategoryStyles]}>
+                            {costCategoryLabels[cost.category as keyof typeof costCategoryLabels]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-mono font-bold">${cost.amount.toLocaleString()}</TableCell>
+                        <TableCell className="text-muted-foreground">{cost.date}</TableCell>
+                        <TableCell>
+                          {cost.recurring ? (
+                            <Badge variant="secondary" className="border-2 border-border">Recurring</Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-2">One-time</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                            onClick={() => deleteCost(cost.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="border-2 border-border shadow-sm">
+              <CardHeader className="border-b-2 border-border">
+                <CardTitle>Cost Breakdown by Category</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                {Object.entries(costCategoryLabels).map(([key, label]) => {
+                  const categoryTotal = costs.filter(c => c.category === key).reduce((sum, c) => sum + c.amount, 0);
+                  const percentage = totalCosts > 0 ? Math.round((categoryTotal / totalCosts) * 100) : 0;
+                  return categoryTotal > 0 ? (
+                    <div key={key} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>{label}</span>
+                        <span className="font-mono font-bold">${categoryTotal.toLocaleString()} ({percentage}%)</span>
+                      </div>
+                      <Progress value={percentage} className="h-2" />
+                    </div>
+                  ) : null;
+                })}
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 border-border shadow-sm">
+              <CardHeader className="border-b-2 border-border">
+                <CardTitle>Profit Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Revenue</span>
+                    <span className="font-mono font-bold">${totalInvoiced.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Costs</span>
+                    <span className="font-mono font-bold text-destructive">-${totalCosts.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t-2 border-border pt-3 flex justify-between">
+                    <span className="font-semibold">Net Profit</span>
+                    <span className={`font-mono font-bold text-lg ${projectProfit >= 0 ? "text-chart-2" : "text-destructive"}`}>
+                      ${projectProfit.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+                <div className="border-t-2 border-border pt-4">
+                  <div className="text-sm text-muted-foreground mb-2">Profit Margin</div>
+                  <div className="flex items-center gap-4">
+                    <Progress value={Math.max(0, profitMargin)} className="h-3 flex-1" />
+                    <span className={`font-mono font-bold ${profitMargin >= 20 ? "text-chart-2" : profitMargin >= 0 ? "" : "text-destructive"}`}>
+                      {profitMargin}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {profitMargin >= 30 ? "Excellent profit margin" :
+                     profitMargin >= 20 ? "Good profit margin" :
+                     profitMargin >= 10 ? "Moderate profit margin" :
+                     profitMargin >= 0 ? "Low profit margin" : "Project is operating at a loss"}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
