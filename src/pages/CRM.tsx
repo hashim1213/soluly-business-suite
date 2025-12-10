@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Building,
   Plus,
@@ -70,142 +71,228 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
-// Pipeline stages
+// Pipeline stages - maps to quote statuses
 const pipelineStages = [
-  { id: "lead", name: "Lead", color: "bg-slate-200", textDark: false },
-  { id: "qualified", name: "Qualified", color: "bg-amber-400", textDark: false },
-  { id: "proposal", name: "Proposal", color: "bg-blue-500", textDark: true },
-  { id: "negotiation", name: "Negotiation", color: "bg-purple-500", textDark: true },
-  { id: "won", name: "Won", color: "bg-green-500", textDark: true },
-  { id: "lost", name: "Lost", color: "bg-red-500", textDark: true },
+  { id: "lead", name: "Lead", color: "bg-slate-200", textDark: false, quoteStatus: "draft" },
+  { id: "qualified", name: "Qualified", color: "bg-amber-400", textDark: false, quoteStatus: null },
+  { id: "proposal", name: "Proposal", color: "bg-blue-500", textDark: true, quoteStatus: "sent" },
+  { id: "negotiation", name: "Negotiation", color: "bg-purple-500", textDark: true, quoteStatus: "negotiating" },
+  { id: "won", name: "Won", color: "bg-green-500", textDark: true, quoteStatus: "accepted" },
+  { id: "lost", name: "Lost", color: "bg-red-500", textDark: true, quoteStatus: "rejected" },
 ];
 
-// Mock deals data
-const initialDeals = [
+// Helper to map quote status to pipeline stage
+const quoteStatusToStage = (status: string): string => {
+  switch (status) {
+    case "draft": return "lead";
+    case "sent": return "proposal";
+    case "negotiating": return "negotiation";
+    case "accepted": return "won";
+    case "rejected": return "lost";
+    default: return "lead";
+  }
+};
+
+// Helper to map pipeline stage to quote status
+const stageToQuoteStatus = (stage: string): string => {
+  switch (stage) {
+    case "lead": return "draft";
+    case "qualified": return "draft";
+    case "proposal": return "sent";
+    case "negotiation": return "negotiating";
+    case "won": return "accepted";
+    case "lost": return "rejected";
+    default: return "draft";
+  }
+};
+
+// Helper to get probability from stage
+const getStageProbability = (stage: string): number => {
+  switch (stage) {
+    case "lead": return 20;
+    case "qualified": return 40;
+    case "proposal": return 60;
+    case "negotiation": return 80;
+    case "won": return 100;
+    case "lost": return 0;
+    default: return 20;
+  }
+};
+
+// Initial quotes data - this is the single source of truth for deals/quotes
+const initialQuotes = [
   {
-    id: "DEAL-001",
-    title: "Enterprise Software Package",
-    companyId: "CLT-001",
+    id: "QTE-001",
+    title: "Enterprise Package Quote",
+    description: "Full enterprise implementation with custom integrations and dedicated support",
+    companyName: "TechStart Inc",
+    companyId: "CLT-002",
+    contactName: "Sarah Johnson",
+    contactEmail: "sarah@techstart.io",
+    value: 45000,
+    status: "sent",
+    stage: 60,
+    validUntil: "Dec 31, 2024",
+    createdAt: "Dec 8, 2024",
+    lastActivity: "Dec 9, 2024",
+    notes: "Client has requested a 10% discount for annual payment. Pending approval from management.",
+  },
+  {
+    id: "QTE-002",
+    title: "Annual Contract Renewal",
+    description: "Renewal of annual support and maintenance contract with expanded scope",
+    companyName: "DataFlow Ltd",
+    companyId: "CLT-004",
+    contactName: "David Miller",
+    contactEmail: "david@dataflow.io",
+    value: 28000,
+    status: "negotiating",
+    stage: 75,
+    validUntil: "Jan 15, 2025",
+    createdAt: "Dec 6, 2024",
+    lastActivity: "Dec 8, 2024",
+    notes: "Client wants to add priority support this year. Previous contract was $22,000.",
+  },
+  {
+    id: "QTE-003",
+    title: "Extended Support Package",
+    description: "24/7 premium support with guaranteed 1-hour response time",
     companyName: "Acme Corporation",
+    companyId: "CLT-001",
     contactName: "John Smith",
     contactEmail: "john@acmecorp.com",
-    value: 75000,
-    stage: "negotiation",
-    probability: 80,
-    expectedClose: "Dec 30, 2024",
-    createdAt: "Nov 1, 2024",
-    notes: "Final contract review in progress",
-    lastActivity: "Dec 9, 2024",
+    value: 18500,
+    status: "draft",
+    stage: 25,
+    validUntil: "Dec 20, 2024",
+    createdAt: "Dec 3, 2024",
+    lastActivity: "Dec 5, 2024",
+    notes: "Draft - needs review before sending to client.",
   },
   {
-    id: "DEAL-002",
-    title: "Annual Support Contract",
-    companyId: "CLT-002",
-    companyName: "TechStart Inc",
-    contactName: "Sarah Wilson",
-    contactEmail: "sarah@techstart.io",
-    value: 28000,
-    stage: "proposal",
-    probability: 60,
-    expectedClose: "Jan 15, 2025",
+    id: "QTE-004",
+    title: "Cloud Migration Project",
+    description: "Complete migration of on-premise infrastructure to cloud with training",
+    companyName: "Global Solutions Ltd",
+    companyId: "CLT-003",
+    contactName: "Emma Williams",
+    contactEmail: "emma@globalsol.com",
+    value: 72000,
+    status: "accepted",
+    stage: 100,
+    validUntil: "Nov 30, 2024",
     createdAt: "Nov 15, 2024",
-    notes: "Waiting for budget approval",
-    lastActivity: "Dec 7, 2024",
+    lastActivity: "Nov 25, 2024",
+    notes: "Contract signed on Nov 25. Implementation begins Dec 1.",
   },
   {
-    id: "DEAL-003",
-    title: "Automation Dashboard Project",
-    companyId: "LEAD-001",
-    companyName: "NextGen Robotics",
-    contactName: "Robert Chen",
-    contactEmail: "rchen@nextgenrobotics.com",
-    value: 50000,
-    stage: "qualified",
-    probability: 70,
-    expectedClose: "Feb 1, 2025",
+    id: "QTE-005",
+    title: "Custom Integration Development",
+    description: "API development and third-party system integrations",
+    companyName: "CloudNine Systems",
+    companyId: "CLT-005",
+    contactName: "Lisa Chen",
+    contactEmail: "lisa@cloudnine.io",
+    value: 35000,
+    status: "sent",
+    stage: 50,
+    validUntil: "Jan 5, 2025",
     createdAt: "Dec 1, 2024",
-    notes: "Demo scheduled for next week",
-    lastActivity: "Dec 8, 2024",
+    lastActivity: "Dec 2, 2024",
+    notes: "Awaiting client feedback on scope of integrations.",
   },
   {
-    id: "DEAL-004",
+    id: "QTE-006",
+    title: "Mobile App Development",
+    description: "Native iOS and Android app development with backend integration",
+    companyName: "StartupXYZ",
+    companyId: "CLT-006",
+    contactName: "Mike Johnson",
+    contactEmail: "mike@startupxyz.com",
+    value: 55000,
+    status: "rejected",
+    stage: 0,
+    validUntil: "Oct 15, 2024",
+    createdAt: "Sep 20, 2024",
+    lastActivity: "Nov 5, 2024",
+    notes: "Lost to competitor - pricing issue",
+  },
+  {
+    id: "QTE-007",
     title: "Healthcare Data Platform",
-    companyId: "LEAD-002",
+    description: "Secure healthcare data management with HIPAA compliance",
     companyName: "HealthTech Solutions",
+    companyId: "LEAD-002",
     contactName: "Dr. Amanda Lee",
     contactEmail: "alee@healthtech.com",
     value: 85000,
-    stage: "lead",
-    probability: 30,
-    expectedClose: "Mar 1, 2025",
+    status: "draft",
+    stage: 10,
+    validUntil: "Mar 1, 2025",
     createdAt: "Dec 5, 2024",
-    notes: "Initial discovery call completed",
     lastActivity: "Dec 5, 2024",
+    notes: "Initial discovery call completed. High potential deal.",
   },
   {
-    id: "DEAL-005",
+    id: "QTE-008",
     title: "Green Energy Monitoring System",
-    companyId: "LEAD-003",
+    description: "Real-time energy monitoring dashboard with analytics",
     companyName: "EcoEnergy Corp",
+    companyId: "LEAD-003",
     contactName: "James Green",
     contactEmail: "jgreen@ecoenergy.com",
     value: 120000,
-    stage: "negotiation",
-    probability: 85,
-    expectedClose: "Dec 20, 2024",
+    status: "negotiating",
+    stage: 85,
+    validUntil: "Dec 20, 2024",
     createdAt: "Nov 10, 2024",
-    notes: "Legal review of contract terms",
     lastActivity: "Dec 9, 2024",
-  },
-  {
-    id: "DEAL-006",
-    title: "Legacy System Migration",
-    companyId: "CLT-003",
-    companyName: "Global Solutions Ltd",
-    contactName: "Michael Brown",
-    contactEmail: "m.brown@globalsol.com",
-    value: 95000,
-    stage: "won",
-    probability: 100,
-    expectedClose: "Dec 1, 2024",
-    createdAt: "Sep 15, 2024",
-    notes: "Contract signed, project starting Q1",
-    lastActivity: "Dec 1, 2024",
-  },
-  {
-    id: "DEAL-007",
-    title: "Mobile App Development",
-    companyId: "CLT-004",
-    companyName: "DataFlow Ltd",
-    contactName: "Emily Davis",
-    contactEmail: "emily@dataflow.co",
-    value: 45000,
-    stage: "lost",
-    probability: 0,
-    expectedClose: "Nov 15, 2024",
-    createdAt: "Aug 20, 2024",
-    notes: "Lost to competitor - pricing issue",
-    lastActivity: "Nov 15, 2024",
+    notes: "Legal review of contract terms. Very close to signing.",
   },
 ];
 
-// Mock activities
+// Transform quotes to deals format for CRM views
+const quotesToDeals = (quotes: typeof initialQuotes) => {
+  return quotes.map(quote => ({
+    id: quote.id,
+    title: quote.title,
+    companyId: quote.companyId,
+    companyName: quote.companyName,
+    contactName: quote.contactName,
+    contactEmail: quote.contactEmail,
+    value: quote.value,
+    stage: quoteStatusToStage(quote.status),
+    probability: getStageProbability(quoteStatusToStage(quote.status)),
+    expectedClose: quote.validUntil,
+    createdAt: quote.createdAt,
+    notes: quote.notes,
+    lastActivity: quote.lastActivity,
+    quoteId: quote.id,
+    quoteStatus: quote.status,
+    description: quote.description,
+  }));
+};
+
+// Mock activities - linked to quotes
 const initialActivities = [
-  { id: "ACT-001", dealId: "DEAL-001", type: "call", description: "Contract discussion call with John", date: "Dec 9, 2024", duration: "45 min" },
-  { id: "ACT-002", dealId: "DEAL-001", type: "email", description: "Sent revised pricing proposal", date: "Dec 8, 2024", duration: "" },
-  { id: "ACT-003", dealId: "DEAL-002", type: "meeting", description: "Product demo with stakeholders", date: "Dec 7, 2024", duration: "1 hr" },
-  { id: "ACT-004", dealId: "DEAL-003", type: "call", description: "Discovery call - requirements gathering", date: "Dec 8, 2024", duration: "30 min" },
-  { id: "ACT-005", dealId: "DEAL-005", type: "email", description: "Contract sent for legal review", date: "Dec 9, 2024", duration: "" },
-  { id: "ACT-006", dealId: "DEAL-001", type: "note", description: "Client requested additional features in scope", date: "Dec 6, 2024", duration: "" },
+  { id: "ACT-001", dealId: "QTE-001", type: "call", description: "Contract discussion call with Sarah", date: "Dec 9, 2024", duration: "45 min" },
+  { id: "ACT-002", dealId: "QTE-001", type: "email", description: "Sent revised pricing proposal", date: "Dec 8, 2024", duration: "" },
+  { id: "ACT-003", dealId: "QTE-002", type: "meeting", description: "Product demo with stakeholders", date: "Dec 7, 2024", duration: "1 hr" },
+  { id: "ACT-004", dealId: "QTE-003", type: "call", description: "Discovery call - requirements gathering", date: "Dec 8, 2024", duration: "30 min" },
+  { id: "ACT-005", dealId: "QTE-008", type: "email", description: "Contract sent for legal review", date: "Dec 9, 2024", duration: "" },
+  { id: "ACT-006", dealId: "QTE-001", type: "note", description: "Client requested additional features in scope", date: "Dec 6, 2024", duration: "" },
+  { id: "ACT-007", dealId: "QTE-004", type: "meeting", description: "Final contract signing meeting", date: "Nov 25, 2024", duration: "30 min" },
+  { id: "ACT-008", dealId: "QTE-007", type: "call", description: "Initial discovery call with Dr. Lee", date: "Dec 5, 2024", duration: "45 min" },
 ];
 
-// Mock tasks
+// Mock tasks - linked to quotes
 const initialTasks = [
-  { id: "TSK-001", dealId: "DEAL-001", title: "Send final contract", dueDate: "Dec 12, 2024", completed: false, priority: "high" },
-  { id: "TSK-002", dealId: "DEAL-002", title: "Follow up on budget approval", dueDate: "Dec 15, 2024", completed: false, priority: "medium" },
-  { id: "TSK-003", dealId: "DEAL-003", title: "Prepare demo environment", dueDate: "Dec 14, 2024", completed: false, priority: "high" },
-  { id: "TSK-004", dealId: "DEAL-005", title: "Schedule final negotiation call", dueDate: "Dec 11, 2024", completed: true, priority: "high" },
-  { id: "TSK-005", dealId: "DEAL-004", title: "Send case studies", dueDate: "Dec 10, 2024", completed: false, priority: "low" },
+  { id: "TSK-001", dealId: "QTE-001", title: "Send final contract", dueDate: "Dec 12, 2024", completed: false, priority: "high" },
+  { id: "TSK-002", dealId: "QTE-002", title: "Follow up on budget approval", dueDate: "Dec 15, 2024", completed: false, priority: "medium" },
+  { id: "TSK-003", dealId: "QTE-003", title: "Prepare demo environment", dueDate: "Dec 14, 2024", completed: false, priority: "high" },
+  { id: "TSK-004", dealId: "QTE-008", title: "Schedule final negotiation call", dueDate: "Dec 11, 2024", completed: true, priority: "high" },
+  { id: "TSK-005", dealId: "QTE-007", title: "Send case studies", dueDate: "Dec 10, 2024", completed: false, priority: "low" },
+  { id: "TSK-006", dealId: "QTE-005", title: "Prepare integration documentation", dueDate: "Dec 18, 2024", completed: false, priority: "medium" },
 ];
 
 // Mock clients data
@@ -225,24 +312,31 @@ const initialLeads = [
 const industries = ["Technology", "Startup", "Consulting", "Data Analytics", "Healthcare", "Energy", "Robotics", "Finance", "Retail", "Other"];
 const leadSources = ["Referral", "Website", "Conference", "Cold Outreach", "Social Media", "Partner", "Other"];
 
+// Type for deals derived from quotes
+type Deal = ReturnType<typeof quotesToDeals>[0];
+
 export default function CRM() {
-  const [deals, setDeals] = useState(initialDeals);
+  const navigate = useNavigate();
+  const [quotes, setQuotes] = useState(initialQuotes);
   const [clients, setClients] = useState(initialClients);
   const [leads, setLeads] = useState(initialLeads);
   const [activities, setActivities] = useState(initialActivities);
   const [tasks, setTasks] = useState(initialTasks);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStage, setFilterStage] = useState("all");
-  const [selectedDeal, setSelectedDeal] = useState<typeof initialDeals[0] | null>(null);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [selectedClient, setSelectedClient] = useState<typeof initialClients[0] | null>(null);
   const [isAddDealDialogOpen, setIsAddDealDialogOpen] = useState(false);
   const [isAddActivityDialogOpen, setIsAddActivityDialogOpen] = useState(false);
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
-  const [newDeal, setNewDeal] = useState({ title: "", companyName: "", contactName: "", contactEmail: "", value: "", expectedClose: "", notes: "" });
+  const [newDeal, setNewDeal] = useState({ title: "", companyName: "", contactName: "", contactEmail: "", value: "", expectedClose: "", notes: "", description: "" });
   const [newActivity, setNewActivity] = useState({ type: "call", description: "" });
   const [newTask, setNewTask] = useState({ title: "", dueDate: "", priority: "medium" });
   const [newClient, setNewClient] = useState({ name: "", contactName: "", contactEmail: "", contactPhone: "", industry: "Technology", address: "" });
+
+  // Transform quotes to deals for CRM view
+  const deals = quotesToDeals(quotes);
 
   // Stats
   const activeDeals = deals.filter(d => !["won", "lost"].includes(d.stage));
@@ -268,20 +362,28 @@ export default function CRM() {
       toast.error("Please fill in required fields");
       return;
     }
-    const deal = {
-      id: `DEAL-${String(deals.length + 1).padStart(3, "0")}`,
-      ...newDeal,
+    const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    // Create a new quote (which becomes a deal)
+    const quote = {
+      id: `QTE-${String(quotes.length + 1).padStart(3, "0")}`,
+      title: newDeal.title,
+      description: newDeal.description || newDeal.notes,
+      companyName: newDeal.companyName,
       companyId: "",
+      contactName: newDeal.contactName,
+      contactEmail: newDeal.contactEmail,
       value: parseInt(newDeal.value) || 0,
-      stage: "lead",
-      probability: 20,
-      createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      lastActivity: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      status: "draft",
+      stage: 10,
+      validUntil: newDeal.expectedClose || "TBD",
+      createdAt: today,
+      lastActivity: today,
+      notes: newDeal.notes,
     };
-    setDeals([deal, ...deals]);
-    setNewDeal({ title: "", companyName: "", contactName: "", contactEmail: "", value: "", expectedClose: "", notes: "" });
+    setQuotes([quote, ...quotes]);
+    setNewDeal({ title: "", companyName: "", contactName: "", contactEmail: "", value: "", expectedClose: "", notes: "", description: "" });
     setIsAddDealDialogOpen(false);
-    toast.success("Deal created successfully");
+    toast.success("Quote/Deal created successfully");
   };
 
   const handleAddActivity = () => {
@@ -295,7 +397,8 @@ export default function CRM() {
       duration: "",
     };
     setActivities([activity, ...activities]);
-    setDeals(deals.map(d => d.id === selectedDeal.id ? { ...d, lastActivity: activity.date } : d));
+    // Update the quote's lastActivity
+    setQuotes(quotes.map(q => q.id === selectedDeal.id ? { ...q, lastActivity: activity.date } : q));
     setSelectedDeal({ ...selectedDeal, lastActivity: activity.date });
     setNewActivity({ type: "call", description: "" });
     setIsAddActivityDialogOpen(false);
@@ -338,10 +441,12 @@ export default function CRM() {
   };
 
   const moveDealToStage = (dealId: string, newStage: string) => {
-    const probabilities: Record<string, number> = { lead: 20, qualified: 40, proposal: 60, negotiation: 80, won: 100, lost: 0 };
-    setDeals(deals.map(d => d.id === dealId ? { ...d, stage: newStage, probability: probabilities[newStage] } : d));
+    const newStatus = stageToQuoteStatus(newStage);
+    const newProbability = getStageProbability(newStage);
+    // Update the quote's status
+    setQuotes(quotes.map(q => q.id === dealId ? { ...q, status: newStatus, stage: newProbability } : q));
     if (selectedDeal?.id === dealId) {
-      setSelectedDeal({ ...selectedDeal, stage: newStage, probability: probabilities[newStage] });
+      setSelectedDeal({ ...selectedDeal, stage: newStage, probability: newProbability, quoteStatus: newStatus });
     }
     toast.success(`Deal moved to ${pipelineStages.find(s => s.id === newStage)?.name}`);
   };
@@ -351,9 +456,9 @@ export default function CRM() {
   };
 
   const deleteDeal = (id: string) => {
-    setDeals(deals.filter(d => d.id !== id));
+    setQuotes(quotes.filter(q => q.id !== id));
     setSelectedDeal(null);
-    toast.success("Deal deleted");
+    toast.success("Quote/Deal deleted");
   };
 
   const deleteClient = (id: string) => {
@@ -412,7 +517,11 @@ export default function CRM() {
             <h1 className="text-2xl font-bold">{selectedDeal.title}</h1>
             <p className="text-muted-foreground">{selectedDeal.companyName}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" className="border-2" onClick={() => navigate(`/quotes/${selectedDeal.id}`)}>
+              <FileText className="h-4 w-4 mr-2" />
+              View Quote
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="border-2">
@@ -811,7 +920,7 @@ export default function CRM() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">CRM</h1>
-          <p className="text-muted-foreground">Manage your sales pipeline, clients, and deals</p>
+          <p className="text-muted-foreground">Manage your sales pipeline, quotes, and clients</p>
         </div>
       </div>
 
@@ -909,16 +1018,16 @@ export default function CRM() {
             </div>
             <Dialog open={isAddDealDialogOpen} onOpenChange={setIsAddDealDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2"><Plus className="h-4 w-4 mr-2" />New Deal</Button>
+                <Button className="border-2"><Plus className="h-4 w-4 mr-2" />New Quote</Button>
               </DialogTrigger>
               <DialogContent className="border-2 sm:max-w-[500px]">
                 <DialogHeader className="border-b-2 border-border pb-4">
-                  <DialogTitle>Create New Deal</DialogTitle>
+                  <DialogTitle>Create New Quote</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label>Deal Title *</Label>
-                    <Input placeholder="Deal title" value={newDeal.title} onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })} className="border-2" />
+                    <Label>Quote Title *</Label>
+                    <Input placeholder="Quote title" value={newDeal.title} onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })} className="border-2" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
@@ -926,7 +1035,7 @@ export default function CRM() {
                       <Input placeholder="Company" value={newDeal.companyName} onChange={(e) => setNewDeal({ ...newDeal, companyName: e.target.value })} className="border-2" />
                     </div>
                     <div className="grid gap-2">
-                      <Label>Deal Value ($) *</Label>
+                      <Label>Quote Value ($) *</Label>
                       <Input type="number" placeholder="50000" value={newDeal.value} onChange={(e) => setNewDeal({ ...newDeal, value: e.target.value })} className="border-2" />
                     </div>
                   </div>
@@ -941,7 +1050,7 @@ export default function CRM() {
                     </div>
                   </div>
                   <div className="grid gap-2">
-                    <Label>Expected Close Date</Label>
+                    <Label>Valid Until Date</Label>
                     <Input type="date" value={newDeal.expectedClose} onChange={(e) => setNewDeal({ ...newDeal, expectedClose: e.target.value })} className="border-2" />
                   </div>
                   <div className="grid gap-2">
@@ -951,7 +1060,7 @@ export default function CRM() {
                 </div>
                 <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
                   <Button variant="outline" onClick={() => setIsAddDealDialogOpen(false)} className="border-2">Cancel</Button>
-                  <Button onClick={handleAddDeal} className="border-2">Create Deal</Button>
+                  <Button onClick={handleAddDeal} className="border-2">Create Quote</Button>
                 </div>
               </DialogContent>
             </Dialog>
