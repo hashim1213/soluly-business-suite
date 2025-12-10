@@ -604,19 +604,21 @@ export default function CRM() {
                     {dealTasks.map(task => (
                       <div
                         key={task.id}
-                        className={`flex items-center gap-3 p-3 border-2 border-border cursor-pointer hover:bg-accent/50 ${task.completed ? "opacity-60" : ""}`}
+                        className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 border-2 border-border cursor-pointer hover:bg-accent/50 ${task.completed ? "opacity-60" : ""}`}
                         onClick={() => toggleTaskComplete(task.id)}
                       >
-                        {task.completed ? (
-                          <CheckCircle className="h-5 w-5 text-chart-2 shrink-0" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
-                        )}
-                        <div className="flex-1">
-                          <span className={task.completed ? "line-through text-muted-foreground" : ""}>{task.title}</span>
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {task.completed ? (
+                            <CheckCircle className="h-5 w-5 text-chart-2 shrink-0" />
+                          ) : (
+                            <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                          )}
+                          <span className={`flex-1 ${task.completed ? "line-through text-muted-foreground" : ""}`}>{task.title}</span>
                         </div>
-                        <Badge className={getPriorityStyle(task.priority)} variant="secondary">{task.priority}</Badge>
-                        <span className="text-sm text-muted-foreground">{task.dueDate}</span>
+                        <div className="flex items-center gap-2 ml-8 sm:ml-0">
+                          <Badge className={getPriorityStyle(task.priority)} variant="secondary">{task.priority}</Badge>
+                          <span className="text-sm text-muted-foreground whitespace-nowrap">{task.dueDate}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -742,11 +744,11 @@ export default function CRM() {
               <CardHeader className="border-b-2 border-border">
                 <CardTitle>Deals</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 overflow-x-auto">
                 {clientDeals.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">No deals with this client</p>
                 ) : (
-                  <Table>
+                  <Table className="min-w-[500px]">
                     <TableHeader>
                       <TableRow className="border-b-2 hover:bg-transparent">
                         <TableHead className="font-bold uppercase text-xs">Deal</TableHead>
@@ -814,7 +816,7 @@ export default function CRM() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -884,24 +886,26 @@ export default function CRM() {
 
       <Tabs defaultValue="pipeline" className="space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="border-2 border-border p-1 bg-background">
-            <TabsTrigger value="pipeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              Pipeline
-            </TabsTrigger>
-            <TabsTrigger value="deals" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              All Deals
-            </TabsTrigger>
-            <TabsTrigger value="clients" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              Clients ({clients.length})
-            </TabsTrigger>
-            <TabsTrigger value="tasks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              Tasks ({pendingTasks})
-            </TabsTrigger>
-          </TabsList>
-          <div className="flex gap-2">
-            <div className="relative">
+          <div className="overflow-x-auto -mx-1 px-1">
+            <TabsList className="border-2 border-border p-1 bg-background inline-flex min-w-max">
+              <TabsTrigger value="pipeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                Pipeline
+              </TabsTrigger>
+              <TabsTrigger value="deals" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                All Deals
+              </TabsTrigger>
+              <TabsTrigger value="clients" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                Clients ({clients.length})
+              </TabsTrigger>
+              <TabsTrigger value="tasks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                Tasks ({pendingTasks})
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-initial">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 w-[200px] border-2" />
+              <Input placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 w-full sm:w-[200px] border-2" />
             </div>
             <Dialog open={isAddDealDialogOpen} onOpenChange={setIsAddDealDialogOpen}>
               <DialogTrigger asChild>
@@ -956,12 +960,13 @@ export default function CRM() {
 
         {/* Pipeline View */}
         <TabsContent value="pipeline" className="space-y-4">
-          <div className="grid grid-cols-6 gap-4 overflow-x-auto">
-            {pipelineStages.map(stage => {
-              const stageDeals = getDealsByStage(stage.id);
-              const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
-              return (
-                <div key={stage.id} className="min-w-[200px]">
+          <div className="overflow-x-auto -mx-4 px-4 pb-4">
+            <div className="flex gap-4 min-w-max lg:grid lg:grid-cols-6">
+              {pipelineStages.map(stage => {
+                const stageDeals = getDealsByStage(stage.id);
+                const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
+                return (
+                  <div key={stage.id} className="w-[260px] sm:w-[220px] lg:w-auto shrink-0 lg:shrink">
                   <div className={`p-3 border-2 border-border mb-3 ${stage.color}`}>
                     <div className="flex items-center justify-between">
                       <span className={`font-semibold ${stage.textDark ? "text-white" : "text-black"}`}>{stage.name}</span>
@@ -994,17 +999,18 @@ export default function CRM() {
                       </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </TabsContent>
 
         {/* All Deals */}
         <TabsContent value="deals" className="space-y-4">
           <Card className="border-2 border-border shadow-sm">
-            <CardContent className="p-0">
-              <Table>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow className="border-b-2 hover:bg-transparent">
                     <TableHead className="font-bold uppercase text-xs">Deal</TableHead>
@@ -1121,8 +1127,8 @@ export default function CRM() {
             </Dialog>
           </div>
           <Card className="border-2 border-border shadow-sm">
-            <CardContent className="p-0">
-              <Table>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow className="border-b-2 hover:bg-transparent">
                     <TableHead className="font-bold uppercase text-xs">Company</TableHead>
@@ -1187,20 +1193,24 @@ export default function CRM() {
                   return (
                     <div
                       key={task.id}
-                      className={`flex items-center gap-3 p-3 border-2 border-border cursor-pointer hover:bg-accent/50 ${task.completed ? "opacity-60" : ""}`}
+                      className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 border-2 border-border cursor-pointer hover:bg-accent/50 ${task.completed ? "opacity-60" : ""}`}
                       onClick={() => toggleTaskComplete(task.id)}
                     >
-                      {task.completed ? (
-                        <CheckCircle className="h-5 w-5 text-chart-2 shrink-0" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className={task.completed ? "line-through text-muted-foreground" : ""}>{task.title}</div>
-                        <div className="text-xs text-muted-foreground">{deal?.title} - {deal?.companyName}</div>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {task.completed ? (
+                          <CheckCircle className="h-5 w-5 text-chart-2 shrink-0" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className={task.completed ? "line-through text-muted-foreground" : ""}>{task.title}</div>
+                          <div className="text-xs text-muted-foreground truncate">{deal?.title} - {deal?.companyName}</div>
+                        </div>
                       </div>
-                      <Badge className={getPriorityStyle(task.priority)} variant="secondary">{task.priority}</Badge>
-                      <span className="text-sm text-muted-foreground shrink-0">{task.dueDate}</span>
+                      <div className="flex items-center gap-2 ml-8 sm:ml-0">
+                        <Badge className={getPriorityStyle(task.priority)} variant="secondary">{task.priority}</Badge>
+                        <span className="text-sm text-muted-foreground shrink-0">{task.dueDate}</span>
+                      </div>
                     </div>
                   );
                 })}
