@@ -11,14 +11,8 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
-  Users,
-  TrendingUp,
-  Star,
-  UserPlus,
   ArrowLeft,
-  Calendar,
   Clock,
-  MessageSquare,
   PhoneCall,
   Video,
   FileText,
@@ -27,8 +21,6 @@ import {
   ArrowRight,
   Target,
   Handshake,
-  XCircle,
-  Send,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -925,68 +917,55 @@ export default function CRM() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
-                <Target className="h-5 w-5 text-background" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-chart-1 shrink-0">
+                <Target className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{activeDeals.length}</div>
-                <div className="text-sm text-muted-foreground">Active Deals</div>
+              <div className="min-w-0">
+                <div className="text-xl sm:text-2xl font-bold">{activeDeals.length}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground truncate">Active Deals</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-primary">
-                <DollarSign className="h-5 w-5 text-primary-foreground" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-primary shrink-0">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
-              <div>
-                <div className="text-2xl font-bold font-mono">${Math.round(totalPipeline / 1000)}k</div>
-                <div className="text-sm text-muted-foreground">Pipeline Value</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-3">
-                <TrendingUp className="h-5 w-5 text-background" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold font-mono">${Math.round(weightedPipeline / 1000)}k</div>
-                <div className="text-sm text-muted-foreground">Weighted Value</div>
+              <div className="min-w-0">
+                <div className="text-xl sm:text-2xl font-bold font-mono">${Math.round(totalPipeline / 1000)}k</div>
+                <div className="text-xs sm:text-sm text-muted-foreground truncate">Pipeline</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
-                <Handshake className="h-5 w-5 text-background" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-chart-2 shrink-0">
+                <Handshake className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
               </div>
-              <div>
-                <div className="text-2xl font-bold font-mono">${Math.round(wonValue / 1000)}k</div>
-                <div className="text-sm text-muted-foreground">Won This Period</div>
+              <div className="min-w-0">
+                <div className="text-xl sm:text-2xl font-bold font-mono">${Math.round(wonValue / 1000)}k</div>
+                <div className="text-xs sm:text-sm text-muted-foreground truncate">Won</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-4">
-                <Clock className="h-5 w-5" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-chart-4 shrink-0">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{pendingTasks}</div>
-                <div className="text-sm text-muted-foreground">Pending Tasks</div>
+              <div className="min-w-0">
+                <div className="text-xl sm:text-2xl font-bold">{pendingTasks}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground truncate">Tasks</div>
               </div>
             </div>
           </CardContent>
@@ -1069,45 +1048,45 @@ export default function CRM() {
 
         {/* Pipeline View */}
         <TabsContent value="pipeline" className="space-y-4">
-          <div className="overflow-x-auto -mx-4 px-4 pb-4">
-            <div className="flex gap-4 min-w-max lg:grid lg:grid-cols-6">
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-3 min-w-max">
               {pipelineStages.map(stage => {
                 const stageDeals = getDealsByStage(stage.id);
                 const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
                 return (
-                  <div key={stage.id} className="w-[260px] sm:w-[220px] lg:w-auto shrink-0 lg:shrink">
-                  <div className={`p-3 border-2 border-border mb-3 ${stage.color}`}>
-                    <div className="flex items-center justify-between">
-                      <span className={`font-semibold ${stage.textDark ? "text-white" : "text-black"}`}>{stage.name}</span>
-                      <Badge variant="secondary" className={stage.textDark ? "bg-white/20 text-white" : "bg-black/10 text-black"}>{stageDeals.length}</Badge>
-                    </div>
-                    <div className={`text-sm font-mono mt-1 ${stage.textDark ? "text-white/80" : "text-black/60"}`}>
-                      ${stageValue.toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {stageDeals.map(deal => (
-                      <Card
-                        key={deal.id}
-                        className="border-2 border-border cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => setSelectedDeal(deal)}
-                      >
-                        <CardContent className="p-3">
-                          <div className="font-medium text-sm mb-1 line-clamp-1">{deal.title}</div>
-                          <div className="text-xs text-muted-foreground mb-2">{deal.companyName}</div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono font-bold text-sm">${deal.value.toLocaleString()}</span>
-                            <span className="text-xs text-muted-foreground">{deal.probability}%</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {stageDeals.length === 0 && (
-                      <div className="border-2 border-dashed border-border p-4 text-center text-muted-foreground text-sm">
-                        No deals
+                  <div key={stage.id} className="w-[180px] sm:w-[200px] shrink-0">
+                    <div className={`p-2 sm:p-3 border-2 border-border mb-2 ${stage.color}`}>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`font-semibold text-sm ${stage.textDark ? "text-white" : "text-black"}`}>{stage.name}</span>
+                        <Badge variant="secondary" className={`text-xs ${stage.textDark ? "bg-white/20 text-white" : "bg-black/10 text-black"}`}>{stageDeals.length}</Badge>
                       </div>
-                    )}
-                  </div>
+                      <div className={`text-xs font-mono mt-1 ${stage.textDark ? "text-white/80" : "text-black/60"}`}>
+                        ${stageValue.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                      {stageDeals.map(deal => (
+                        <Card
+                          key={deal.id}
+                          className="border-2 border-border cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => setSelectedDeal(deal)}
+                        >
+                          <CardContent className="p-2 sm:p-3">
+                            <div className="font-medium text-xs sm:text-sm mb-1 line-clamp-2">{deal.title}</div>
+                            <div className="text-xs text-muted-foreground mb-1 truncate">{deal.companyName}</div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-bold text-xs sm:text-sm">${deal.value.toLocaleString()}</span>
+                              <span className="text-xs text-muted-foreground">{deal.probability}%</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      {stageDeals.length === 0 && (
+                        <div className="border-2 border-dashed border-border p-3 text-center text-muted-foreground text-xs">
+                          No deals
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
