@@ -319,7 +319,7 @@ export default function ProjectDetail() {
   });
   const [newCost, setNewCost] = useState({
     description: "",
-    category: "Infrastructure",
+    category: "infrastructure",
     amount: "",
     recurring: false,
     date: new Date().toISOString().split("T")[0],
@@ -862,7 +862,7 @@ export default function ProjectDetail() {
         date: newCost.date || new Date().toISOString().split("T")[0],
         recurring: newCost.recurring,
       });
-      setNewCost({ description: "", category: "Infrastructure", amount: "", recurring: false, date: new Date().toISOString().split("T")[0] });
+      setNewCost({ description: "", category: "infrastructure", amount: "", recurring: false, date: new Date().toISOString().split("T")[0] });
       setIsCostDialogOpen(false);
     } catch (error) {
       // Error handled by hook
@@ -2861,7 +2861,7 @@ export default function ProjectDetail() {
                             size="sm"
                             variant="ghost"
                             className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
-                            onClick={() => deleteCost(cost.id)}
+                            onClick={() => handleDeleteCost(cost.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
