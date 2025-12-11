@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import {
   Building,
   Plus,
@@ -16,6 +16,12 @@ import {
   Mail,
   FileText,
   MessageSquare,
+  Users,
+  UserPlus,
+  CheckSquare,
+  Calendar,
+  Clock,
+  Edit,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +30,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -45,12 +53,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { useQuotes, useCreateQuote, useUpdateQuote, useDeleteQuote, useCreateActivity, Quote } from "@/hooks/useQuotes";
-import { useCrmClients } from "@/hooks/useCRM";
+import { useQuotes, useCreateQuote, useUpdateQuote, useDeleteQuote, useCreateActivity, useTasks, useCreateTask, useUpdateTask, Quote } from "@/hooks/useQuotes";
+import { useCrmClients, useCrmLeads, useCreateCrmClient, useCreateCrmLead, useDeleteCrmClient, useDeleteCrmLead, useConvertLeadToClient, useUpdateCrmLead } from "@/hooks/useCRM";
 import { Database } from "@/integrations/supabase/types";
 
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 type ActivityType = Database["public"]["Enums"]["activity_type"];
+type LeadStatus = Database["public"]["Enums"]["lead_status"];
 
 // Pipeline stages - maps to quote statuses
 const pipelineStages = [
@@ -61,18 +70,40 @@ const pipelineStages = [
   { id: "rejected", name: "Lost", color: "bg-red-500", textDark: true },
 ];
 
+const leadStatusStyles: Record<LeadStatus, string> = {
+  new: "bg-blue-600 text-white",
+  contacted: "bg-amber-500 text-black",
+  qualified: "bg-purple-600 text-white",
+  converted: "bg-emerald-600 text-white",
+  lost: "bg-red-600 text-white",
+};
+
 export default function CRM() {
-  const navigate = useNavigate();
-  const { data: quotes, isLoading, error } = useQuotes();
-  const { data: clients } = useCrmClients();
+  const { navigateOrg } = useOrgNavigation();
+  const { data: quotes, isLoading: quotesLoading, error: quotesError } = useQuotes();
+  const { data: clients, isLoading: clientsLoading } = useCrmClients();
+  const { data: leads, isLoading: leadsLoading } = useCrmLeads();
+  const { data: tasks, isLoading: tasksLoading } = useTasks();
   const createQuote = useCreateQuote();
   const updateQuote = useUpdateQuote();
   const deleteQuote = useDeleteQuote();
   const createActivity = useCreateActivity();
+  const createClient = useCreateCrmClient();
+  const deleteClient = useDeleteCrmClient();
+  const createLead = useCreateCrmLead();
+  const deleteLead = useDeleteCrmLead();
+  const updateLead = useUpdateCrmLead();
+  const convertLead = useConvertLeadToClient();
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("pipeline");
   const [isNewDealOpen, setIsNewDealOpen] = useState(false);
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
+  const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+  const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [newDeal, setNewDeal] = useState({
     title: "",
@@ -89,6 +120,29 @@ export default function CRM() {
     description: "",
     duration: "",
   });
+  const [newClient, setNewClient] = useState({
+    name: "",
+    contact_name: "",
+    contact_email: "",
+    contact_phone: "",
+    industry: "",
+  });
+  const [newLead, setNewLead] = useState({
+    name: "",
+    contact_name: "",
+    contact_email: "",
+    contact_phone: "",
+    source: "",
+    notes: "",
+  });
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    due_date: "",
+    quote_id: "",
+  });
+
+  const isLoading = quotesLoading || clientsLoading || leadsLoading || tasksLoading;
 
   // Filter quotes by search
   const filteredQuotes = quotes?.filter((quote) => {
@@ -121,6 +175,41 @@ export default function CRM() {
     (q) => q.status !== "rejected" && q.status !== "accepted"
   ).length;
 
+  // Filter leads
+  const filteredLeads = leads?.filter((lead) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      lead.name.toLowerCase().includes(query) ||
+      lead.contact_name?.toLowerCase().includes(query) ||
+      lead.contact_email?.toLowerCase().includes(query)
+    );
+  }) || [];
+
+  // Filter clients
+  const filteredClients = clients?.filter((client) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      client.name.toLowerCase().includes(query) ||
+      client.contact_name?.toLowerCase().includes(query) ||
+      client.contact_email?.toLowerCase().includes(query)
+    );
+  }) || [];
+
+  // Filter tasks
+  const filteredTasks = tasks?.filter((task) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      task.title.toLowerCase().includes(query) ||
+      task.description?.toLowerCase().includes(query)
+    );
+  }) || [];
+
+  const pendingTasks = filteredTasks.filter(t => !t.completed);
+  const completedTasks = filteredTasks.filter(t => t.completed);
+
   const handleCreateDeal = async () => {
     if (!newDeal.title || !newDeal.company_name) {
       toast.error("Please fill in required fields");
@@ -152,6 +241,93 @@ export default function CRM() {
         notes: "",
       });
       setIsNewDealOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleCreateClient = async () => {
+    if (!newClient.name) {
+      toast.error("Please enter a company name");
+      return;
+    }
+
+    try {
+      await createClient.mutateAsync({
+        name: newClient.name,
+        contact_name: newClient.contact_name || null,
+        contact_email: newClient.contact_email || null,
+        contact_phone: newClient.contact_phone || null,
+        industry: newClient.industry || null,
+        status: "active",
+      });
+
+      setNewClient({
+        name: "",
+        contact_name: "",
+        contact_email: "",
+        contact_phone: "",
+        industry: "",
+      });
+      setIsNewClientOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleCreateLead = async () => {
+    if (!newLead.name) {
+      toast.error("Please enter a company name");
+      return;
+    }
+
+    try {
+      await createLead.mutateAsync({
+        name: newLead.name,
+        contact_name: newLead.contact_name || null,
+        contact_email: newLead.contact_email || null,
+        contact_phone: newLead.contact_phone || null,
+        source: newLead.source || null,
+        notes: newLead.notes || null,
+        status: "new",
+      });
+
+      setNewLead({
+        name: "",
+        contact_name: "",
+        contact_email: "",
+        contact_phone: "",
+        source: "",
+        notes: "",
+      });
+      setIsNewLeadOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleCreateTask = async () => {
+    if (!newTask.title) {
+      toast.error("Please enter a task title");
+      return;
+    }
+
+    try {
+      await createTask.mutateAsync({
+        title: newTask.title,
+        description: newTask.description || null,
+        due_date: newTask.due_date || null,
+        quote_id: newTask.quote_id || null,
+        completed: false,
+      });
+
+      setNewTask({
+        title: "",
+        description: "",
+        due_date: "",
+        quote_id: "",
+      });
+      setIsNewTaskOpen(false);
     } catch (error) {
       // Error handled by hook
     }
@@ -194,12 +370,29 @@ export default function CRM() {
     }
   };
 
+  const handleToggleTask = async (taskId: string, completed: boolean) => {
+    try {
+      await updateTask.mutateAsync({ id: taskId, completed });
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
   const formatValue = (value: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 0,
     }).format(value);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "No date";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   if (isLoading) {
@@ -210,7 +403,7 @@ export default function CRM() {
     );
   }
 
-  if (error) {
+  if (quotesError) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p className="text-destructive">Failed to load CRM data</p>
@@ -226,111 +419,9 @@ export default function CRM() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">CRM Pipeline</h1>
-          <p className="text-muted-foreground">Manage your sales pipeline and deals</p>
+          <h1 className="text-2xl font-bold tracking-tight">CRM</h1>
+          <p className="text-muted-foreground">Manage your sales pipeline, leads, clients, and tasks</p>
         </div>
-        <Dialog open={isNewDealOpen} onOpenChange={setIsNewDealOpen}>
-          <DialogTrigger asChild>
-            <Button className="border-2">
-              <Plus className="h-4 w-4 mr-2" />
-              New Deal
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="border-2 sm:max-w-[500px]">
-            <DialogHeader className="border-b-2 border-border pb-4">
-              <DialogTitle>Create New Deal</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Deal Title *</Label>
-                <Input
-                  placeholder="e.g., Enterprise Package Quote"
-                  value={newDeal.title}
-                  onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })}
-                  className="border-2"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Description</Label>
-                <Textarea
-                  placeholder="Describe the deal..."
-                  value={newDeal.description}
-                  onChange={(e) => setNewDeal({ ...newDeal, description: e.target.value })}
-                  className="border-2"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label>Company Name *</Label>
-                  <Input
-                    placeholder="Company name"
-                    value={newDeal.company_name}
-                    onChange={(e) => setNewDeal({ ...newDeal, company_name: e.target.value })}
-                    className="border-2"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Deal Value ($)</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={newDeal.value}
-                    onChange={(e) => setNewDeal({ ...newDeal, value: e.target.value })}
-                    className="border-2"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label>Contact Name</Label>
-                  <Input
-                    placeholder="Contact name"
-                    value={newDeal.contact_name}
-                    onChange={(e) => setNewDeal({ ...newDeal, contact_name: e.target.value })}
-                    className="border-2"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Contact Email</Label>
-                  <Input
-                    type="email"
-                    placeholder="email@company.com"
-                    value={newDeal.contact_email}
-                    onChange={(e) => setNewDeal({ ...newDeal, contact_email: e.target.value })}
-                    className="border-2"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>Valid Until</Label>
-                <Input
-                  type="date"
-                  value={newDeal.valid_until}
-                  onChange={(e) => setNewDeal({ ...newDeal, valid_until: e.target.value })}
-                  className="border-2"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Notes</Label>
-                <Textarea
-                  placeholder="Internal notes..."
-                  value={newDeal.notes}
-                  onChange={(e) => setNewDeal({ ...newDeal, notes: e.target.value })}
-                  className="border-2"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => setIsNewDealOpen(false)} className="border-2">
-                Cancel
-              </Button>
-              <Button onClick={handleCreateDeal} className="border-2" disabled={createQuote.isPending}>
-                {createQuote.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Create Deal
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Stats Cards */}
@@ -338,8 +429,8 @@ export default function CRM() {
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
-                <Target className="h-5 w-5 text-background" />
+              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-blue-600">
+                <Target className="h-5 w-5 text-white" />
               </div>
               <div>
                 <div className="text-2xl font-bold font-mono">{formatValue(totalPipelineValue)}</div>
@@ -351,8 +442,8 @@ export default function CRM() {
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
-                <Handshake className="h-5 w-5 text-background" />
+              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-emerald-600">
+                <Handshake className="h-5 w-5 text-white" />
               </div>
               <div>
                 <div className="text-2xl font-bold font-mono">{formatValue(wonValue)}</div>
@@ -365,11 +456,11 @@ export default function CRM() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-primary">
-                <Building className="h-5 w-5 text-primary-foreground" />
+                <Users className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{activeDeals}</div>
-                <div className="text-sm text-muted-foreground">Active Deals</div>
+                <div className="text-2xl font-bold">{leads?.length || 0}</div>
+                <div className="text-sm text-muted-foreground">Active Leads</div>
               </div>
             </div>
           </CardContent>
@@ -377,8 +468,8 @@ export default function CRM() {
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-4">
-                <DollarSign className="h-5 w-5" />
+              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-amber-500">
+                <Building className="h-5 w-5 text-black" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{clients?.length || 0}</div>
@@ -393,124 +484,713 @@ export default function CRM() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search deals..."
+          placeholder="Search deals, leads, clients..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 border-2"
         />
       </div>
 
-      {/* Pipeline View */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {dealsByStage.map((stage) => (
-          <Card key={stage.id} className="border-2 border-border shadow-sm">
-            <CardHeader className={`py-3 px-4 ${stage.color} ${stage.textDark ? "text-white" : ""}`}>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-bold">{stage.name}</CardTitle>
-                <Badge variant="secondary" className="bg-white/20 text-current border-0">
-                  {stage.deals.length}
-                </Badge>
-              </div>
-              <div className={`text-xs ${stage.textDark ? "text-white/80" : "text-muted-foreground"}`}>
-                {formatValue(stage.totalValue)}
-              </div>
-            </CardHeader>
-            <CardContent className="p-2 space-y-2 min-h-[200px]">
-              {stage.deals.length === 0 ? (
-                <div className="text-center text-muted-foreground text-sm py-8">
-                  No deals
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="border-2 border-border bg-secondary p-1">
+          <TabsTrigger value="pipeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Pipeline ({activeDeals})
+          </TabsTrigger>
+          <TabsTrigger value="leads" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Leads ({leads?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="clients" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Clients ({clients?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Tasks ({pendingTasks.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Pipeline Tab */}
+        <TabsContent value="pipeline" className="space-y-4">
+          <div className="flex justify-end">
+            <Dialog open={isNewDealOpen} onOpenChange={setIsNewDealOpen}>
+              <DialogTrigger asChild>
+                <Button className="border-2">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Deal
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-2 sm:max-w-[500px]">
+                <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogTitle>Create New Deal</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Deal Title *</Label>
+                    <Input
+                      placeholder="e.g., Enterprise Package Quote"
+                      value={newDeal.title}
+                      onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      placeholder="Describe the deal..."
+                      value={newDeal.description}
+                      onChange={(e) => setNewDeal({ ...newDeal, description: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Company Name *</Label>
+                      <Input
+                        placeholder="Company name"
+                        value={newDeal.company_name}
+                        onChange={(e) => setNewDeal({ ...newDeal, company_name: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Deal Value ($)</Label>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={newDeal.value}
+                        onChange={(e) => setNewDeal({ ...newDeal, value: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Contact Name</Label>
+                      <Input
+                        placeholder="Contact name"
+                        value={newDeal.contact_name}
+                        onChange={(e) => setNewDeal({ ...newDeal, contact_name: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Contact Email</Label>
+                      <Input
+                        type="email"
+                        placeholder="email@company.com"
+                        value={newDeal.contact_email}
+                        onChange={(e) => setNewDeal({ ...newDeal, contact_email: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Valid Until</Label>
+                    <Input
+                      type="date"
+                      value={newDeal.valid_until}
+                      onChange={(e) => setNewDeal({ ...newDeal, valid_until: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Notes</Label>
+                    <Textarea
+                      placeholder="Internal notes..."
+                      value={newDeal.notes}
+                      onChange={(e) => setNewDeal({ ...newDeal, notes: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
                 </div>
-              ) : (
-                stage.deals.map((deal) => (
-                  <Card
-                    key={deal.id}
-                    className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/quotes/${deal.display_id}`)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{deal.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {deal.company_name}
-                          </p>
-                          <p className="text-sm font-mono font-bold mt-1">
-                            {formatValue(deal.value)}
-                          </p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <MoreVertical className="h-3 w-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-2">
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedQuoteId(deal.id);
-                              setIsActivityDialogOpen(true);
-                            }}>
-                              <Phone className="h-4 w-4 mr-2" />
-                              Log Activity
-                            </DropdownMenuItem>
-                            {stage.id !== "sent" && stage.id !== "negotiating" && stage.id !== "accepted" && stage.id !== "rejected" && (
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                handleMoveStage(deal.id, "sent");
-                              }}>
-                                <ArrowRight className="h-4 w-4 mr-2" />
-                                Move to Proposal
-                              </DropdownMenuItem>
-                            )}
-                            {stage.id !== "negotiating" && stage.id !== "accepted" && stage.id !== "rejected" && (
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                handleMoveStage(deal.id, "negotiating");
-                              }}>
-                                <ArrowRight className="h-4 w-4 mr-2" />
-                                Move to Negotiation
-                              </DropdownMenuItem>
-                            )}
-                            {stage.id !== "accepted" && stage.id !== "rejected" && (
-                              <>
+                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewDealOpen(false)} className="border-2">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateDeal} className="border-2" disabled={createQuote.isPending}>
+                    {createQuote.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Create Deal
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Pipeline View */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {dealsByStage.map((stage) => (
+              <Card key={stage.id} className="border-2 border-border shadow-sm">
+                <CardHeader className={`py-3 px-4 ${stage.color} ${stage.textDark ? "text-white" : ""}`}>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-bold">{stage.name}</CardTitle>
+                    <Badge variant="secondary" className="bg-white/20 text-current border-0">
+                      {stage.deals.length}
+                    </Badge>
+                  </div>
+                  <div className={`text-xs ${stage.textDark ? "text-white/80" : "text-muted-foreground"}`}>
+                    {formatValue(stage.totalValue)}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-2 space-y-2 min-h-[200px]">
+                  {stage.deals.length === 0 ? (
+                    <div className="text-center text-muted-foreground text-sm py-8">
+                      No deals
+                    </div>
+                  ) : (
+                    stage.deals.map((deal) => (
+                      <Card
+                        key={deal.id}
+                        className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{deal.title}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {deal.company_name}
+                              </p>
+                              <p className="text-sm font-mono font-bold mt-1">
+                                {formatValue(deal.value)}
+                              </p>
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                  <MoreVertical className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="border-2">
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
-                                  handleMoveStage(deal.id, "accepted");
-                                }} className="text-green-600">
-                                  <ChevronRight className="h-4 w-4 mr-2" />
-                                  Mark as Won
+                                  setSelectedQuoteId(deal.id);
+                                  setIsActivityDialogOpen(true);
+                                }}>
+                                  <Phone className="h-4 w-4 mr-2" />
+                                  Log Activity
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMoveStage(deal.id, "rejected");
-                                }} className="text-destructive">
+                                {stage.id !== "sent" && stage.id !== "negotiating" && stage.id !== "accepted" && stage.id !== "rejected" && (
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveStage(deal.id, "sent");
+                                  }}>
+                                    <ArrowRight className="h-4 w-4 mr-2" />
+                                    Move to Proposal
+                                  </DropdownMenuItem>
+                                )}
+                                {stage.id !== "negotiating" && stage.id !== "accepted" && stage.id !== "rejected" && (
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveStage(deal.id, "negotiating");
+                                  }}>
+                                    <ArrowRight className="h-4 w-4 mr-2" />
+                                    Move to Negotiation
+                                  </DropdownMenuItem>
+                                )}
+                                {stage.id !== "accepted" && stage.id !== "rejected" && (
+                                  <>
+                                    <DropdownMenuItem onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMoveStage(deal.id, "accepted");
+                                    }} className="text-green-600">
+                                      <ChevronRight className="h-4 w-4 mr-2" />
+                                      Mark as Won
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMoveStage(deal.id, "rejected");
+                                    }} className="text-destructive">
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Mark as Lost
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteQuote.mutate(deal.id);
+                                  }}
+                                >
                                   <Trash2 className="h-4 w-4 mr-2" />
-                                  Mark as Lost
+                                  Delete Deal
                                 </DropdownMenuItem>
-                              </>
-                            )}
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteQuote.mutate(deal.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Deal
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          <Progress value={deal.stage} className="h-1 mt-2" />
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Leads Tab */}
+        <TabsContent value="leads" className="space-y-4">
+          <div className="flex justify-end">
+            <Dialog open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
+              <DialogTrigger asChild>
+                <Button className="border-2">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  New Lead
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-2 sm:max-w-[500px]">
+                <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogTitle>Add New Lead</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Company Name *</Label>
+                    <Input
+                      placeholder="Company name"
+                      value={newLead.name}
+                      onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Contact Name</Label>
+                      <Input
+                        placeholder="Contact name"
+                        value={newLead.contact_name}
+                        onChange={(e) => setNewLead({ ...newLead, contact_name: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Contact Email</Label>
+                      <Input
+                        type="email"
+                        placeholder="email@company.com"
+                        value={newLead.contact_email}
+                        onChange={(e) => setNewLead({ ...newLead, contact_email: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Phone</Label>
+                      <Input
+                        placeholder="+1 234 567 8900"
+                        value={newLead.contact_phone}
+                        onChange={(e) => setNewLead({ ...newLead, contact_phone: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Source</Label>
+                      <Input
+                        placeholder="e.g., Website, Referral"
+                        value={newLead.source}
+                        onChange={(e) => setNewLead({ ...newLead, source: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Notes</Label>
+                    <Textarea
+                      placeholder="Additional notes..."
+                      value={newLead.notes}
+                      onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewLeadOpen(false)} className="border-2">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateLead} className="border-2" disabled={createLead.isPending}>
+                    {createLead.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Add Lead
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {filteredLeads.length === 0 ? (
+            <Card className="border-2 border-border">
+              <CardContent className="p-8 text-center">
+                <UserPlus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="font-semibold mb-2">No Leads Yet</h3>
+                <p className="text-muted-foreground mb-4">Add your first lead to start tracking potential customers.</p>
+                <Button onClick={() => setIsNewLeadOpen(true)} className="border-2">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Lead
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredLeads.map((lead) => (
+                <Card key={lead.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge className={leadStatusStyles[lead.status]}>
+                            {lead.status}
+                          </Badge>
+                          <span className="font-mono text-xs text-muted-foreground">{lead.display_id}</span>
+                        </div>
+                        <h3 className="font-semibold truncate">{lead.name}</h3>
+                        {lead.contact_name && (
+                          <p className="text-sm text-muted-foreground">{lead.contact_name}</p>
+                        )}
+                        {lead.contact_email && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <Mail className="h-3 w-3" /> {lead.contact_email}
+                          </p>
+                        )}
+                        {lead.source && (
+                          <p className="text-xs text-muted-foreground mt-1">Source: {lead.source}</p>
+                        )}
                       </div>
-                      <Progress value={deal.stage} className="h-1 mt-2" />
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuItem onClick={() => updateLead.mutate({ id: lead.id, status: "contacted" })}>
+                            Mark as Contacted
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateLead.mutate({ id: lead.id, status: "qualified" })}>
+                            Mark as Qualified
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => convertLead.mutate(lead.id)} className="text-chart-2">
+                            <UserPlus className="h-4 w-4 mr-2" />
+                            Convert to Client
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => deleteLead.mutate(lead.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Lead
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Clients Tab */}
+        <TabsContent value="clients" className="space-y-4">
+          <div className="flex justify-end">
+            <Dialog open={isNewClientOpen} onOpenChange={setIsNewClientOpen}>
+              <DialogTrigger asChild>
+                <Button className="border-2">
+                  <Building className="h-4 w-4 mr-2" />
+                  New Client
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-2 sm:max-w-[500px]">
+                <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogTitle>Add New Client</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Company Name *</Label>
+                    <Input
+                      placeholder="Company name"
+                      value={newClient.name}
+                      onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Contact Name</Label>
+                      <Input
+                        placeholder="Contact name"
+                        value={newClient.contact_name}
+                        onChange={(e) => setNewClient({ ...newClient, contact_name: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Contact Email</Label>
+                      <Input
+                        type="email"
+                        placeholder="email@company.com"
+                        value={newClient.contact_email}
+                        onChange={(e) => setNewClient({ ...newClient, contact_email: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Phone</Label>
+                      <Input
+                        placeholder="+1 234 567 8900"
+                        value={newClient.contact_phone}
+                        onChange={(e) => setNewClient({ ...newClient, contact_phone: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Industry</Label>
+                      <Input
+                        placeholder="e.g., Technology"
+                        value={newClient.industry}
+                        onChange={(e) => setNewClient({ ...newClient, industry: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewClientOpen(false)} className="border-2">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateClient} className="border-2" disabled={createClient.isPending}>
+                    {createClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Add Client
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {filteredClients.length === 0 ? (
+            <Card className="border-2 border-border">
+              <CardContent className="p-8 text-center">
+                <Building className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="font-semibold mb-2">No Clients Yet</h3>
+                <p className="text-muted-foreground mb-4">Add your first client or convert a lead.</p>
+                <Button onClick={() => setIsNewClientOpen(true)} className="border-2">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Client
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredClients.map((client) => (
+                <Card key={client.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge className="bg-emerald-600 text-white">
+                            {client.status}
+                          </Badge>
+                          <span className="font-mono text-xs text-muted-foreground">{client.display_id}</span>
+                        </div>
+                        <h3 className="font-semibold truncate">{client.name}</h3>
+                        {client.contact_name && (
+                          <p className="text-sm text-muted-foreground">{client.contact_name}</p>
+                        )}
+                        {client.contact_email && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <Mail className="h-3 w-3" /> {client.contact_email}
+                          </p>
+                        )}
+                        {client.contact_phone && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <Phone className="h-3 w-3" /> {client.contact_phone}
+                          </p>
+                        )}
+                        {client.industry && (
+                          <p className="text-xs text-muted-foreground mt-1">Industry: {client.industry}</p>
+                        )}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuItem onClick={() => deleteClient.mutate(client.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Client
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Tasks Tab */}
+        <TabsContent value="tasks" className="space-y-4">
+          <div className="flex justify-end">
+            <Dialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen}>
+              <DialogTrigger asChild>
+                <Button className="border-2">
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  New Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-2 sm:max-w-[500px]">
+                <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogTitle>Create New Task</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Task Title *</Label>
+                    <Input
+                      placeholder="e.g., Follow up with client"
+                      value={newTask.title}
+                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      placeholder="Task details..."
+                      value={newTask.description}
+                      onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Due Date</Label>
+                      <Input
+                        type="date"
+                        value={newTask.due_date}
+                        onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Related Deal</Label>
+                      <Select value={newTask.quote_id} onValueChange={(value) => setNewTask({ ...newTask, quote_id: value })}>
+                        <SelectTrigger className="border-2">
+                          <SelectValue placeholder="Select deal (optional)" />
+                        </SelectTrigger>
+                        <SelectContent className="border-2">
+                          {quotes?.map((quote) => (
+                            <SelectItem key={quote.id} value={quote.id}>
+                              {quote.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewTaskOpen(false)} className="border-2">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateTask} className="border-2" disabled={createTask.isPending}>
+                    {createTask.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Create Task
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Pending Tasks */}
+            <Card className="border-2 border-border shadow-sm">
+              <CardHeader className="border-b-2 border-border">
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Pending Tasks ({pendingTasks.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {pendingTasks.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    No pending tasks
+                  </div>
+                ) : (
+                  <div className="divide-y-2 divide-border">
+                    {pendingTasks.map((task) => (
+                      <div key={task.id} className="p-4 flex items-start gap-3">
+                        <Checkbox
+                          checked={task.completed}
+                          onCheckedChange={(checked) => handleToggleTask(task.id, checked as boolean)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">{task.title}</p>
+                          {task.description && (
+                            <p className="text-sm text-muted-foreground">{task.description}</p>
+                          )}
+                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                            {task.due_date && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {formatDate(task.due_date)}
+                              </span>
+                            )}
+                            {task.quote && (
+                              <span className="flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                {task.quote.title}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Completed Tasks */}
+            <Card className="border-2 border-border shadow-sm">
+              <CardHeader className="border-b-2 border-border">
+                <CardTitle className="flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5" />
+                  Completed ({completedTasks.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {completedTasks.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    No completed tasks
+                  </div>
+                ) : (
+                  <div className="divide-y-2 divide-border">
+                    {completedTasks.slice(0, 5).map((task) => (
+                      <div key={task.id} className="p-4 flex items-start gap-3">
+                        <Checkbox
+                          checked={task.completed}
+                          onCheckedChange={(checked) => handleToggleTask(task.id, checked as boolean)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium line-through text-muted-foreground">{task.title}</p>
+                          {task.quote && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                              <FileText className="h-3 w-3" />
+                              {task.quote.title}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Log Activity Dialog */}
       <Dialog open={isActivityDialogOpen} onOpenChange={setIsActivityDialogOpen}>

@@ -6,12 +6,168 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+// Permission types for role-based access control
+export type Permission = boolean | "own";
+export type ResourcePermissions = {
+  view: Permission;
+  create: Permission;
+  edit: Permission;
+  delete: Permission;
+};
+export type SettingsPermissions = {
+  view: Permission;
+  manage_org: Permission;
+  manage_users: Permission;
+  manage_roles: Permission;
+};
+export type Permissions = {
+  dashboard: { view: Permission };
+  projects: ResourcePermissions;
+  tickets: ResourcePermissions;
+  team: ResourcePermissions;
+  crm: ResourcePermissions;
+  quotes: ResourcePermissions;
+  features: ResourcePermissions;
+  feedback: ResourcePermissions;
+  emails: ResourcePermissions;
+  settings: SettingsPermissions;
+};
+
 export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
+      organizations: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          icon: string | null
+          logo_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          icon?: string | null
+          logo_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          icon?: string | null
+          logo_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      roles: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          description: string | null
+          is_system: boolean
+          permissions: Permissions
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          description?: string | null
+          is_system?: boolean
+          permissions: Permissions
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          description?: string | null
+          is_system?: boolean
+          permissions?: Permissions
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      invitations: {
+        Row: {
+          id: string
+          organization_id: string
+          email: string
+          role_id: string
+          invited_by: string | null
+          token: string
+          expires_at: string
+          accepted_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          email: string
+          role_id: string
+          invited_by?: string | null
+          token: string
+          expires_at: string
+          accepted_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          email?: string
+          role_id?: string
+          invited_by?: string | null
+          token?: string
+          expires_at?: string
+          accepted_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       crm_activities: {
         Row: {
           activity_date: string
@@ -524,18 +680,64 @@ export type Database = {
           }
         ]
       }
+      quote_line_items: {
+        Row: {
+          id: string
+          quote_id: string
+          description: string
+          quantity: number
+          unit_price: number
+          total: number
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          quote_id: string
+          description: string
+          quantity?: number
+          unit_price?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          quote_id?: string
+          description?: string
+          quantity?: number
+          unit_price?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_line_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       team_members: {
         Row: {
           avatar: string | null
+          auth_user_id: string | null
           contract_type: Database["public"]["Enums"]["contract_type"]
           created_at: string
           department: string
           email: string
           hourly_rate: number
           id: string
+          is_owner: boolean
           name: string
+          organization_id: string | null
           phone: string | null
           role: string
+          role_id: string | null
           salary: number
           status: Database["public"]["Enums"]["member_status"]
           total_hours: number
@@ -543,15 +745,19 @@ export type Database = {
         }
         Insert: {
           avatar?: string | null
+          auth_user_id?: string | null
           contract_type?: Database["public"]["Enums"]["contract_type"]
           created_at?: string
           department: string
           email: string
           hourly_rate?: number
           id?: string
+          is_owner?: boolean
           name: string
+          organization_id?: string | null
           phone?: string | null
           role: string
+          role_id?: string | null
           salary?: number
           status?: Database["public"]["Enums"]["member_status"]
           total_hours?: number
@@ -559,21 +765,144 @@ export type Database = {
         }
         Update: {
           avatar?: string | null
+          auth_user_id?: string | null
           contract_type?: Database["public"]["Enums"]["contract_type"]
           created_at?: string
           department?: string
           email?: string
           hourly_rate?: number
           id?: string
+          is_owner?: boolean
           name?: string
+          organization_id?: string | null
           phone?: string | null
           role?: string
+          role_id?: string | null
           salary?: number
           status?: Database["public"]["Enums"]["member_status"]
           total_hours?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "team_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      time_entries: {
+        Row: {
+          id: string
+          team_member_id: string
+          project_id: string | null
+          date: string
+          hours: number
+          description: string | null
+          billable: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          team_member_id: string
+          project_id?: string | null
+          date?: string
+          hours: number
+          description?: string | null
+          billable?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          team_member_id?: string
+          project_id?: string | null
+          date?: string
+          hours?: number
+          description?: string | null
+          billable?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      payments: {
+        Row: {
+          id: string
+          team_member_id: string
+          amount: number
+          payment_date: string
+          period_start: string | null
+          period_end: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          reference_number: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          team_member_id: string
+          amount: number
+          payment_date?: string
+          period_start?: string | null
+          period_end?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          reference_number?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          team_member_id?: string
+          amount?: number
+          payment_date?: string
+          period_start?: string | null
+          period_end?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          reference_number?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       tickets: {
         Row: {
@@ -637,7 +966,76 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      handle_new_user_signup: {
+        Args: {
+          p_user_id: string
+          p_email: string
+          p_name: string
+          p_org_name: string
+          p_org_slug: string
+        }
+        Returns: Json
+      }
+      handle_invitation_acceptance: {
+        Args: {
+          p_user_id: string
+          p_token: string
+          p_name: string
+        }
+        Returns: Json
+      }
+      create_default_roles_for_org: {
+        Args: {
+          org_id: string
+        }
+        Returns: undefined
+      }
+      auth_get_user_org_id: {
+        Args: Record<string, never>
+        Returns: string | null
+      }
+      auth_is_org_owner: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
+      auth_has_settings_permission: {
+        Args: {
+          perm: string
+        }
+        Returns: boolean
+      }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_resource_type: string
+          p_resource_id?: string
+          p_old_values?: Json
+          p_new_values?: Json
+        }
+        Returns: string
+      }
+      log_security_event: {
+        Args: {
+          p_event_type: string
+          p_event_details?: Json
+          p_risk_level?: string
+        }
+        Returns: string
+      }
+      is_account_locked: {
+        Args: {
+          p_email: string
+        }
+        Returns: boolean
+      }
+      record_login_attempt: {
+        Args: {
+          p_email: string
+          p_success: boolean
+          p_failure_reason?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       activity_type: "call" | "email" | "meeting" | "note"
@@ -659,6 +1057,8 @@ export type Database = {
       ticket_category: "feature" | "quote" | "feedback"
       ticket_priority: "high" | "medium" | "low"
       ticket_status: "open" | "in-progress" | "pending" | "closed"
+      payment_status: "pending" | "paid" | "cancelled"
+      payment_method: "direct_deposit" | "check" | "wire_transfer" | "e_transfer" | "cash" | "other"
     }
     CompositeTypes: {
       [_ in never]: never

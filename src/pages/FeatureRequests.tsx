@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Plus, Lightbulb, MapPin, Edit, Trash2, Check, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { Plus, Lightbulb, MapPin, Edit, Trash2, Check, Loader2, Ticket, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -23,41 +25,66 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useFeatureRequests, useCreateFeatureRequest, useUpdateFeatureRequest, useDeleteFeatureRequest } from "@/hooks/useFeatureRequests";
+import { useTickets, useDeleteTicket } from "@/hooks/useTickets";
 import { useProjects } from "@/hooks/useProjects";
 import { Database } from "@/integrations/supabase/types";
+import { ticketPriorityStyles, featureStatusStyles, ticketStatusStyles } from "@/lib/styles";
 
 type FeaturePriority = Database["public"]["Enums"]["feature_priority"];
 type FeatureStatus = Database["public"]["Enums"]["feature_status"];
 
-const priorityColors: Record<FeaturePriority, string> = {
-  high: "bg-destructive text-destructive-foreground",
-  medium: "bg-chart-4 text-foreground",
-  low: "bg-secondary text-secondary-foreground border-2 border-border",
+// Combined status colors for features and tickets
+const statusColors: Record<string, string> = {
+  // Feature statuses
+  backlog: "bg-slate-400 text-black",
+  "in-review": "bg-amber-500 text-black",
+  planned: "bg-blue-600 text-white",
+  "in-progress": "bg-cyan-600 text-white",
+  completed: "bg-emerald-600 text-white",
+  // Ticket statuses
+  ...ticketStatusStyles,
 };
 
-const statusColors: Record<FeatureStatus, string> = {
-  backlog: "bg-secondary text-secondary-foreground",
-  "in-review": "bg-chart-4 text-foreground",
-  planned: "bg-chart-1 text-background",
-  "in-progress": "bg-chart-2 text-background",
-  completed: "bg-primary text-primary-foreground",
-};
-
-const statusLabels: Record<FeatureStatus, string> = {
+const statusLabels: Record<string, string> = {
   backlog: "Backlog",
   "in-review": "In Review",
   planned: "Planned",
   "in-progress": "In Progress",
   completed: "Completed",
+  // Ticket statuses
+  open: "Open",
+  pending: "Pending",
+  closed: "Closed",
+};
+
+// Unified type for both feature requests and tickets
+type UnifiedFeature = {
+  id: string;
+  display_id: string;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  source: "feature_request" | "ticket";
+  client_name: string | null;
+  requested_by: string | null;
+  added_to_roadmap: boolean;
+  created_at: string;
+  projects: Array<{ project_id: string; project: { id: string; name: string; display_id: string } | null }>;
+  notes: string | null;
 };
 
 export default function FeatureRequests() {
-  const { data: features, isLoading, error } = useFeatureRequests();
+  const { navigateOrg } = useOrgNavigation();
+  const { data: features, isLoading: featuresLoading, error: featuresError } = useFeatureRequests();
+  const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: projects } = useProjects();
   const createFeature = useCreateFeatureRequest();
   const updateFeature = useUpdateFeatureRequest();
   const deleteFeature = useDeleteFeatureRequest();
+  const deleteTicket = useDeleteTicket();
 
+  const [activeTab, setActiveTab] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState({
@@ -68,6 +95,70 @@ export default function FeatureRequests() {
     client_name: "",
     notes: "",
   });
+
+  const isLoading = featuresLoading || ticketsLoading;
+
+  // Get feature tickets
+  const featureTickets = useMemo(() => {
+    return tickets?.filter(t => t.category === "feature") || [];
+  }, [tickets]);
+
+  // Unify features and tickets into single list
+  const unifiedFeatures: UnifiedFeature[] = useMemo(() => {
+    const items: UnifiedFeature[] = [];
+
+    // Add feature requests
+    features?.forEach((feature) => {
+      items.push({
+        id: feature.id,
+        display_id: feature.display_id,
+        title: feature.title,
+        description: feature.description,
+        priority: feature.priority,
+        status: feature.status,
+        source: "feature_request",
+        client_name: feature.client_name,
+        requested_by: feature.requested_by,
+        added_to_roadmap: feature.added_to_roadmap,
+        created_at: feature.created_at,
+        projects: feature.projects,
+        notes: feature.notes,
+      });
+    });
+
+    // Add tickets with category="feature"
+    featureTickets.forEach((ticket) => {
+      items.push({
+        id: ticket.id,
+        display_id: ticket.display_id,
+        title: ticket.title,
+        description: ticket.description,
+        priority: ticket.priority,
+        status: ticket.status,
+        source: "ticket",
+        client_name: ticket.project?.name || null,
+        requested_by: null,
+        added_to_roadmap: false,
+        created_at: ticket.created_at,
+        projects: ticket.project_id && ticket.project ? [{
+          project_id: ticket.project_id,
+          project: { id: ticket.project_id, name: ticket.project.name, display_id: ticket.project.display_id }
+        }] : [],
+        notes: null,
+      });
+    });
+
+    // Sort by created_at descending
+    return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [features, featureTickets]);
+
+  // Filter based on tab
+  const filteredFeatures = useMemo(() => {
+    if (activeTab === "all") return unifiedFeatures;
+    if (activeTab === "feature_requests") return unifiedFeatures.filter(f => f.source === "feature_request");
+    if (activeTab === "tickets") return unifiedFeatures.filter(f => f.source === "ticket");
+    return unifiedFeatures;
+  }, [unifiedFeatures, activeTab]);
 
   const handleCreateFeature = async () => {
     if (!newFeature.title) {
@@ -101,12 +192,25 @@ export default function FeatureRequests() {
     }
   };
 
-  const handleUpdateStatus = (id: string, status: FeatureStatus) => {
-    updateFeature.mutate({ id, status });
+  const handleUpdateStatus = (feature: UnifiedFeature, status: FeatureStatus) => {
+    if (feature.source === "feature_request") {
+      updateFeature.mutate({ id: feature.id, status });
+    }
+    // For tickets, we'd need to navigate to ticket detail or add a ticket update mutation
   };
 
-  const handleToggleRoadmap = (id: string, current: boolean) => {
-    updateFeature.mutate({ id, added_to_roadmap: !current });
+  const handleToggleRoadmap = (feature: UnifiedFeature) => {
+    if (feature.source === "feature_request") {
+      updateFeature.mutate({ id: feature.id, added_to_roadmap: !feature.added_to_roadmap });
+    }
+  };
+
+  const handleDelete = (feature: UnifiedFeature) => {
+    if (feature.source === "feature_request") {
+      deleteFeature.mutate(feature.id);
+    } else {
+      deleteTicket.mutate(feature.id);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -125,7 +229,7 @@ export default function FeatureRequests() {
     );
   }
 
-  if (error) {
+  if (featuresError) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p className="text-destructive">Failed to load feature requests</p>
@@ -135,6 +239,9 @@ export default function FeatureRequests() {
       </div>
     );
   }
+
+  const featureRequestCount = features?.length || 0;
+  const ticketCount = featureTickets.length;
 
   return (
     <div className="space-y-6">
@@ -255,7 +362,24 @@ export default function FeatureRequests() {
         </Dialog>
       </div>
 
-      {features?.length === 0 ? (
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="border-2 border-border p-1">
+          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            All ({unifiedFeatures.length})
+          </TabsTrigger>
+          <TabsTrigger value="feature_requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Lightbulb className="h-4 w-4 mr-1" />
+            Feature Requests ({featureRequestCount})
+          </TabsTrigger>
+          <TabsTrigger value="tickets" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Ticket className="h-4 w-4 mr-1" />
+            From Tickets ({ticketCount})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {filteredFeatures.length === 0 ? (
         <Card className="border-2 border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
@@ -268,22 +392,42 @@ export default function FeatureRequests() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {features?.map((feature) => (
-            <Card key={feature.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+          {filteredFeatures.map((feature) => (
+            <Card
+              key={`${feature.source}-${feature.id}`}
+              className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => {
+                if (feature.source === "ticket") {
+                  navigateOrg(`/tickets/${feature.display_id}`);
+                } else {
+                  navigateOrg(`/features/${feature.display_id}`);
+                }
+              }}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="h-10 w-10 rounded-full bg-chart-4 flex items-center justify-center">
-                      <Lightbulb className="h-5 w-5 text-foreground" />
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${feature.source === "ticket" ? "bg-blue-600" : "bg-amber-500"}`}>
+                      {feature.source === "ticket" ? (
+                        <Ticket className="h-5 w-5 text-white" />
+                      ) : (
+                        <Lightbulb className="h-5 w-5 text-black" />
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="font-mono text-xs text-muted-foreground">{feature.display_id}</span>
-                        <Badge className={priorityColors[feature.priority]}>
+                        {feature.source === "ticket" && (
+                          <Badge variant="outline" className="border-2 text-xs">
+                            <Ticket className="h-3 w-3 mr-1" />
+                            Ticket
+                          </Badge>
+                        )}
+                        <Badge className={ticketPriorityStyles[feature.priority as keyof typeof ticketPriorityStyles] || "bg-slate-400 text-black"}>
                           {feature.priority}
                         </Badge>
-                        <Badge className={statusColors[feature.status]}>
-                          {statusLabels[feature.status]}
+                        <Badge className={statusColors[feature.status] || statusColors.backlog}>
+                          {statusLabels[feature.status] || feature.status}
                         </Badge>
                         {feature.added_to_roadmap && (
                           <Badge variant="outline" className="border-2 gap-1">
@@ -296,7 +440,13 @@ export default function FeatureRequests() {
                       <p className="text-sm text-muted-foreground mb-2">{feature.description}</p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                         {feature.client_name && (
-                          <span>From: {feature.client_name}</span>
+                          <span className="flex items-center gap-1">
+                            <Building className="h-3 w-3" />
+                            {feature.client_name}
+                          </span>
+                        )}
+                        {feature.requested_by && (
+                          <span>From: {feature.requested_by}</span>
                         )}
                         <span>{formatDate(feature.created_at)}</span>
                       </div>
@@ -316,36 +466,40 @@ export default function FeatureRequests() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant={feature.added_to_roadmap ? "default" : "outline"}
-                      size="sm"
-                      className="border-2"
-                      onClick={() => handleToggleRoadmap(feature.id, feature.added_to_roadmap)}
-                    >
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {feature.added_to_roadmap ? "On Roadmap" : "Add to Roadmap"}
-                    </Button>
-                    <Select
-                      value={feature.status}
-                      onValueChange={(value: FeatureStatus) => handleUpdateStatus(feature.id, value)}
-                    >
-                      <SelectTrigger className="w-[130px] border-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="border-2">
-                        <SelectItem value="backlog">Backlog</SelectItem>
-                        <SelectItem value="in-review">In Review</SelectItem>
-                        <SelectItem value="planned">Planned</SelectItem>
-                        <SelectItem value="in-progress">In Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    {feature.source === "feature_request" && (
+                      <>
+                        <Button
+                          variant={feature.added_to_roadmap ? "default" : "outline"}
+                          size="sm"
+                          className="border-2"
+                          onClick={() => handleToggleRoadmap(feature)}
+                        >
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {feature.added_to_roadmap ? "On Roadmap" : "Add to Roadmap"}
+                        </Button>
+                        <Select
+                          value={feature.status}
+                          onValueChange={(value: FeatureStatus) => handleUpdateStatus(feature, value)}
+                        >
+                          <SelectTrigger className="w-[130px] border-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="border-2">
+                            <SelectItem value="backlog">Backlog</SelectItem>
+                            <SelectItem value="in-review">In Review</SelectItem>
+                            <SelectItem value="planned">Planned</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => deleteFeature.mutate(feature.id)}
+                      onClick={() => handleDelete(feature)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

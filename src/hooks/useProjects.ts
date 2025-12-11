@@ -2,24 +2,31 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Project = Tables<"projects">;
 export type ProjectInsert = TablesInsert<"projects">;
 export type ProjectUpdate = TablesUpdate<"projects">;
 
-// Fetch all projects
+// Fetch all projects for the current organization
 export function useProjects() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["projects"],
+    queryKey: ["projects", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data, error } = await supabase
         .from("projects")
         .select("*")
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as Project[];
     },
+    enabled: !!organization?.id,
   });
 }
 
@@ -42,42 +49,67 @@ export function useProject(id: string | undefined) {
   });
 }
 
-// Fetch project by display_id (e.g., PRJ-001)
+// Fetch project by display_id (e.g., PRJ-001) - filtered by organization
 export function useProjectByDisplayId(displayId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["projects", "display", displayId],
+    queryKey: ["projects", "display", displayId, organization?.id],
     queryFn: async () => {
-      if (!displayId) return null;
+      if (!displayId || !organization?.id) return null;
       const { data, error } = await supabase
         .from("projects")
         .select("*")
         .eq("display_id", displayId)
+        .eq("organization_id", organization.id)
         .single();
 
       if (error) throw error;
       return data as Project;
     },
-    enabled: !!displayId,
+    enabled: !!displayId && !!organization?.id,
   });
+}
+
+// Generate unique display ID within organization
+async function generateUniqueProjectDisplayId(organizationId: string): Promise<string> {
+  const { data } = await supabase
+    .from("projects")
+    .select("display_id")
+    .eq("organization_id", organizationId)
+    .like("display_id", "PRJ-%")
+    .order("display_id", { ascending: false })
+    .limit(1);
+
+  let nextNum = 1;
+  if (data && data.length > 0) {
+    // Match patterns like PRJ-001 or PRJ-DEMO-001
+    const match = data[0].display_id.match(/PRJ-(?:DEMO-)?(\d+)/);
+    if (match) {
+      nextNum = parseInt(match[1], 10) + 1;
+    }
+  }
+
+  return `PRJ-${String(nextNum).padStart(3, "0")}`;
 }
 
 // Create project
 export function useCreateProject() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
-    mutationFn: async (project: Omit<ProjectInsert, "display_id"> & { display_id?: string }) => {
+    mutationFn: async (project: Omit<ProjectInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       // Generate display_id if not provided
       if (!project.display_id) {
-        const { count } = await supabase
-          .from("projects")
-          .select("*", { count: "exact", head: true });
-        project.display_id = `PRJ-${String((count || 0) + 1).padStart(3, "0")}`;
+        project.display_id = await generateUniqueProjectDisplayId(organization.id);
       }
 
       const { data, error } = await supabase
         .from("projects")
-        .insert(project as ProjectInsert)
+        .insert({ ...project, organization_id: organization.id } as ProjectInsert)
         .select()
         .single();
 

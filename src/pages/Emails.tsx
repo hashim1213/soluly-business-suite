@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Email {
   id: string;
@@ -26,10 +27,10 @@ interface Email {
 }
 
 const categoryStyles: Record<string, string> = {
-  feature_request: "bg-chart-4 text-foreground",
-  customer_quote: "bg-chart-1 text-background",
-  feedback: "bg-chart-2 text-background",
-  other: "bg-muted text-muted-foreground",
+  feature_request: "bg-amber-500 text-black",
+  customer_quote: "bg-blue-600 text-white",
+  feedback: "bg-emerald-600 text-white",
+  other: "bg-slate-400 text-black",
 };
 
 const categoryLabels: Record<string, string> = {
@@ -40,6 +41,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function Emails() {
+  const { organization } = useAuth();
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -53,14 +55,20 @@ export default function Emails() {
   });
 
   const fetchEmails = async () => {
+    if (!organization?.id) {
+      setEmails([]);
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("emails")
       .select("*")
+      .eq("organization_id", organization.id)
       .order("received_at", { ascending: false });
 
     if (error) {
       toast.error("Failed to fetch emails");
-      console.error(error);
     } else {
       setEmails(data as Email[]);
     }
@@ -68,7 +76,9 @@ export default function Emails() {
   };
 
   useEffect(() => {
-    fetchEmails();
+    if (organization?.id) {
+      fetchEmails();
+    }
 
     // Subscribe to realtime updates
     const channel = supabase
@@ -85,7 +95,7 @@ export default function Emails() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [organization?.id]);
 
   const processEmail = async (email: Email) => {
     setProcessingId(email.id);
@@ -104,8 +114,7 @@ export default function Emails() {
 
       toast.success(`Email categorized as: ${categoryLabels[data.category] || data.category}`);
       fetchEmails();
-    } catch (err) {
-      console.error("Processing error:", err);
+    } catch {
       toast.error("Failed to process email");
     } finally {
       setProcessingId(null);
@@ -151,7 +160,13 @@ export default function Emails() {
       return;
     }
 
+    if (!organization?.id) {
+      toast.error("No organization found");
+      return;
+    }
+
     const { error } = await supabase.from("emails").insert({
+      organization_id: organization.id,
       subject: newEmail.subject,
       sender_email: newEmail.sender_email,
       sender_name: newEmail.sender_name || null,
@@ -160,7 +175,6 @@ export default function Emails() {
 
     if (error) {
       toast.error("Failed to add email");
-      console.error(error);
     } else {
       toast.success("Email added successfully");
       setNewEmail({ subject: "", sender_email: "", sender_name: "", body: "" });
@@ -308,8 +322,8 @@ export default function Emails() {
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-4">
-                <Mail className="h-5 w-5" />
+              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-amber-500">
+                <Mail className="h-5 w-5 text-black" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{unprocessedCount}</div>
@@ -321,8 +335,8 @@ export default function Emails() {
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
-                <Archive className="h-5 w-5 text-background" />
+              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-emerald-600">
+                <Archive className="h-5 w-5 text-white" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{processedCount}</div>
@@ -362,10 +376,10 @@ export default function Emails() {
                   <div className="flex items-start gap-4">
                     <div
                       className={`h-10 w-10 border-2 border-border flex items-center justify-center shrink-0 ${
-                        email.status === "processed" ? "bg-secondary" : "bg-chart-4"
+                        email.status === "processed" ? "bg-secondary" : "bg-amber-500"
                       }`}
                     >
-                      <Mail className="h-5 w-5" />
+                      <Mail className={`h-5 w-5 ${email.status === "processed" ? "" : "text-black"}`} />
                     </div>
 
                     <div className="flex-1 min-w-0">

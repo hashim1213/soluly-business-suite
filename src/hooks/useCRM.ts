@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type CrmClient = Tables<"crm_clients">;
 export type CrmClientInsert = TablesInsert<"crm_clients">;
@@ -15,19 +16,25 @@ export type CrmLeadUpdate = TablesUpdate<"crm_leads">;
 // CLIENTS
 // =====================
 
-// Fetch all clients
+// Fetch all clients for the current organization
 export function useCrmClients() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["crm_clients"],
+    queryKey: ["crm_clients", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data, error } = await supabase
         .from("crm_clients")
         .select("*")
+        .eq("organization_id", organization.id)
         .order("name", { ascending: true });
 
       if (error) throw error;
       return data as CrmClient[];
     },
+    enabled: !!organization?.id,
   });
 }
 
@@ -96,9 +103,12 @@ export function useCrmClientByDisplayId(displayId: string | undefined) {
 // Create client
 export function useCreateCrmClient() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
-    mutationFn: async (client: Omit<CrmClientInsert, "display_id"> & { display_id?: string }) => {
+    mutationFn: async (client: Omit<CrmClientInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       if (!client.display_id) {
         const { count } = await supabase
           .from("crm_clients")
@@ -108,7 +118,7 @@ export function useCreateCrmClient() {
 
       const { data, error } = await supabase
         .from("crm_clients")
-        .insert(client as CrmClientInsert)
+        .insert({ ...client, organization_id: organization.id } as CrmClientInsert)
         .select()
         .single();
 
@@ -179,19 +189,25 @@ export function useDeleteCrmClient() {
 // LEADS
 // =====================
 
-// Fetch all leads
+// Fetch all leads for the current organization
 export function useCrmLeads() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["crm_leads"],
+    queryKey: ["crm_leads", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data, error } = await supabase
         .from("crm_leads")
         .select("*")
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as CrmLead[];
     },
+    enabled: !!organization?.id,
   });
 }
 
@@ -217,9 +233,12 @@ export function useCrmLead(id: string | undefined) {
 // Create lead
 export function useCreateCrmLead() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
-    mutationFn: async (lead: Omit<CrmLeadInsert, "display_id"> & { display_id?: string }) => {
+    mutationFn: async (lead: Omit<CrmLeadInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       if (!lead.display_id) {
         const { count } = await supabase
           .from("crm_leads")
@@ -229,7 +248,7 @@ export function useCreateCrmLead() {
 
       const { data, error } = await supabase
         .from("crm_leads")
-        .insert(lead as CrmLeadInsert)
+        .insert({ ...lead, organization_id: organization.id } as CrmLeadInsert)
         .select()
         .single();
 

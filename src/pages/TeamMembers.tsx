@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import {
   Users,
   Plus,
@@ -63,7 +64,7 @@ const departments = ["Management", "Engineering", "Design", "Quality", "Operatio
 const contractTypes: ContractType[] = ["Full-time", "Part-time", "Contractor"];
 
 export default function TeamMembers() {
-  const navigate = useNavigate();
+  const { navigateOrg } = useOrgNavigation();
   const { data: teamMembers, isLoading, error } = useTeamMembersWithProjects();
   const createTeamMember = useCreateTeamMember();
   const updateTeamMember = useUpdateTeamMember();
@@ -192,14 +193,14 @@ export default function TeamMembers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Team Members</h1>
-          <p className="text-muted-foreground">Manage your team across all projects</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Team Members</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your team across all projects</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="border-2">
+            <Button className="border-2 w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Team Member
             </Button>
@@ -320,55 +321,55 @@ export default function TeamMembers() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
-                <Users className="h-5 w-5 text-background" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-emerald-600 shrink-0">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{activeMembers}</div>
-                <div className="text-sm text-muted-foreground">Active Members</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold truncate">{activeMembers}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Active</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
-                <Clock className="h-5 w-5 text-background" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-blue-600 shrink-0">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
-              <div>
-                <div className="text-2xl font-bold font-mono">{totalHours}</div>
-                <div className="text-sm text-muted-foreground">Total Hours</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-primary">
-                <DollarSign className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold font-mono">${totalLaborCost.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground">Labor Cost</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold font-mono truncate">{totalHours}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Hours</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
-                <Briefcase className="h-5 w-5" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-primary shrink-0">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{contractors}</div>
-                <div className="text-sm text-muted-foreground">Contractors</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold font-mono truncate">${totalLaborCost.toLocaleString()}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Labor Cost</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-2 border-border shadow-sm">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-secondary shrink-0">
+                <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold truncate">{contractors}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Contractors</div>
               </div>
             </div>
           </CardContent>
@@ -415,69 +416,24 @@ export default function TeamMembers() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-b-2 hover:bg-transparent">
-                <TableHead className="font-bold uppercase text-xs">Member</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Role</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Department</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Contract</TableHead>
-                <TableHead className="font-bold uppercase text-xs text-right">Rate/Hr</TableHead>
-                <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Projects</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredMembers.map((member) => (
-                <TableRow key={member.id} className="border-b-2 cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/team/${member.id}`)}>
-                  <TableCell>
-                    <Link to={`/team/${member.id}`} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                      <Avatar className="h-8 w-8 border-2 border-border">
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium text-primary hover:underline">{member.name}</div>
-                        <div className="text-xs text-muted-foreground">{member.email}</div>
-                      </div>
-                    </Link>
-                  </TableCell>
-                  <TableCell>{member.role}</TableCell>
-                  <TableCell>{member.department}</TableCell>
-                  <TableCell>
-                    <Badge variant={member.contract_type === "Full-time" ? "default" : member.contract_type === "Contractor" ? "secondary" : "outline"} className="border-2 border-border">
-                      {member.contract_type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-mono">${member.hourly_rate}</TableCell>
-                  <TableCell className="text-right font-mono">{member.total_hours}h</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {member.projects.length > 0 ? (
-                        member.projects.slice(0, 2).map((p) => (
-                          <Link key={p.project_id} to={`/projects/${p.project?.display_id}`} onClick={(e) => e.stopPropagation()}>
-                            <Badge variant="outline" className="border-2 cursor-pointer hover:bg-accent text-xs">
-                              {p.project?.name || p.project_id}
-                            </Badge>
-                          </Link>
-                        ))
-                      ) : (
-                        <span className="text-muted-foreground text-sm">No projects</span>
-                      )}
-                      {member.projects.length > 2 && (
-                        <Badge variant="outline" className="border-2 text-xs">
-                          +{member.projects.length - 2}
-                        </Badge>
-                      )}
+          {/* Mobile view - cards */}
+          <div className="block sm:hidden divide-y-2 divide-border">
+            {filteredMembers.map((member) => (
+              <div key={member.id} className="p-4 cursor-pointer hover:bg-accent/50" onClick={() => navigateOrg(`/team/${member.id}`)}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-10 w-10 border-2 border-border shrink-0">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="font-medium text-primary truncate">{member.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{member.role}</div>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={member.status === "active" ? "bg-chart-2 text-background" : "bg-muted text-muted-foreground"}>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge className={`text-xs ${member.status === "active" ? "bg-emerald-600 text-white" : "bg-slate-400 text-black"}`}>
                       {member.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border-2 border-transparent hover:border-border">
@@ -509,11 +465,134 @@ export default function TeamMembers() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </TableCell>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
+                  <span className="text-muted-foreground">{member.department}</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="font-mono">${member.hourly_rate}/hr</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="font-mono">{member.total_hours}h</span>
+                </div>
+                {member.projects.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {member.projects.slice(0, 2).map((p) => (
+                      <Badge key={p.project_id} variant="outline" className="border-2 text-xs">
+                        {p.project?.name || p.project_id}
+                      </Badge>
+                    ))}
+                    {member.projects.length > 2 && (
+                      <Badge variant="outline" className="border-2 text-xs">
+                        +{member.projects.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {/* Desktop view - table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b-2 hover:bg-transparent">
+                  <TableHead className="font-bold uppercase text-xs">Member</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Role</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Department</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Contract</TableHead>
+                  <TableHead className="font-bold uppercase text-xs text-right">Rate/Hr</TableHead>
+                  <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Projects</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Status</TableHead>
+                  <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredMembers.map((member) => (
+                  <TableRow key={member.id} className="border-b-2 cursor-pointer hover:bg-accent/50" onClick={() => navigateOrg(`/team/${member.id}`)}>
+                    <TableCell>
+                      <Link to={`/team/${member.id}`} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                        <Avatar className="h-8 w-8 border-2 border-border">
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium text-primary hover:underline">{member.name}</div>
+                          <div className="text-xs text-muted-foreground">{member.email}</div>
+                        </div>
+                      </Link>
+                    </TableCell>
+                    <TableCell>{member.role}</TableCell>
+                    <TableCell>{member.department}</TableCell>
+                    <TableCell>
+                      <Badge variant={member.contract_type === "Full-time" ? "default" : member.contract_type === "Contractor" ? "secondary" : "outline"} className="border-2 border-border">
+                        {member.contract_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-mono">${member.hourly_rate}</TableCell>
+                    <TableCell className="text-right font-mono">{member.total_hours}h</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {member.projects.length > 0 ? (
+                          member.projects.slice(0, 2).map((p) => (
+                            <Link key={p.project_id} to={`/projects/${p.project?.display_id}`} onClick={(e) => e.stopPropagation()}>
+                              <Badge variant="outline" className="border-2 cursor-pointer hover:bg-accent text-xs">
+                                {p.project?.name || p.project_id}
+                              </Badge>
+                            </Link>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground text-sm">No projects</span>
+                        )}
+                        {member.projects.length > 2 && (
+                          <Badge variant="outline" className="border-2 text-xs">
+                            +{member.projects.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={member.status === "active" ? "bg-emerald-600 text-white" : "bg-slate-400 text-black"}>
+                        {member.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border-2 border-transparent hover:border-border">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingMember(member);
+                            setIsEditDialogOpen(true);
+                          }}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            toggleMemberStatus(member.id, member.status);
+                          }}>
+                            <Users className="h-4 w-4 mr-2" />
+                            {member.status === "active" ? "Deactivate" : "Activate"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteMember(member.id, member.name);
+                          }}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           {filteredMembers.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No team members found matching your criteria

@@ -1,21 +1,24 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useState } from "react";
 import {
   ArrowLeft,
   Mail,
   Phone,
-  MapPin,
   Calendar,
   Clock,
   DollarSign,
-  Building,
   CreditCard,
-  Briefcase,
   Edit,
-  FileText,
-  TrendingUp,
-  Plus,
+  Loader2,
+  Save,
   Trash2,
+  MoreVertical,
+  Users,
+  Briefcase,
+  Plus,
+  Check,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -48,340 +52,335 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import {
+  useTeamMember,
+  useUpdateTeamMember,
+  useDeleteTeamMember,
+} from "@/hooks/useTeamMembers";
+import {
+  useTimeEntriesByMember,
+  useCreateTimeEntry,
+  useDeleteTimeEntry,
+} from "@/hooks/useTimeEntries";
+import {
+  usePaymentsByMember,
+  usePaymentSummary,
+  useCreatePayment,
+  useUpdatePayment,
+  useDeletePayment,
+  useMarkPaymentPaid,
+  PaymentMethod,
+  PaymentStatus,
+} from "@/hooks/usePayments";
+import { useProjects } from "@/hooks/useProjects";
+import { useAddProjectTeamMember, useRemoveProjectTeamMember } from "@/hooks/useProjectTeamMembers";
+import { Database } from "@/integrations/supabase/types";
+import { formatDistanceToNow, format } from "date-fns";
 
-// Mock team member data
-const teamMembersData: Record<string, {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  department: string;
-  hourlyRate: number;
-  salary: number;
-  contractType: string;
-  status: string;
-  avatar: string;
-  startDate: string;
-  location: {
-    address: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-  };
-  paymentInfo: {
-    method: string;
-    details: string;
-  };
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relation: string;
-  };
-}> = {
-  "1": {
-    id: "1",
-    name: "You",
-    email: "you@company.com",
-    phone: "+1 555-0100",
-    role: "Project Lead",
-    department: "Management",
-    hourlyRate: 150,
-    salary: 120000,
-    contractType: "Full-time",
-    status: "active",
-    avatar: "Y",
-    startDate: "Jan 15, 2020",
-    location: {
-      address: "123 Main Street",
-      city: "San Francisco",
-      state: "CA",
-      zip: "94105",
-      country: "USA",
-    },
-    paymentInfo: {
-      method: "Direct Deposit",
-      details: "Bank of America - ****4521",
-    },
-    emergencyContact: {
-      name: "Jane Doe",
-      phone: "+1 555-0199",
-      relation: "Spouse",
-    },
-  },
-  "2": {
-    id: "2",
-    name: "Sarah Chen",
-    email: "sarah@company.com",
-    phone: "+1 555-0101",
-    role: "Senior Developer",
-    department: "Engineering",
-    hourlyRate: 95,
-    salary: 95000,
-    contractType: "Full-time",
-    status: "active",
-    avatar: "SC",
-    startDate: "Mar 10, 2021",
-    location: {
-      address: "456 Oak Avenue",
-      city: "Oakland",
-      state: "CA",
-      zip: "94612",
-      country: "USA",
-    },
-    paymentInfo: {
-      method: "Direct Deposit",
-      details: "Chase Bank - ****7823",
-    },
-    emergencyContact: {
-      name: "Michael Chen",
-      phone: "+1 555-0188",
-      relation: "Brother",
-    },
-  },
-  "3": {
-    id: "3",
-    name: "Mike Johnson",
-    email: "mike@company.com",
-    phone: "+1 555-0102",
-    role: "Designer",
-    department: "Design",
-    hourlyRate: 85,
-    salary: 0,
-    contractType: "Contractor",
-    status: "active",
-    avatar: "MJ",
-    startDate: "Jun 1, 2022",
-    location: {
-      address: "789 Creative Blvd",
-      city: "Los Angeles",
-      state: "CA",
-      zip: "90001",
-      country: "USA",
-    },
-    paymentInfo: {
-      method: "E-Transfer",
-      details: "mike.johnson@email.com",
-    },
-    emergencyContact: {
-      name: "Lisa Johnson",
-      phone: "+1 555-0177",
-      relation: "Wife",
-    },
-  },
-  "4": {
-    id: "4",
-    name: "Emma Wilson",
-    email: "emma@company.com",
-    phone: "+1 555-0103",
-    role: "Developer",
-    department: "Engineering",
-    hourlyRate: 90,
-    salary: 90000,
-    contractType: "Full-time",
-    status: "active",
-    avatar: "EW",
-    startDate: "Sep 15, 2021",
-    location: {
-      address: "321 Tech Park Drive",
-      city: "San Jose",
-      state: "CA",
-      zip: "95134",
-      country: "USA",
-    },
-    paymentInfo: {
-      method: "Direct Deposit",
-      details: "Wells Fargo - ****9012",
-    },
-    emergencyContact: {
-      name: "Tom Wilson",
-      phone: "+1 555-0166",
-      relation: "Father",
-    },
-  },
-  "5": {
-    id: "5",
-    name: "David Brown",
-    email: "david@company.com",
-    phone: "+1 555-0104",
-    role: "QA Engineer",
-    department: "Quality",
-    hourlyRate: 75,
-    salary: 75000,
-    contractType: "Full-time",
-    status: "active",
-    avatar: "DB",
-    startDate: "Feb 1, 2023",
-    location: {
-      address: "567 Quality Lane",
-      city: "Palo Alto",
-      state: "CA",
-      zip: "94301",
-      country: "USA",
-    },
-    paymentInfo: {
-      method: "Direct Deposit",
-      details: "Citibank - ****3456",
-    },
-    emergencyContact: {
-      name: "Sarah Brown",
-      phone: "+1 555-0155",
-      relation: "Spouse",
-    },
-  },
-  "6": {
-    id: "6",
-    name: "Lisa Park",
-    email: "lisa@company.com",
-    phone: "+1 555-0105",
-    role: "Business Analyst",
-    department: "Operations",
-    hourlyRate: 80,
-    salary: 80000,
-    contractType: "Full-time",
-    status: "active",
-    avatar: "LP",
-    startDate: "Nov 10, 2022",
-    location: {
-      address: "890 Business Center",
-      city: "Mountain View",
-      state: "CA",
-      zip: "94043",
-      country: "USA",
-    },
-    paymentInfo: {
-      method: "Direct Deposit",
-      details: "US Bank - ****7890",
-    },
-    emergencyContact: {
-      name: "Kevin Park",
-      phone: "+1 555-0144",
-      relation: "Brother",
-    },
-  },
-  "7": {
-    id: "7",
-    name: "James Lee",
-    email: "james@company.com",
-    phone: "+1 555-0106",
-    role: "DevOps Engineer",
-    department: "Engineering",
-    hourlyRate: 100,
-    salary: 100000,
-    contractType: "Full-time",
-    status: "active",
-    avatar: "JL",
-    startDate: "Aug 5, 2020",
-    location: {
-      address: "234 Cloud Street",
-      city: "Sunnyvale",
-      state: "CA",
-      zip: "94086",
-      country: "USA",
-    },
-    paymentInfo: {
-      method: "Direct Deposit",
-      details: "First Republic - ****2345",
-    },
-    emergencyContact: {
-      name: "Mary Lee",
-      phone: "+1 555-0133",
-      relation: "Mother",
-    },
-  },
-  "8": {
-    id: "8",
-    name: "Anna Martinez",
-    email: "anna@company.com",
-    phone: "+1 555-0107",
-    role: "UI Designer",
-    department: "Design",
-    hourlyRate: 80,
-    salary: 0,
-    contractType: "Contractor",
-    status: "inactive",
-    avatar: "AM",
-    startDate: "Apr 20, 2023",
-    location: {
-      address: "456 Design Plaza",
-      city: "San Diego",
-      state: "CA",
-      zip: "92101",
-      country: "USA",
-    },
-    paymentInfo: {
-      method: "E-Transfer",
-      details: "anna.martinez@email.com",
-    },
-    emergencyContact: {
-      name: "Carlos Martinez",
-      phone: "+1 555-0122",
-      relation: "Husband",
-    },
-  },
-};
+type ContractType = Database["public"]["Enums"]["contract_type"];
+type MemberStatus = Database["public"]["Enums"]["member_status"];
 
-// Mock time entries for this member
-const timeEntriesData = [
-  { id: "1", date: "Dec 9, 2024", project: "Acme Corp", projectId: "PRJ-001", hours: 8, description: "Feature development", billable: true },
-  { id: "2", date: "Dec 8, 2024", project: "Acme Corp", projectId: "PRJ-001", hours: 7, description: "Code review", billable: true },
-  { id: "3", date: "Dec 7, 2024", project: "TechStart Inc", projectId: "PRJ-002", hours: 6, description: "UI implementation", billable: true },
-  { id: "4", date: "Dec 6, 2024", project: "Acme Corp", projectId: "PRJ-001", hours: 8, description: "Bug fixes", billable: true },
-  { id: "5", date: "Dec 5, 2024", project: "Internal", projectId: "", hours: 2, description: "Team meeting", billable: false },
-  { id: "6", date: "Dec 4, 2024", project: "CloudNine Systems", projectId: "PRJ-005", hours: 5, description: "API integration", billable: true },
-  { id: "7", date: "Dec 3, 2024", project: "Acme Corp", projectId: "PRJ-001", hours: 8, description: "Sprint planning", billable: true },
-  { id: "8", date: "Dec 2, 2024", project: "TechStart Inc", projectId: "PRJ-002", hours: 4, description: "Design review", billable: true },
-];
-
-// Mock payment history
-const paymentHistoryData = [
-  { id: "1", date: "Dec 1, 2024", amount: 4500, period: "Nov 16-30, 2024", status: "paid", method: "Direct Deposit" },
-  { id: "2", date: "Nov 15, 2024", amount: 4800, period: "Nov 1-15, 2024", status: "paid", method: "Direct Deposit" },
-  { id: "3", date: "Nov 1, 2024", amount: 4200, period: "Oct 16-31, 2024", status: "paid", method: "Direct Deposit" },
-  { id: "4", date: "Oct 15, 2024", amount: 4650, period: "Oct 1-15, 2024", status: "paid", method: "Direct Deposit" },
-];
-
-// Mock project breakdown
-const projectBreakdownData = [
-  { projectId: "PRJ-001", projectName: "Acme Corp", totalHours: 120, percentage: 45 },
-  { projectId: "PRJ-002", projectName: "TechStart Inc", totalHours: 60, percentage: 23 },
-  { projectId: "PRJ-005", projectName: "CloudNine Systems", totalHours: 45, percentage: 17 },
-  { projectId: "PRJ-003", projectName: "Global Solutions", totalHours: 25, percentage: 10 },
-  { projectId: "", projectName: "Internal/Non-billable", totalHours: 14, percentage: 5 },
+const departments = ["Management", "Engineering", "Design", "Quality", "Operations"];
+const contractTypes: ContractType[] = ["Full-time", "Part-time", "Contractor"];
+const paymentMethods: { value: PaymentMethod; label: string }[] = [
+  { value: "direct_deposit", label: "Direct Deposit" },
+  { value: "check", label: "Check" },
+  { value: "wire_transfer", label: "Wire Transfer" },
+  { value: "e_transfer", label: "E-Transfer" },
+  { value: "cash", label: "Cash" },
+  { value: "other", label: "Other" },
 ];
 
 export default function TeamMemberDetail() {
   const { memberId } = useParams();
-  const navigate = useNavigate();
-  const [timeEntries, setTimeEntries] = useState(timeEntriesData);
-  const [paymentHistory] = useState(paymentHistoryData);
+  const { navigateOrg, getOrgPath } = useOrgNavigation();
+
+  const { data: member, isLoading, error } = useTeamMember(memberId);
+  const { data: timeEntries, isLoading: timeEntriesLoading } = useTimeEntriesByMember(memberId);
+  const { data: payments, isLoading: paymentsLoading } = usePaymentsByMember(memberId);
+  const { data: paymentSummary } = usePaymentSummary(memberId);
+  const { data: projects } = useProjects();
+
+  const updateTeamMember = useUpdateTeamMember();
+  const deleteTeamMember = useDeleteTeamMember();
+  const createTimeEntry = useCreateTimeEntry();
+  const deleteTimeEntry = useDeleteTimeEntry();
+  const addProjectTeamMember = useAddProjectTeamMember();
+  const removeProjectTeamMember = useRemoveProjectTeamMember();
+  const createPayment = useCreatePayment();
+  const updatePayment = useUpdatePayment();
+  const deletePayment = useDeletePayment();
+  const markPaymentPaid = useMarkPaymentPaid();
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isTimeEntryDialogOpen, setIsTimeEntryDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isAssignProjectDialogOpen, setIsAssignProjectDialogOpen] = useState(false);
 
-  const member = teamMembersData[memberId || ""] || teamMembersData["2"]; // Default to Sarah for demo
+  const [editData, setEditData] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+    department: string;
+    hourly_rate: number;
+    salary: number;
+    contract_type: ContractType;
+    status: MemberStatus;
+  } | null>(null);
 
-  if (!member) {
+  const [newTimeEntry, setNewTimeEntry] = useState({
+    project_id: "",
+    date: new Date().toISOString().split("T")[0],
+    hours: "",
+    description: "",
+    billable: true,
+  });
+
+  const [newPayment, setNewPayment] = useState({
+    amount: "",
+    payment_date: new Date().toISOString().split("T")[0],
+    period_start: "",
+    period_end: "",
+    payment_method: "direct_deposit" as PaymentMethod,
+    reference_number: "",
+    notes: "",
+  });
+
+  const handleStartEdit = () => {
+    if (!member) return;
+    setEditData({
+      name: member.name,
+      email: member.email,
+      phone: member.phone || "",
+      role: member.role,
+      department: member.department,
+      hourly_rate: member.hourly_rate,
+      salary: member.salary,
+      contract_type: member.contract_type,
+      status: member.status,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!member || !editData) return;
+    try {
+      await updateTeamMember.mutateAsync({
+        id: member.id,
+        name: editData.name,
+        email: editData.email,
+        phone: editData.phone || null,
+        role: editData.role,
+        department: editData.department,
+        hourly_rate: editData.hourly_rate,
+        salary: editData.salary,
+        contract_type: editData.contract_type,
+        status: editData.status,
+      });
+      setIsEditDialogOpen(false);
+      setEditData(null);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!member) return;
+    if (!confirm(`Are you sure you want to delete ${member.name}? This action cannot be undone.`)) return;
+    try {
+      await deleteTeamMember.mutateAsync(member.id);
+      navigateOrg("/team");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    if (!member) return;
+    try {
+      await updateTeamMember.mutateAsync({
+        id: member.id,
+        status: member.status === "active" ? "inactive" : "active",
+      });
+      toast.success(`${member.name} is now ${member.status === "active" ? "inactive" : "active"}`);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleAddTimeEntry = async () => {
+    if (!member || !newTimeEntry.hours) {
+      toast.error("Please enter hours");
+      return;
+    }
+
+    const hoursValue = parseFloat(newTimeEntry.hours);
+    if (isNaN(hoursValue) || hoursValue <= 0 || hoursValue > 24) {
+      toast.error("Hours must be between 0.01 and 24");
+      return;
+    }
+
+    try {
+      await createTimeEntry.mutateAsync({
+        team_member_id: member.id,
+        project_id: newTimeEntry.project_id && newTimeEntry.project_id !== "" ? newTimeEntry.project_id : null,
+        date: newTimeEntry.date,
+        hours: hoursValue,
+        description: newTimeEntry.description || null,
+        billable: newTimeEntry.billable,
+      });
+      setNewTimeEntry({
+        project_id: "",
+        date: new Date().toISOString().split("T")[0],
+        hours: "",
+        description: "",
+        billable: true,
+      });
+      setIsTimeEntryDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDeleteTimeEntry = async (id: string, hours: number, projectId?: string | null) => {
+    if (!member) return;
+    if (!confirm("Delete this time entry?")) return;
+    try {
+      await deleteTimeEntry.mutateAsync({ id, memberId: member.id, hours, projectId });
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleAddPayment = async () => {
+    if (!member || !newPayment.amount) {
+      toast.error("Please enter an amount");
+      return;
+    }
+
+    try {
+      await createPayment.mutateAsync({
+        team_member_id: member.id,
+        amount: parseFloat(newPayment.amount),
+        payment_date: newPayment.payment_date,
+        period_start: newPayment.period_start || null,
+        period_end: newPayment.period_end || null,
+        payment_method: newPayment.payment_method,
+        reference_number: newPayment.reference_number || null,
+        notes: newPayment.notes || null,
+        status: "paid",
+      });
+      setNewPayment({
+        amount: "",
+        payment_date: new Date().toISOString().split("T")[0],
+        period_start: "",
+        period_end: "",
+        payment_method: "direct_deposit",
+        reference_number: "",
+        notes: "",
+      });
+      setIsPaymentDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    if (!confirm("Delete this payment record?")) return;
+    try {
+      await deletePayment.mutateAsync(id);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <h2 className="text-xl font-bold mb-2">Team Member Not Found</h2>
-        <Button onClick={() => navigate("/team")}>Back to Team</Button>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !member) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={() => navigateOrg("/team")} className="border-2 border-transparent hover:border-border">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Team
+        </Button>
+        <Card className="border-2 border-border">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-bold mb-2">Team Member Not Found</h2>
+            <p className="text-muted-foreground">This team member doesn't exist or was deleted.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   // Calculate stats
-  const totalHours = timeEntries.reduce((sum, e) => sum + e.hours, 0);
-  const billableHours = timeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0);
-  const totalEarned = billableHours * member.hourlyRate;
-  const totalPaid = paymentHistory.reduce((sum, p) => sum + p.amount, 0);
-  const unpaidAmount = totalEarned - totalPaid;
+  const totalHours = member.total_hours;
+  const billableHours = timeEntries?.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0) || 0;
+  const totalEarned = billableHours * member.hourly_rate;
+  const totalPaid = paymentSummary?.totalPaid || 0;
+  const outstanding = totalEarned - totalPaid;
+  const projectCount = member.projects.length;
 
-  // Calculate tenure
-  const startDate = new Date(member.startDate);
+  // Calculate project breakdown
+  const projectBreakdown = member.projects.map(p => ({
+    project_id: p.project_id,
+    name: p.project?.name || "Unknown Project",
+    display_id: p.project?.display_id || "",
+    hours: p.hours_logged,
+    earnings: p.hours_logged * member.hourly_rate,
+  }));
+
+  const totalProjectHours = projectBreakdown.reduce((sum, p) => sum + p.hours, 0);
+
+  // Get available projects (not already assigned)
+  const assignedProjectIds = new Set(member.projects.map(p => p.project_id));
+  const availableProjects = projects?.filter(p => !assignedProjectIds.has(p.id) && p.status !== "completed") || [];
+
+  // Handlers for project assignment
+  const handleAssignProject = async (projectId: string) => {
+    if (!member) return;
+    try {
+      await addProjectTeamMember.mutateAsync({
+        projectId,
+        teamMemberId: member.id,
+      });
+      setIsAssignProjectDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleRemoveFromProject = async (projectId: string) => {
+    if (!member) return;
+    if (!confirm("Remove this team member from the project?")) return;
+    try {
+      await removeProjectTeamMember.mutateAsync({
+        projectId,
+        teamMemberId: member.id,
+      });
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  // Calculate tenure from created_at
+  const createdDate = new Date(member.created_at);
   const now = new Date();
-  const tenureMonths = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+  const tenureMonths = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
   const tenureYears = Math.floor(tenureMonths / 12);
   const remainingMonths = tenureMonths % 12;
   const tenureText = tenureYears > 0 ? `${tenureYears}y ${remainingMonths}m` : `${remainingMonths}m`;
@@ -389,89 +388,113 @@ export default function TeamMemberDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate("/team")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/team")} className="border-2 border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
       </div>
 
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border-2 border-border">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xl">{member.avatar}</AvatarFallback>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-border shrink-0">
+            <AvatarFallback className="bg-primary text-primary-foreground text-base sm:text-xl">
+              {member.avatar || member.name.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{member.name}</h1>
-              <Badge className={member.status === "active" ? "bg-chart-2 text-background" : "bg-muted text-muted-foreground"}>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">{member.name}</h1>
+              <Badge className={`text-xs ${member.status === "active" ? "bg-chart-2 text-background" : "bg-muted text-muted-foreground"}`}>
                 {member.status}
               </Badge>
-              <Badge variant={member.contractType === "Full-time" ? "default" : "secondary"} className="border-2 border-border">
-                {member.contractType}
+              <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border-2 border-border text-xs hidden sm:inline-flex">
+                {member.contract_type}
               </Badge>
             </div>
-            <p className="text-muted-foreground">{member.role} • {member.department}</p>
+            <p className="text-sm sm:text-base text-muted-foreground">{member.role} • {member.department}</p>
+            <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border-2 border-border text-xs sm:hidden mt-1">
+              {member.contract_type}
+            </Badge>
           </div>
         </div>
-        <Button className="border-2" onClick={() => setIsEditDialogOpen(true)}>
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Profile
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button className="border-2 flex-1 sm:flex-none" onClick={handleStartEdit}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Profile
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="border-2 border-transparent hover:border-border shrink-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="border-2">
+              <DropdownMenuItem onClick={handleToggleStatus}>
+                <Users className="h-4 w-4 mr-2" />
+                {member.status === "active" ? "Deactivate" : "Activate"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Member
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
-                <Clock className="h-5 w-5 text-background" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-chart-1 shrink-0">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
               </div>
-              <div>
-                <div className="text-2xl font-bold font-mono">{totalHours}h</div>
-                <div className="text-sm text-muted-foreground">Total Hours</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold font-mono truncate">{totalHours}h</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Total Hours</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
-                <DollarSign className="h-5 w-5 text-background" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-chart-2 shrink-0">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
               </div>
-              <div>
-                <div className="text-2xl font-bold font-mono">${totalPaid.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground">Total Paid</div>
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold font-mono truncate">${totalEarned.toLocaleString()}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Total Earned</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${unpaidAmount > 0 ? "bg-chart-4" : "bg-muted"}`}>
-                <CreditCard className="h-5 w-5" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-primary shrink-0">
+                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
-              <div>
-                <div className={`text-2xl font-bold font-mono ${unpaidAmount > 0 ? "text-chart-4" : ""}`}>
-                  ${unpaidAmount.toLocaleString()}
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl font-bold font-mono text-chart-2 truncate">${totalPaid.toLocaleString()}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Total Paid</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-2 border-border shadow-sm">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className={`h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center shrink-0 ${outstanding > 0 ? "bg-chart-4" : "bg-muted"}`}>
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className={`text-lg sm:text-2xl font-bold font-mono truncate ${outstanding > 0 ? "text-chart-4" : ""}`}>
+                  ${outstanding.toLocaleString()}
                 </div>
-                <div className="text-sm text-muted-foreground">Unpaid</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-primary">
-                <Calendar className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{tenureText}</div>
-                <div className="text-sm text-muted-foreground">Tenure</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Outstanding</div>
               </div>
             </div>
           </CardContent>
@@ -479,17 +502,17 @@ export default function TeamMemberDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="border-2 border-border p-1 bg-background">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+        <TabsList className="border-2 border-border p-1 bg-background w-full flex flex-wrap sm:w-auto">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex-1 sm:flex-none text-xs sm:text-sm">
             Overview
           </TabsTrigger>
-          <TabsTrigger value="hours" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Time Entries
+          <TabsTrigger value="hours" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex-1 sm:flex-none text-xs sm:text-sm">
+            Time
           </TabsTrigger>
-          <TabsTrigger value="payments" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="payments" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex-1 sm:flex-none text-xs sm:text-sm">
             Payments
           </TabsTrigger>
-          <TabsTrigger value="projects" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="projects" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex-1 sm:flex-none text-xs sm:text-sm">
             Projects
           </TabsTrigger>
         </TabsList>
@@ -505,32 +528,28 @@ export default function TeamMemberDetail() {
               <CardContent className="p-4 space-y-4">
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{member.email}</span>
+                  <a href={`mailto:${member.email}`} className="text-primary hover:underline">
+                    {member.email}
+                  </a>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{member.phone}</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
-                  <div>
-                    <div>{member.location.address}</div>
-                    <div>{member.location.city}, {member.location.state} {member.location.zip}</div>
-                    <div>{member.location.country}</div>
+                {member.phone && (
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span>{member.phone}</span>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Payment Info */}
             <Card className="border-2 border-border shadow-sm">
               <CardHeader className="border-b-2 border-border">
-                <CardTitle>Payment Information</CardTitle>
+                <CardTitle>Compensation</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Hourly Rate</span>
-                  <span className="font-mono font-bold">${member.hourlyRate}/hr</span>
+                  <span className="font-mono font-bold">${member.hourly_rate}/hr</span>
                 </div>
                 {member.salary > 0 && (
                   <div className="flex justify-between">
@@ -539,11 +558,24 @@ export default function TeamMemberDetail() {
                   </div>
                 )}
                 <div className="border-t-2 border-border pt-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-muted-foreground">Payment Method</span>
-                    <Badge variant="secondary" className="border-2 border-border">{member.paymentInfo.method}</Badge>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Billable Hours</span>
+                    <span className="font-mono font-bold">{billableHours}h</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">{member.paymentInfo.details}</div>
+                  <div className="flex justify-between mt-2">
+                    <span className="text-muted-foreground">Total Earned</span>
+                    <span className="font-mono font-bold">${totalEarned.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between mt-2">
+                    <span className="text-muted-foreground">Total Paid</span>
+                    <span className="font-mono font-bold text-chart-2">${totalPaid.toLocaleString()}</span>
+                  </div>
+                  {outstanding > 0 && (
+                    <div className="flex justify-between mt-2">
+                      <span className="text-muted-foreground">Outstanding</span>
+                      <span className="font-mono font-bold text-chart-4">${outstanding.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -555,8 +587,8 @@ export default function TeamMemberDetail() {
               </CardHeader>
               <CardContent className="p-4 space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Start Date</span>
-                  <span className="font-medium">{member.startDate}</span>
+                  <span className="text-muted-foreground">Member Since</span>
+                  <span className="font-medium">{formatDistanceToNow(new Date(member.created_at), { addSuffix: true })}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tenure</span>
@@ -568,30 +600,36 @@ export default function TeamMemberDetail() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Contract Type</span>
-                  <Badge variant={member.contractType === "Full-time" ? "default" : "secondary"} className="border-2 border-border">
-                    {member.contractType}
+                  <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border-2 border-border">
+                    {member.contract_type}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <Badge className={member.status === "active" ? "bg-chart-2 text-background" : "bg-muted text-muted-foreground"}>
+                    {member.status}
                   </Badge>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Emergency Contact */}
+            {/* Quick Stats */}
             <Card className="border-2 border-border shadow-sm">
               <CardHeader className="border-b-2 border-border">
-                <CardTitle>Emergency Contact</CardTitle>
+                <CardTitle>Performance</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Name</span>
-                  <span className="font-medium">{member.emergencyContact.name}</span>
+                  <span className="text-muted-foreground">Active Projects</span>
+                  <span className="font-bold">{projectCount}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Relationship</span>
-                  <span className="font-medium">{member.emergencyContact.relation}</span>
+                  <span className="text-muted-foreground">Total Time Entries</span>
+                  <span className="font-bold">{timeEntries?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Phone</span>
-                  <span className="font-medium">{member.emergencyContact.phone}</span>
+                  <span className="text-muted-foreground">Effective Rate</span>
+                  <span className="font-mono font-bold">${member.hourly_rate}/hr</span>
                 </div>
               </CardContent>
             </Card>
@@ -602,76 +640,151 @@ export default function TeamMemberDetail() {
         <TabsContent value="hours" className="space-y-6">
           <Card className="border-2 border-border shadow-sm">
             <CardHeader className="border-b-2 border-border">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle>Time Entries</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {billableHours} billable hours • {totalHours - billableHours} non-billable
+                  <CardTitle className="text-base sm:text-lg">Time Entries</CardTitle>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                    {billableHours} billable • {totalHours - billableHours} non-billable
                   </p>
                 </div>
+                <Button className="border-2 w-full sm:w-auto" onClick={() => setIsTimeEntryDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Log Time
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b-2 hover:bg-transparent">
-                    <TableHead className="font-bold uppercase text-xs">Date</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Project</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Description</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Type</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {timeEntries.map((entry) => (
-                    <TableRow key={entry.id} className="border-b-2">
-                      <TableCell className="text-muted-foreground">{entry.date}</TableCell>
-                      <TableCell>
-                        {entry.projectId ? (
-                          <Link to={`/projects/${entry.projectId}`} className="text-primary hover:underline">
-                            {entry.project}
+              {timeEntriesLoading ? (
+                <div className="p-8 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                </div>
+              ) : !timeEntries || timeEntries.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No time entries yet.</p>
+                  <Button variant="outline" className="mt-4 border-2" onClick={() => setIsTimeEntryDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Log First Entry
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Mobile view - cards */}
+                  <div className="block sm:hidden divide-y-2 divide-border">
+                    {timeEntries.map((entry) => (
+                      <div key={entry.id} className="p-4 space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-mono font-bold text-lg">{entry.hours}h</div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(new Date(entry.date), "MMM d, yyyy")}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {entry.billable ? (
+                              <Badge className="bg-chart-2 text-background text-xs">Billable</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="border-2 border-border text-xs">Non-billable</Badge>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteTimeEntry(entry.id, entry.hours, entry.project_id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        {entry.project && (
+                          <Link to={getOrgPath(`/projects/${entry.project.display_id}`)} className="text-primary hover:underline text-sm block">
+                            {entry.project.name}
                           </Link>
-                        ) : (
-                          <span className="text-muted-foreground">{entry.project}</span>
                         )}
-                      </TableCell>
-                      <TableCell>{entry.description}</TableCell>
-                      <TableCell className="text-right font-mono font-bold">{entry.hours}h</TableCell>
-                      <TableCell>
-                        {entry.billable ? (
-                          <Badge className="bg-chart-2 text-background">Billable</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="border-2 border-border">Non-billable</Badge>
+                        {entry.description && (
+                          <p className="text-sm text-muted-foreground">{entry.description}</p>
                         )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop view - table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b-2 hover:bg-transparent">
+                          <TableHead className="font-bold uppercase text-xs">Date</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Project</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Description</TableHead>
+                          <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Type</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {timeEntries.map((entry) => (
+                          <TableRow key={entry.id} className="border-b-2">
+                            <TableCell className="text-muted-foreground">
+                              {format(new Date(entry.date), "MMM d, yyyy")}
+                            </TableCell>
+                            <TableCell>
+                              {entry.project ? (
+                                <Link to={getOrgPath(`/projects/${entry.project.display_id}`)} className="text-primary hover:underline">
+                                  {entry.project.name}
+                                </Link>
+                              ) : (
+                                <span className="text-muted-foreground">No project</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{entry.description || "-"}</TableCell>
+                            <TableCell className="text-right font-mono font-bold">{entry.hours}h</TableCell>
+                            <TableCell>
+                              {entry.billable ? (
+                                <Badge className="bg-chart-2 text-background">Billable</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="border-2 border-border">Non-billable</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteTimeEntry(entry.id, entry.hours, entry.project_id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Payments Tab */}
         <TabsContent value="payments" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
             <Card className="border-2 border-border shadow-sm">
-              <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Total Earned</div>
-                <div className="text-2xl font-bold font-mono">${totalEarned.toLocaleString()}</div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="text-xs sm:text-sm text-muted-foreground">Total Earned</div>
+                <div className="text-xl sm:text-2xl font-bold font-mono">${totalEarned.toLocaleString()}</div>
               </CardContent>
             </Card>
             <Card className="border-2 border-border shadow-sm">
-              <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Total Paid</div>
-                <div className="text-2xl font-bold font-mono text-chart-2">${totalPaid.toLocaleString()}</div>
+              <CardContent className="p-3 sm:p-4">
+                <div className="text-xs sm:text-sm text-muted-foreground">Total Paid</div>
+                <div className="text-xl sm:text-2xl font-bold font-mono text-chart-2">${totalPaid.toLocaleString()}</div>
               </CardContent>
             </Card>
             <Card className="border-2 border-border shadow-sm">
-              <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Outstanding</div>
-                <div className={`text-2xl font-bold font-mono ${unpaidAmount > 0 ? "text-chart-4" : "text-chart-2"}`}>
-                  ${unpaidAmount.toLocaleString()}
+              <CardContent className="p-3 sm:p-4">
+                <div className="text-xs sm:text-sm text-muted-foreground">Outstanding</div>
+                <div className={`text-xl sm:text-2xl font-bold font-mono ${outstanding > 0 ? "text-chart-4" : "text-chart-2"}`}>
+                  ${outstanding.toLocaleString()}
                 </div>
               </CardContent>
             </Card>
@@ -679,99 +792,314 @@ export default function TeamMemberDetail() {
 
           <Card className="border-2 border-border shadow-sm">
             <CardHeader className="border-b-2 border-border">
-              <CardTitle>Payment History</CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="text-base sm:text-lg">Payment History</CardTitle>
+                <Button className="border-2 w-full sm:w-auto" onClick={() => setIsPaymentDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Record Payment
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b-2 hover:bg-transparent">
-                    <TableHead className="font-bold uppercase text-xs">Date</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Period</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Method</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Amount</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paymentHistory.map((payment) => (
-                    <TableRow key={payment.id} className="border-b-2">
-                      <TableCell className="font-medium">{payment.date}</TableCell>
-                      <TableCell className="text-muted-foreground">{payment.period}</TableCell>
-                      <TableCell>{payment.method}</TableCell>
-                      <TableCell className="text-right font-mono font-bold">${payment.amount.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge className="bg-chart-2 text-background">{payment.status}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {paymentsLoading ? (
+                <div className="p-8 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                </div>
+              ) : !payments || payments.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No payment history.</p>
+                  <Button variant="outline" className="mt-4 border-2" onClick={() => setIsPaymentDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Record First Payment
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Mobile view - cards */}
+                  <div className="block sm:hidden divide-y-2 divide-border">
+                    {payments.map((payment) => (
+                      <div key={payment.id} className="p-4 space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-mono font-bold text-lg">${payment.amount.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(new Date(payment.payment_date), "MMM d, yyyy")}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className={`text-xs ${payment.status === "paid" ? "bg-chart-2 text-background" : payment.status === "pending" ? "bg-chart-4 text-foreground" : "bg-muted text-muted-foreground"}`}>
+                              {payment.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {paymentMethods.find(m => m.value === payment.payment_method)?.label || payment.payment_method}
+                          </span>
+                          <div className="flex gap-1">
+                            {payment.status === "pending" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-chart-2 hover:text-chart-2"
+                                onClick={() => markPaymentPaid.mutate(payment.id)}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              onClick={() => handleDeletePayment(payment.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        {payment.period_start && payment.period_end && (
+                          <div className="text-xs text-muted-foreground">
+                            Period: {format(new Date(payment.period_start), "MMM d")} - {format(new Date(payment.period_end), "MMM d, yyyy")}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop view - table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b-2 hover:bg-transparent">
+                          <TableHead className="font-bold uppercase text-xs">Date</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Period</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Method</TableHead>
+                          <TableHead className="font-bold uppercase text-xs text-right">Amount</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Status</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payments.map((payment) => (
+                          <TableRow key={payment.id} className="border-b-2">
+                            <TableCell className="font-medium">
+                              {format(new Date(payment.payment_date), "MMM d, yyyy")}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {payment.period_start && payment.period_end
+                                ? `${format(new Date(payment.period_start), "MMM d")} - ${format(new Date(payment.period_end), "MMM d, yyyy")}`
+                                : "-"}
+                            </TableCell>
+                            <TableCell>
+                              {paymentMethods.find(m => m.value === payment.payment_method)?.label || payment.payment_method}
+                            </TableCell>
+                            <TableCell className="text-right font-mono font-bold">
+                              ${payment.amount.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={payment.status === "paid" ? "bg-chart-2 text-background" : payment.status === "pending" ? "bg-chart-4 text-foreground" : "bg-muted text-muted-foreground"}>
+                                {payment.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                {payment.status === "pending" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-chart-2 hover:text-chart-2"
+                                    onClick={() => markPaymentPaid.mutate(payment.id)}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeletePayment(payment.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Projects Tab */}
         <TabsContent value="projects" className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
-              <CardTitle>Project Hours Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              {projectBreakdownData.map((project) => (
-                <div key={project.projectId || "internal"} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    {project.projectId ? (
-                      <Link to={`/projects/${project.projectId}`} className="text-primary hover:underline font-medium">
-                        {project.projectName}
-                      </Link>
-                    ) : (
-                      <span className="text-muted-foreground">{project.projectName}</span>
-                    )}
-                    <span className="font-mono font-bold">{project.totalHours}h ({project.percentage}%)</span>
-                  </div>
-                  <Progress value={project.percentage} className="h-2" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          {projectBreakdown.length > 0 && (
+            <Card className="border-2 border-border shadow-sm">
+              <CardHeader className="border-b-2 border-border">
+                <CardTitle>Project Hours Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                {projectBreakdown.map((project) => {
+                  const percentage = totalProjectHours > 0 ? Math.round((project.hours / totalProjectHours) * 100) : 0;
+                  return (
+                    <div key={project.project_id} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        {project.display_id ? (
+                          <Link to={getOrgPath(`/projects/${project.display_id}`)} className="text-primary hover:underline font-medium">
+                            {project.name}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground">{project.name}</span>
+                        )}
+                        <span className="font-mono font-bold">{project.hours}h ({percentage}%)</span>
+                      </div>
+                      <Progress value={percentage} className="h-2" />
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-2 border-border shadow-sm">
             <CardHeader className="border-b-2 border-border">
-              <CardTitle>Active Projects</CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="text-base sm:text-lg">Assigned Projects</CardTitle>
+                <Dialog open={isAssignProjectDialogOpen} onOpenChange={setIsAssignProjectDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="border-2 w-full sm:w-auto">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Assign to Project
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="border-2 sm:max-w-[400px]">
+                    <DialogHeader className="border-b-2 border-border pb-4">
+                      <DialogTitle>Assign to Project</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2 max-h-[300px] overflow-y-auto">
+                      {availableProjects.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4">No available projects to assign</p>
+                      ) : (
+                        availableProjects.map((project) => (
+                          <div
+                            key={project.id}
+                            className="flex items-center justify-between p-3 border-2 border-border hover:bg-accent/50 cursor-pointer"
+                            onClick={() => handleAssignProject(project.id)}
+                          >
+                            <div>
+                              <div className="font-medium">{project.name}</div>
+                              <div className="text-xs text-muted-foreground">{project.display_id} • {project.client_name}</div>
+                            </div>
+                            <Badge className={project.status === "active" ? "bg-chart-2 text-background" : "bg-chart-4 text-foreground"}>
+                              {project.status}
+                            </Badge>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b-2 hover:bg-transparent">
-                    <TableHead className="font-bold uppercase text-xs">Project</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Earnings</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {projectBreakdownData.filter(p => p.projectId).map((project) => (
-                    <TableRow key={project.projectId} className="border-b-2">
-                      <TableCell>
-                        <Link to={`/projects/${project.projectId}`} className="font-medium text-primary hover:underline">
-                          {project.projectName}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">{project.totalHours}h</TableCell>
-                      <TableCell className="text-right font-mono font-bold">
-                        ${(project.totalHours * member.hourlyRate).toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <Link to={`/projects/${project.projectId}`}>
-                          <Button variant="ghost" size="sm" className="border-2 border-transparent hover:border-border">
-                            View Project
+              {projectBreakdown.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No projects assigned yet.</p>
+                  <Button variant="outline" className="mt-4 border-2" onClick={() => setIsAssignProjectDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Assign First Project
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Mobile view - cards */}
+                  <div className="block sm:hidden divide-y-2 divide-border">
+                    {projectBreakdown.map((project) => (
+                      <div key={project.project_id} className="p-4 space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            {project.display_id ? (
+                              <Link to={getOrgPath(`/projects/${project.display_id}`)} className="font-medium text-primary hover:underline">
+                                {project.name}
+                              </Link>
+                            ) : (
+                              <span className="font-medium">{project.name}</span>
+                            )}
+                            <div className="text-xs text-muted-foreground">{project.display_id}</div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            onClick={() => handleRemoveFromProject(project.project_id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Hours: <span className="font-mono">{project.hours}h</span></span>
+                          <span className="font-mono font-bold">${project.earnings.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop view - table */}
+                  <div className="hidden sm:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b-2 hover:bg-transparent">
+                          <TableHead className="font-bold uppercase text-xs">Project</TableHead>
+                          <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
+                          <TableHead className="font-bold uppercase text-xs text-right">Earnings</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {projectBreakdown.map((project) => (
+                          <TableRow key={project.project_id} className="border-b-2">
+                            <TableCell>
+                              {project.display_id ? (
+                                <Link to={getOrgPath(`/projects/${project.display_id}`)} className="font-medium text-primary hover:underline">
+                                  {project.name}
+                                </Link>
+                              ) : (
+                                <span className="font-medium">{project.name}</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right font-mono">{project.hours}h</TableCell>
+                            <TableCell className="text-right font-mono font-bold">
+                              ${project.earnings.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                {project.display_id && (
+                                  <Link to={getOrgPath(`/projects/${project.display_id}`)}>
+                                    <Button variant="ghost" size="sm" className="border-2 border-transparent hover:border-border">
+                                      View
+                                    </Button>
+                                  </Link>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  onClick={() => handleRemoveFromProject(project.project_id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -779,86 +1107,285 @@ export default function TeamMemberDetail() {
 
       {/* Edit Profile Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
+        <DialogContent className="border-2 sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b-2 border-border pb-4">
             <DialogTitle>Edit Team Member</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Name</Label>
-                <Input defaultValue={member.name} className="border-2" />
+          {editData && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Name *</Label>
+                  <Input
+                    value={editData.name}
+                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    value={editData.email}
+                    onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Phone</Label>
+                  <Input
+                    value={editData.phone}
+                    onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Role *</Label>
+                  <Input
+                    value={editData.role}
+                    onChange={(e) => setEditData({ ...editData, role: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Department</Label>
+                  <Select value={editData.department} onValueChange={(value) => setEditData({ ...editData, department: value })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      {departments.map((dept) => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Contract Type</Label>
+                  <Select value={editData.contract_type} onValueChange={(value: ContractType) => setEditData({ ...editData, contract_type: value })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      {contractTypes.map((type) => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Hourly Rate ($)</Label>
+                  <Input
+                    type="number"
+                    value={editData.hourly_rate}
+                    onChange={(e) => setEditData({ ...editData, hourly_rate: parseFloat(e.target.value) || 0 })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Annual Salary ($)</Label>
+                  <Input
+                    type="number"
+                    value={editData.salary}
+                    onChange={(e) => setEditData({ ...editData, salary: parseFloat(e.target.value) || 0 })}
+                    className="border-2"
+                  />
+                </div>
               </div>
               <div className="grid gap-2">
-                <Label>Email</Label>
-                <Input type="email" defaultValue={member.email} className="border-2" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Phone</Label>
-                <Input defaultValue={member.phone} className="border-2" />
-              </div>
-              <div className="grid gap-2">
-                <Label>Role</Label>
-                <Input defaultValue={member.role} className="border-2" />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label>Address</Label>
-              <Input defaultValue={member.location.address} className="border-2" />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="grid gap-2">
-                <Label>City</Label>
-                <Input defaultValue={member.location.city} className="border-2" />
-              </div>
-              <div className="grid gap-2">
-                <Label>State</Label>
-                <Input defaultValue={member.location.state} className="border-2" />
-              </div>
-              <div className="grid gap-2">
-                <Label>ZIP</Label>
-                <Input defaultValue={member.location.zip} className="border-2" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Payment Method</Label>
-                <Select defaultValue={member.paymentInfo.method}>
+                <Label>Status</Label>
+                <Select value={editData.status} onValueChange={(value: MemberStatus) => setEditData({ ...editData, status: value })}>
                   <SelectTrigger className="border-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border-2">
-                    <SelectItem value="Direct Deposit">Direct Deposit</SelectItem>
-                    <SelectItem value="E-Transfer">E-Transfer</SelectItem>
-                    <SelectItem value="Check">Check</SelectItem>
-                    <SelectItem value="Wire Transfer">Wire Transfer</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
-                <Label>Payment Details</Label>
-                <Input defaultValue={member.paymentInfo.details} className="border-2" />
-              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Hourly Rate ($)</Label>
-                <Input type="number" defaultValue={member.hourlyRate} className="border-2" />
-              </div>
-              <div className="grid gap-2">
-                <Label>Annual Salary ($)</Label>
-                <Input type="number" defaultValue={member.salary} className="border-2" />
-              </div>
-            </div>
-          </div>
+          )}
           <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border-2">
               Cancel
             </Button>
-            <Button onClick={() => { setIsEditDialogOpen(false); toast.success("Profile updated"); }} className="border-2">
+            <Button onClick={handleSaveEdit} className="border-2" disabled={updateTeamMember.isPending}>
+              {updateTeamMember.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Log Time Entry Dialog */}
+      <Dialog open={isTimeEntryDialogOpen} onOpenChange={setIsTimeEntryDialogOpen}>
+        <DialogContent className="border-2 sm:max-w-[425px]">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Log Time Entry</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Project</Label>
+              <Select value={newTimeEntry.project_id || "none"} onValueChange={(value) => setNewTimeEntry({ ...newTimeEntry, project_id: value === "none" ? "" : value })}>
+                <SelectTrigger className="border-2">
+                  <SelectValue placeholder="Select project (optional)" />
+                </SelectTrigger>
+                <SelectContent className="border-2">
+                  <SelectItem value="none">No project</SelectItem>
+                  {projects?.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Date *</Label>
+                <Input
+                  type="date"
+                  value={newTimeEntry.date}
+                  onChange={(e) => setNewTimeEntry({ ...newTimeEntry, date: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Hours *</Label>
+                <Input
+                  type="number"
+                  step="0.25"
+                  min="0.25"
+                  max="24"
+                  placeholder="0.00"
+                  value={newTimeEntry.hours}
+                  onChange={(e) => setNewTimeEntry({ ...newTimeEntry, hours: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="What did you work on?"
+                value={newTimeEntry.description}
+                onChange={(e) => setNewTimeEntry({ ...newTimeEntry, description: e.target.value })}
+                className="border-2"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="billable"
+                checked={newTimeEntry.billable}
+                onCheckedChange={(checked) => setNewTimeEntry({ ...newTimeEntry, billable: checked as boolean })}
+              />
+              <Label htmlFor="billable" className="cursor-pointer">Billable hours</Label>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => setIsTimeEntryDialogOpen(false)} className="border-2">
+              Cancel
+            </Button>
+            <Button onClick={handleAddTimeEntry} className="border-2" disabled={createTimeEntry.isPending}>
+              {createTimeEntry.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              Log Time
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Record Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="border-2 sm:max-w-[425px]">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Record Payment</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Amount ($) *</Label>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={newPayment.amount}
+                  onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Payment Date *</Label>
+                <Input
+                  type="date"
+                  value={newPayment.payment_date}
+                  onChange={(e) => setNewPayment({ ...newPayment, payment_date: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Period Start</Label>
+                <Input
+                  type="date"
+                  value={newPayment.period_start}
+                  onChange={(e) => setNewPayment({ ...newPayment, period_start: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Period End</Label>
+                <Input
+                  type="date"
+                  value={newPayment.period_end}
+                  onChange={(e) => setNewPayment({ ...newPayment, period_end: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Payment Method</Label>
+              <Select value={newPayment.payment_method} onValueChange={(value: PaymentMethod) => setNewPayment({ ...newPayment, payment_method: value })}>
+                <SelectTrigger className="border-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="border-2">
+                  {paymentMethods.map((method) => (
+                    <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Reference Number</Label>
+              <Input
+                placeholder="Check #, transaction ID, etc."
+                value={newPayment.reference_number}
+                onChange={(e) => setNewPayment({ ...newPayment, reference_number: e.target.value })}
+                className="border-2"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Notes</Label>
+              <Textarea
+                placeholder="Additional notes..."
+                value={newPayment.notes}
+                onChange={(e) => setNewPayment({ ...newPayment, notes: e.target.value })}
+                className="border-2"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)} className="border-2">
+              Cancel
+            </Button>
+            <Button onClick={handleAddPayment} className="border-2" disabled={createPayment.isPending}>
+              {createPayment.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              Record Payment
             </Button>
           </div>
         </DialogContent>

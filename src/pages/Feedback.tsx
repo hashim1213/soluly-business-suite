@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Meh, Mail, Phone, HeadphonesIcon, Edit, Trash2, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { Plus, MessageSquare, ThumbsUp, ThumbsDown, Meh, Mail, Phone, HeadphonesIcon, Edit, Trash2, Loader2, Ticket, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -22,8 +24,10 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useFeedback, useCreateFeedback, useUpdateFeedback, useDeleteFeedback } from "@/hooks/useFeedback";
+import { useTickets, useDeleteTicket } from "@/hooks/useTickets";
 import { useProjects } from "@/hooks/useProjects";
 import { Database } from "@/integrations/supabase/types";
+import { feedbackStatusStyles, feedbackSentimentStyles, ticketStatusStyles } from "@/lib/styles";
 
 type FeedbackSentiment = Database["public"]["Enums"]["feedback_sentiment"];
 type FeedbackCategory = Database["public"]["Enums"]["feedback_category"];
@@ -36,44 +40,59 @@ const sentimentIcons = {
   neutral: Meh,
 };
 
-const sentimentColors: Record<FeedbackSentiment, string> = {
-  positive: "bg-chart-2 text-background",
-  negative: "bg-destructive text-destructive-foreground",
-  neutral: "bg-chart-4 text-foreground",
-};
-
 const sourceIcons = {
   email: Mail,
   call: Phone,
   support: HeadphonesIcon,
+  ticket: Ticket,
 };
 
-const statusColors: Record<FeedbackStatus, string> = {
-  "acknowledged": "bg-secondary text-secondary-foreground",
-  "under-review": "bg-chart-4 text-foreground",
-  "investigating": "bg-chart-1 text-background",
-  "in-progress": "bg-chart-2 text-background",
-  "resolved": "bg-primary text-primary-foreground",
+// Combined status colors for feedback and tickets
+const statusColors: Record<string, string> = {
+  ...feedbackStatusStyles,
+  ...ticketStatusStyles,
 };
 
-const categoryLabels: Record<FeedbackCategory, string> = {
+const categoryLabels: Record<string, string> = {
   performance: "Performance",
   "ui-ux": "UI/UX",
   feature: "Feature",
   mobile: "Mobile",
   bug: "Bug",
   general: "General",
+  feedback: "Feedback",
+};
+
+// Unified type for both feedback and tickets
+type UnifiedFeedback = {
+  id: string;
+  display_id: string;
+  title: string;
+  description: string | null;
+  sentiment: string;
+  category: string;
+  source: "feedback" | "ticket";
+  sourceType: string;
+  status: string;
+  from_contact: string | null;
+  project_name: string | null;
+  project_id: string | null;
+  notes: string | null;
+  created_at: string;
 };
 
 export default function Feedback() {
-  const { data: feedbackItems, isLoading, error } = useFeedback();
+  const { navigateOrg } = useOrgNavigation();
+  const { data: feedbackItems, isLoading: feedbackLoading, error } = useFeedback();
+  const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: projects } = useProjects();
   const createFeedback = useCreateFeedback();
   const updateFeedback = useUpdateFeedback();
   const deleteFeedback = useDeleteFeedback();
+  const deleteTicket = useDeleteTicket();
 
+  const [activeTab, setActiveTab] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingFeedback, setEditingFeedback] = useState<typeof feedbackItems extends (infer T)[] ? T : never | null>(null);
   const [newFeedback, setNewFeedback] = useState({
     title: "",
     description: "",
@@ -85,6 +104,69 @@ export default function Feedback() {
     from_contact: "",
     notes: "",
   });
+
+  const isLoading = feedbackLoading || ticketsLoading;
+
+  // Get feedback tickets
+  const feedbackTickets = useMemo(() => {
+    return tickets?.filter(t => t.category === "feedback") || [];
+  }, [tickets]);
+
+  // Unify feedback and tickets into single list
+  const unifiedFeedback: UnifiedFeedback[] = useMemo(() => {
+    const items: UnifiedFeedback[] = [];
+
+    // Add feedback items
+    feedbackItems?.forEach((feedback) => {
+      items.push({
+        id: feedback.id,
+        display_id: feedback.display_id,
+        title: feedback.title,
+        description: feedback.description,
+        sentiment: feedback.sentiment,
+        category: feedback.category,
+        source: "feedback",
+        sourceType: feedback.source,
+        status: feedback.status,
+        from_contact: feedback.from_contact,
+        project_name: feedback.project?.name || feedback.project_name,
+        project_id: feedback.project_id,
+        notes: feedback.notes,
+        created_at: feedback.created_at,
+      });
+    });
+
+    // Add tickets with category="feedback"
+    feedbackTickets.forEach((ticket) => {
+      items.push({
+        id: ticket.id,
+        display_id: ticket.display_id,
+        title: ticket.title,
+        description: ticket.description,
+        sentiment: ticket.priority === "high" ? "negative" : ticket.priority === "low" ? "positive" : "neutral",
+        category: "feedback",
+        source: "ticket",
+        sourceType: "ticket",
+        status: ticket.status,
+        from_contact: null,
+        project_name: ticket.project?.name || null,
+        project_id: ticket.project_id,
+        notes: null,
+        created_at: ticket.created_at,
+      });
+    });
+
+    // Sort by created_at descending
+    return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [feedbackItems, feedbackTickets]);
+
+  // Filter based on tab
+  const filteredFeedback = useMemo(() => {
+    if (activeTab === "all") return unifiedFeedback;
+    if (activeTab === "feedback") return unifiedFeedback.filter(f => f.source === "feedback");
+    if (activeTab === "tickets") return unifiedFeedback.filter(f => f.source === "ticket");
+    return unifiedFeedback;
+  }, [unifiedFeedback, activeTab]);
 
   const handleCreateFeedback = async () => {
     if (!newFeedback.title) {
@@ -124,8 +206,18 @@ export default function Feedback() {
     }
   };
 
-  const handleUpdateStatus = (id: string, newStatus: FeedbackStatus) => {
-    updateFeedback.mutate({ id, status: newStatus });
+  const handleUpdateStatus = (feedback: UnifiedFeedback, newStatus: FeedbackStatus) => {
+    if (feedback.source === "feedback") {
+      updateFeedback.mutate({ id: feedback.id, status: newStatus });
+    }
+  };
+
+  const handleDelete = (feedback: UnifiedFeedback) => {
+    if (feedback.source === "feedback") {
+      deleteFeedback.mutate(feedback.id);
+    } else {
+      deleteTicket.mutate(feedback.id);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -154,6 +246,9 @@ export default function Feedback() {
       </div>
     );
   }
+
+  const feedbackCount = feedbackItems?.length || 0;
+  const ticketCount = feedbackTickets.length;
 
   return (
     <div className="space-y-6">
@@ -287,7 +382,24 @@ export default function Feedback() {
         </Dialog>
       </div>
 
-      {feedbackItems?.length === 0 ? (
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="border-2 border-border p-1">
+          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            All ({unifiedFeedback.length})
+          </TabsTrigger>
+          <TabsTrigger value="feedback" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <MessageSquare className="h-4 w-4 mr-1" />
+            Feedback ({feedbackCount})
+          </TabsTrigger>
+          <TabsTrigger value="tickets" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Ticket className="h-4 w-4 mr-1" />
+            From Tickets ({ticketCount})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {filteredFeedback.length === 0 ? (
         <Card className="border-2 border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
@@ -300,36 +412,55 @@ export default function Feedback() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {feedbackItems?.map((feedback) => {
-            const SentimentIcon = sentimentIcons[feedback.sentiment];
-            const SourceIcon = sourceIcons[feedback.source];
+          {filteredFeedback.map((feedback) => {
+            const SentimentIcon = sentimentIcons[feedback.sentiment as keyof typeof sentimentIcons] || Meh;
+            const SourceIcon = sourceIcons[feedback.sourceType as keyof typeof sourceIcons] || Mail;
             return (
-              <Card key={feedback.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+              <Card
+                key={`${feedback.source}-${feedback.id}`}
+                className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  if (feedback.source === "ticket") {
+                    navigateOrg(`/tickets/${feedback.display_id}`);
+                  } else {
+                    navigateOrg(`/feedback/${feedback.display_id}`);
+                  }
+                }}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${sentimentColors[feedback.sentiment]}`}>
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${feedbackSentimentStyles[feedback.sentiment as keyof typeof feedbackSentimentStyles] || "bg-slate-400 text-black"}`}>
                         <SentimentIcon className="h-5 w-5" />
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="font-mono text-xs text-muted-foreground">{feedback.display_id}</span>
-                          <Badge className={statusColors[feedback.status]}>
+                          {feedback.source === "ticket" && (
+                            <Badge variant="outline" className="border-2 text-xs">
+                              <Ticket className="h-3 w-3 mr-1" />
+                              Ticket
+                            </Badge>
+                          )}
+                          <Badge className={statusColors[feedback.status] || statusColors.acknowledged}>
                             {feedback.status.replace("-", " ")}
                           </Badge>
                           <Badge variant="outline" className="border-2">
-                            {categoryLabels[feedback.category]}
+                            {categoryLabels[feedback.category] || feedback.category}
                           </Badge>
                         </div>
                         <h3 className="font-semibold mb-1">{feedback.title}</h3>
                         <p className="text-sm text-muted-foreground mb-2">{feedback.description}</p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                           <span className="flex items-center gap-1">
                             <SourceIcon className="h-4 w-4" />
                             {feedback.from_contact || "Unknown"}
                           </span>
                           {feedback.project_name && (
-                            <span>{feedback.project_name}</span>
+                            <span className="flex items-center gap-1">
+                              <Building className="h-3 w-3" />
+                              {feedback.project_name}
+                            </span>
                           )}
                           <span>{formatDate(feedback.created_at)}</span>
                         </div>
@@ -340,27 +471,29 @@ export default function Feedback() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={feedback.status}
-                        onValueChange={(value: FeedbackStatus) => handleUpdateStatus(feedback.id, value)}
-                      >
-                        <SelectTrigger className="w-[140px] border-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="border-2">
-                          <SelectItem value="acknowledged">Acknowledged</SelectItem>
-                          <SelectItem value="under-review">Under Review</SelectItem>
-                          <SelectItem value="investigating">Investigating</SelectItem>
-                          <SelectItem value="in-progress">In Progress</SelectItem>
-                          <SelectItem value="resolved">Resolved</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      {feedback.source === "feedback" && (
+                        <Select
+                          value={feedback.status}
+                          onValueChange={(value: FeedbackStatus) => handleUpdateStatus(feedback, value)}
+                        >
+                          <SelectTrigger className="w-[140px] border-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="border-2">
+                            <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                            <SelectItem value="under-review">Under Review</SelectItem>
+                            <SelectItem value="investigating">Investigating</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => deleteFeedback.mutate(feedback.id)}
+                        onClick={() => handleDelete(feedback)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

@@ -1,10 +1,13 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { ArrowLeft, Edit, Lightbulb, FileText, MessageSquare, Send, MoreVertical, Clock, User } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Edit, Lightbulb, FileText, MessageSquare, Send, MoreVertical, Clock, User, Loader2, Save, X, FolderOpen, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
@@ -19,225 +22,179 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Mock data - in a real app this would come from API/state management
-const ticketsData: Record<string, {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  project: string;
-  projectId: string;
-  priority: string;
-  status: string;
-  assignee: string;
-  reporter: string;
-  created: string;
-  updated: string;
-  comments: Array<{ id: string; author: string; content: string; timestamp: string }>;
-}> = {
-  "TKT-001": {
-    id: "TKT-001",
-    title: "Add export functionality to reports",
-    description: "We need the ability to export reports in multiple formats including PDF, CSV, and Excel. This should include all data from the dashboard analytics section and custom date range selection for the export.",
-    category: "feature",
-    project: "Acme Corp",
-    projectId: "PRJ-001",
-    priority: "high",
-    status: "open",
-    assignee: "You",
-    reporter: "John Smith",
-    created: "Dec 8, 2024",
-    updated: "Dec 9, 2024",
-    comments: [
-      { id: "1", author: "John Smith", content: "This is critical for our quarterly reporting process.", timestamp: "Dec 8, 2024 10:30 AM" },
-      { id: "2", author: "You", content: "I'll start working on this. Should have initial implementation ready by end of week.", timestamp: "Dec 8, 2024 2:15 PM" },
-    ],
-  },
-  "TKT-002": {
-    id: "TKT-002",
-    title: "Quote request for enterprise package",
-    description: "TechStart Inc is interested in our enterprise package. They need a detailed quote including all features, support levels, and implementation timeline.",
-    category: "quote",
-    project: "TechStart Inc",
-    projectId: "PRJ-002",
-    priority: "medium",
-    status: "in-progress",
-    assignee: "You",
-    reporter: "Sarah Johnson",
-    created: "Dec 8, 2024",
-    updated: "Dec 8, 2024",
-    comments: [
-      { id: "1", author: "Sarah Johnson", content: "Looking for a quote that includes 24/7 support and custom integrations.", timestamp: "Dec 8, 2024 9:00 AM" },
-    ],
-  },
-  "TKT-003": {
-    id: "TKT-003",
-    title: "Dashboard loading speed issue",
-    description: "Users are reporting that the main dashboard takes over 10 seconds to load. This needs to be investigated and optimized.",
-    category: "feedback",
-    project: "Global Solutions",
-    projectId: "PRJ-003",
-    priority: "high",
-    status: "open",
-    assignee: "You",
-    reporter: "Mike Chen",
-    created: "Dec 7, 2024",
-    updated: "Dec 7, 2024",
-    comments: [],
-  },
-  "TKT-004": {
-    id: "TKT-004",
-    title: "Integration with Salesforce CRM",
-    description: "Request to integrate our system with Salesforce CRM for automatic data sync between platforms.",
-    category: "feature",
-    project: "Acme Corp",
-    projectId: "PRJ-001",
-    priority: "low",
-    status: "open",
-    assignee: "You",
-    reporter: "John Smith",
-    created: "Dec 7, 2024",
-    updated: "Dec 7, 2024",
-    comments: [],
-  },
-  "TKT-005": {
-    id: "TKT-005",
-    title: "Annual contract renewal discussion",
-    description: "Annual contract is up for renewal. Need to discuss terms and any changes to the service level agreement.",
-    category: "quote",
-    project: "DataFlow Ltd",
-    projectId: "PRJ-004",
-    priority: "medium",
-    status: "pending",
-    assignee: "You",
-    reporter: "Emma Wilson",
-    created: "Dec 6, 2024",
-    updated: "Dec 6, 2024",
-    comments: [],
-  },
-  "TKT-006": {
-    id: "TKT-006",
-    title: "Mobile app feature request",
-    description: "Request for a mobile application that allows basic functionality like viewing dashboards and approving requests.",
-    category: "feature",
-    project: "TechStart Inc",
-    projectId: "PRJ-002",
-    priority: "medium",
-    status: "open",
-    assignee: "You",
-    reporter: "Sarah Johnson",
-    created: "Dec 5, 2024",
-    updated: "Dec 5, 2024",
-    comments: [],
-  },
-  "TKT-007": {
-    id: "TKT-007",
-    title: "Positive feedback on new UI",
-    description: "Team loves the new user interface redesign. Great job on the improved navigation and cleaner look.",
-    category: "feedback",
-    project: "Global Solutions",
-    projectId: "PRJ-003",
-    priority: "low",
-    status: "closed",
-    assignee: "You",
-    reporter: "Mike Chen",
-    created: "Dec 4, 2024",
-    updated: "Dec 4, 2024",
-    comments: [
-      { id: "1", author: "Mike Chen", content: "The team is very happy with the changes!", timestamp: "Dec 4, 2024 11:00 AM" },
-    ],
-  },
-  "TKT-008": {
-    id: "TKT-008",
-    title: "Extended support package quote",
-    description: "Acme Corp is interested in upgrading to our extended support package with 24/7 coverage.",
-    category: "quote",
-    project: "Acme Corp",
-    projectId: "PRJ-001",
-    priority: "high",
-    status: "in-progress",
-    assignee: "You",
-    reporter: "John Smith",
-    created: "Dec 3, 2024",
-    updated: "Dec 5, 2024",
-    comments: [],
-  },
-};
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { useTicketByDisplayId, useUpdateTicket, useDeleteTicket } from "@/hooks/useTickets";
+import { useProjects } from "@/hooks/useProjects";
+import { formatDistanceToNow } from "date-fns";
+import { ticketStatusStyles, ticketPriorityStyles } from "@/lib/styles";
 
 const categoryIcons = {
   feature: Lightbulb,
   quote: FileText,
   feedback: MessageSquare,
+  uncategorized: Tag,
 };
 
-const categoryLabels = {
+const categoryLabels: Record<string, string> = {
   feature: "Feature Request",
   quote: "Customer Quote",
   feedback: "Feedback",
-};
-
-const priorityStyles = {
-  high: "bg-destructive text-destructive-foreground",
-  medium: "bg-chart-4 text-foreground",
-  low: "bg-secondary text-secondary-foreground border-2 border-border",
-};
-
-const statusStyles = {
-  open: "bg-chart-1 text-background",
-  "in-progress": "bg-chart-2 text-background",
-  pending: "bg-chart-4 text-foreground",
-  closed: "bg-muted text-muted-foreground",
+  uncategorized: "Uncategorized",
 };
 
 export default function TicketDetail() {
   const { ticketId } = useParams();
-  const navigate = useNavigate();
+  const { navigateOrg } = useOrgNavigation();
+  const { data: ticket, isLoading, error } = useTicketByDisplayId(ticketId);
+  const { data: projects } = useProjects();
+  const updateTicket = useUpdateTicket();
+  const deleteTicket = useDeleteTicket();
+
   const [newComment, setNewComment] = useState("");
-  const [status, setStatus] = useState<string>("");
-  const [priority, setPriority] = useState<string>("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<{
+    title: string;
+    description: string;
+    status: string;
+    priority: string;
+    category: string;
+    project_id: string | null;
+  } | null>(null);
 
-  const ticket = ticketsData[ticketId || ""];
+  const handleStatusChange = async (newStatus: string) => {
+    if (!ticket) return;
+    try {
+      await updateTicket.mutateAsync({
+        id: ticket.id,
+        status: newStatus as "open" | "in-progress" | "pending" | "closed",
+      });
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
 
-  // Initialize status and priority from ticket data
-  if (ticket && !status) {
-    setStatus(ticket.status);
+  const handlePriorityChange = async (newPriority: string) => {
+    if (!ticket) return;
+    try {
+      await updateTicket.mutateAsync({
+        id: ticket.id,
+        priority: newPriority as "low" | "medium" | "high",
+      });
+      toast.success(`Priority updated to ${newPriority}`);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleStartEdit = () => {
+    if (!ticket) return;
+    setEditData({
+      title: ticket.title,
+      description: ticket.description || "",
+      status: ticket.status,
+      priority: ticket.priority,
+      category: ticket.category,
+      project_id: ticket.project_id,
+    });
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!ticket || !editData) return;
+    try {
+      await updateTicket.mutateAsync({
+        id: ticket.id,
+        title: editData.title,
+        description: editData.description || null,
+        status: editData.status as "open" | "in-progress" | "pending" | "closed",
+        priority: editData.priority as "low" | "medium" | "high",
+        category: editData.category as "uncategorized" | "feature" | "quote" | "feedback",
+        project_id: editData.project_id,
+      });
+      toast.success("Ticket updated successfully");
+      setIsEditing(false);
+      setEditData(null);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!ticket) return;
+    if (!confirm("Are you sure you want to delete this ticket?")) return;
+    try {
+      await deleteTicket.mutateAsync(ticket.id);
+      toast.success("Ticket deleted");
+      navigateOrg("/tickets");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      // In a real app, this would call an API to add a comment
+      toast.info("Comment functionality coming soon");
+      setNewComment("");
+    }
+  };
+
+  // Navigate to category-specific view
+  const handleGoToCategoryView = () => {
+    if (!ticket) return;
+    switch (ticket.category) {
+      case "quote":
+        navigateOrg("/tickets/quotes");
+        break;
+      case "feature":
+        navigateOrg("/tickets/features");
+        break;
+      case "feedback":
+        navigateOrg("/tickets/feedback");
+        break;
+      default:
+        navigateOrg("/tickets");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
-  if (ticket && !priority) {
-    setPriority(ticket.priority);
-  }
 
-  if (!ticket) {
+  if (error || !ticket) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate("/tickets")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/tickets")} className="border-2 border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Tickets
         </Button>
         <Card className="border-2 border-border">
           <CardContent className="p-8 text-center">
             <h2 className="text-xl font-bold mb-2">Ticket Not Found</h2>
-            <p className="text-muted-foreground">The ticket you're looking for doesn't exist.</p>
+            <p className="text-muted-foreground">The ticket "{ticketId}" doesn't exist or was deleted.</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const CategoryIcon = categoryIcons[ticket.category as keyof typeof categoryIcons];
-
-  const handleAddComment = () => {
-    if (newComment.trim()) {
-      // In a real app, this would call an API
-      console.log("Adding comment:", newComment);
-      setNewComment("");
-    }
-  };
+  const CategoryIcon = categoryIcons[ticket.category as keyof typeof categoryIcons] || Tag;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate("/tickets")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/tickets")} className="border-2 border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -246,25 +203,35 @@ export default function TicketDetail() {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="font-mono text-sm text-muted-foreground">{ticket.id}</span>
+            <span className="font-mono text-sm text-muted-foreground">{ticket.display_id}</span>
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <CategoryIcon className="h-4 w-4" />
-              <span className="text-sm">{categoryLabels[ticket.category as keyof typeof categoryLabels]}</span>
+              <span className="text-sm">{categoryLabels[ticket.category] || "Ticket"}</span>
             </div>
+            <Badge className={ticketStatusStyles[ticket.status as keyof typeof ticketStatusStyles] || "bg-slate-400 text-black"}>
+              {ticket.status}
+            </Badge>
+            <Badge className={ticketPriorityStyles[ticket.priority as keyof typeof ticketPriorityStyles] || "bg-slate-400 text-black"}>
+              {ticket.priority}
+            </Badge>
           </div>
           <h1 className="text-3xl font-bold tracking-tight">{ticket.title}</h1>
           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-            <span
-              className="hover:text-foreground cursor-pointer"
-              onClick={() => navigate(`/projects/${ticket.projectId}`)}
-            >
-              Project: <strong className="text-foreground">{ticket.project}</strong>
-            </span>
-            <span>Reporter: <strong className="text-foreground">{ticket.reporter}</strong></span>
+            {ticket.project && (
+              <span
+                className="hover:text-foreground cursor-pointer"
+                onClick={() => navigateOrg(`/projects/${ticket.project?.display_id}`)}
+              >
+                Project: <strong className="text-foreground">{ticket.project.name}</strong>
+              </span>
+            )}
+            {ticket.assignee && (
+              <span>Assignee: <strong className="text-foreground">{ticket.assignee.name}</strong></span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-2">
+          <Button variant="outline" className="border-2" onClick={handleStartEdit}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
@@ -275,9 +242,12 @@ export default function TicketDetail() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="border-2">
-              <DropdownMenuItem>Convert to Quote</DropdownMenuItem>
-              <DropdownMenuItem>Link to Another Ticket</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">Delete Ticket</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleGoToCategoryView}>
+                View in {categoryLabels[ticket.category] || "Category"} List
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+                Delete Ticket
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -290,7 +260,7 @@ export default function TicketDetail() {
               <CardTitle>Description</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              <p className="whitespace-pre-wrap">{ticket.description}</p>
+              <p className="whitespace-pre-wrap">{ticket.description || "No description provided."}</p>
             </CardContent>
           </Card>
 
@@ -299,26 +269,7 @@ export default function TicketDetail() {
               <CardTitle>Activity</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
-              {ticket.comments.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No comments yet</p>
-              ) : (
-                ticket.comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3 pb-4 border-b-2 border-border last:border-0 last:pb-0">
-                    <Avatar className="h-8 w-8 border-2 border-border">
-                      <AvatarFallback className="bg-secondary text-xs">
-                        {comment.author.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{comment.author}</span>
-                        <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
-                      </div>
-                      <p className="text-sm">{comment.content}</p>
-                    </div>
-                  </div>
-                ))
-              )}
+              <p className="text-muted-foreground text-center py-4">No comments yet</p>
 
               <div className="pt-4 border-t-2 border-border">
                 <Textarea
@@ -346,7 +297,7 @@ export default function TicketDetail() {
             <CardContent className="p-4 space-y-4">
               <div>
                 <div className="text-sm text-muted-foreground mb-2">Status</div>
-                <Select value={status} onValueChange={setStatus}>
+                <Select value={ticket.status} onValueChange={handleStatusChange} disabled={updateTicket.isPending}>
                   <SelectTrigger className="border-2">
                     <SelectValue />
                   </SelectTrigger>
@@ -361,7 +312,7 @@ export default function TicketDetail() {
 
               <div className="border-t-2 border-border pt-4">
                 <div className="text-sm text-muted-foreground mb-2">Priority</div>
-                <Select value={priority} onValueChange={setPriority}>
+                <Select value={ticket.priority} onValueChange={handlePriorityChange} disabled={updateTicket.isPending}>
                   <SelectTrigger className="border-2">
                     <SelectValue />
                   </SelectTrigger>
@@ -374,26 +325,41 @@ export default function TicketDetail() {
               </div>
 
               <div className="border-t-2 border-border pt-4">
-                <div className="text-sm text-muted-foreground mb-1">Assignee</div>
+                <div className="text-sm text-muted-foreground mb-1">Category</div>
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6 border-2 border-border">
-                    <AvatarFallback className="bg-secondary text-xs">Y</AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium">{ticket.assignee}</span>
+                  <CategoryIcon className="h-4 w-4" />
+                  <span className="font-medium">{categoryLabels[ticket.category] || ticket.category}</span>
                 </div>
               </div>
 
-              <div className="border-t-2 border-border pt-4">
-                <div className="text-sm text-muted-foreground mb-1">Reporter</div>
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6 border-2 border-border">
-                    <AvatarFallback className="bg-secondary text-xs">
-                      {ticket.reporter.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium">{ticket.reporter}</span>
+              {ticket.project && (
+                <div className="border-t-2 border-border pt-4">
+                  <div className="text-sm text-muted-foreground mb-1">Project</div>
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                    <span
+                      className="font-medium cursor-pointer hover:text-primary"
+                      onClick={() => navigateOrg(`/projects/${ticket.project?.display_id}`)}
+                    >
+                      {ticket.project.name}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {ticket.assignee && (
+                <div className="border-t-2 border-border pt-4">
+                  <div className="text-sm text-muted-foreground mb-1">Assignee</div>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6 border-2 border-border">
+                      <AvatarFallback className="bg-secondary text-xs">
+                        {ticket.assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{ticket.assignee.name}</span>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -405,17 +371,122 @@ export default function TicketDetail() {
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Created:</span>
-                <span className="font-medium">{ticket.created}</span>
+                <span className="font-medium">{formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Updated:</span>
-                <span className="font-medium">{ticket.updated}</span>
+                <span className="font-medium">{formatDistanceToNow(new Date(ticket.updated_at), { addSuffix: true })}</span>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Edit Ticket Dialog */}
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="border-2 sm:max-w-[500px]">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Edit Ticket</DialogTitle>
+          </DialogHeader>
+          {editData && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-title">Title *</Label>
+                <Input
+                  id="edit-title"
+                  value={editData.title}
+                  onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editData.description}
+                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                  className="border-2"
+                  rows={4}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Status</Label>
+                  <Select value={editData.status} onValueChange={(v) => setEditData({ ...editData, status: v })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Priority</Label>
+                  <Select value={editData.priority} onValueChange={(v) => setEditData({ ...editData, priority: v })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Category</Label>
+                  <Select value={editData.category} onValueChange={(v) => setEditData({ ...editData, category: v })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                      <SelectItem value="feature">Feature Request</SelectItem>
+                      <SelectItem value="quote">Customer Quote</SelectItem>
+                      <SelectItem value="feedback">Feedback</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Project</Label>
+                  <Select
+                    value={editData.project_id || "none"}
+                    onValueChange={(v) => setEditData({ ...editData, project_id: v === "none" ? null : v })}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="none">No project</SelectItem>
+                      {projects?.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditing(false)} className="border-2">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} className="border-2" disabled={updateTicket.isPending}>
+              {updateTicket.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

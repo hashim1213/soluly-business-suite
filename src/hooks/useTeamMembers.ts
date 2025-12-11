@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type TeamMember = Tables<"team_members">;
 export type TeamMemberInsert = TablesInsert<"team_members">;
@@ -18,30 +19,41 @@ export type TeamMemberWithProjects = TeamMember & {
   }>;
 };
 
-// Fetch all team members
+// Fetch all team members for the current organization
 export function useTeamMembers() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["team_members"],
+    queryKey: ["team_members", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data, error } = await supabase
         .from("team_members")
         .select("*")
+        .eq("organization_id", organization.id)
         .order("name", { ascending: true });
 
       if (error) throw error;
       return data as TeamMember[];
     },
+    enabled: !!organization?.id,
   });
 }
 
 // Fetch team members with their project assignments
 export function useTeamMembersWithProjects() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["team_members", "with-projects"],
+    queryKey: ["team_members", "with-projects", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data: members, error: membersError } = await supabase
         .from("team_members")
         .select("*")
+        .eq("organization_id", organization.id)
         .order("name", { ascending: true });
 
       if (membersError) throw membersError;
@@ -70,6 +82,7 @@ export function useTeamMembersWithProjects() {
         projects: memberProjects.get(member.id) || [],
       })) as TeamMemberWithProjects[];
     },
+    enabled: !!organization?.id,
   });
 }
 
@@ -133,12 +146,15 @@ export function useTeamMembersByProject(projectId: string | undefined) {
   });
 }
 
-// Create team member
+// Create team member (for invitations - regular team members are created via auth)
 export function useCreateTeamMember() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
-    mutationFn: async (member: TeamMemberInsert) => {
+    mutationFn: async (member: Omit<TeamMemberInsert, "organization_id">) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       // Generate avatar from name
       if (!member.avatar && member.name) {
         member.avatar = member.name
@@ -151,7 +167,7 @@ export function useCreateTeamMember() {
 
       const { data, error } = await supabase
         .from("team_members")
-        .insert(member)
+        .insert({ ...member, organization_id: organization.id })
         .select()
         .single();
 

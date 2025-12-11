@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Plus, MoreVertical, Users, Ticket, Loader2 } from "lucide-react";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -31,17 +31,12 @@ import { toast } from "sonner";
 import { useProjects, useCreateProject, useDeleteProject } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
 import { Database } from "@/integrations/supabase/types";
+import { projectStatusStyles } from "@/lib/styles";
 
 type ProjectStatus = Database["public"]["Enums"]["project_status"];
 
-const statusStyles: Record<ProjectStatus, string> = {
-  active: "bg-chart-2 text-background",
-  pending: "bg-chart-4 text-foreground",
-  completed: "bg-primary text-primary-foreground",
-};
-
 export default function Projects() {
-  const navigate = useNavigate();
+  const { navigateOrg } = useOrgNavigation();
   const { data: projects, isLoading, error } = useProjects();
   const { data: tickets } = useTickets();
   const createProject = useCreateProject();
@@ -258,10 +253,10 @@ export default function Projects() {
                       <span className="font-mono text-xs text-muted-foreground">{project.display_id}</span>
                       <span
                         className={`inline-block px-2 py-0.5 text-xs font-bold uppercase ${
-                          statusStyles[project.status]
+                          projectStatusStyles[project.status as keyof typeof projectStatusStyles] || "bg-slate-400 text-black"
                         }`}
                       >
-                        {project.status}
+                        {project.status.replace("_", " ")}
                       </span>
                     </div>
                     <CardTitle className="text-lg">{project.name}</CardTitle>
@@ -273,13 +268,13 @@ export default function Projects() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="border-2">
-                      <DropdownMenuItem onClick={() => navigate(`/projects/${project.display_id}`)}>
+                      <DropdownMenuItem onClick={() => navigateOrg(`/projects/${project.display_id}`)}>
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate(`/projects/${project.display_id}`)}>
+                      <DropdownMenuItem onClick={() => navigateOrg(`/projects/${project.display_id}`)}>
                         Edit Project
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate("/tickets")}>
+                      <DropdownMenuItem onClick={() => navigateOrg("/tickets")}>
                         View Tickets
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -294,7 +289,7 @@ export default function Projects() {
               </CardHeader>
               <CardContent
                 className="pt-4 cursor-pointer"
-                onClick={() => navigate(`/projects/${project.display_id}`)}
+                onClick={() => navigateOrg(`/projects/${project.display_id}`)}
               >
                 <p className="text-sm text-muted-foreground mb-4">{project.description}</p>
 

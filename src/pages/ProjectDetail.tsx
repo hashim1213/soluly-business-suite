@@ -1,5 +1,13 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { useState, useMemo } from "react";
+import { useProjectByDisplayId, useUpdateProject, useDeleteProject } from "@/hooks/useProjects";
+import { useTicketsByProject, TicketWithProject } from "@/hooks/useTickets";
+import { useProjectTeamMembers, useAddProjectTeamMember, useRemoveProjectTeamMember } from "@/hooks/useProjectTeamMembers";
+import { useTeamMembersWithProjects } from "@/hooks/useTeamMembers";
+import { useTimeEntriesByProject, useCreateTimeEntry, useDeleteTimeEntry } from "@/hooks/useTimeEntries";
+import { formatDistanceToNow, format } from "date-fns";
+import { Loader2, Save } from "lucide-react";
 import {
   ArrowLeft,
   Edit,
@@ -71,6 +79,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import {
+  projectStatusStyles,
+  ticketStatusStyles,
+  ticketPriorityStyles,
+  milestoneStatusStyles,
+  invoiceStatusStyles,
+  documentTypeStyles,
+  documentStatusStyles,
+  costCategoryStyles,
+  contractTypeStyles,
+} from "@/lib/styles";
 
 // Company team members (internal) with salary and hours tracking
 const companyTeamMembers = [
@@ -218,11 +237,7 @@ const projectsData: Record<string, {
   },
 };
 
-const projectTickets = [
-  { id: "TKT-001", title: "Add export functionality to reports", priority: "high", status: "open", created: "Dec 8, 2024" },
-  { id: "TKT-004", title: "Integration with Salesforce CRM", priority: "low", status: "open", created: "Dec 7, 2024" },
-  { id: "TKT-008", title: "Extended support package quote", priority: "high", status: "in-progress", created: "Dec 3, 2024" },
-];
+// projectTickets is now fetched from the database using useTicketsByProject hook
 
 const initialInvoices = [
   { id: "INV-001", description: "Initial deposit - 30%", amount: 13500, status: "paid", dueDate: "Jan 20, 2024", paidDate: "Jan 18, 2024" },
@@ -279,37 +294,10 @@ const initialCosts = [
   { id: "COST-003", description: "Third-party API Integration", category: "external", amount: 2500, date: "Feb 2024", recurring: false },
 ];
 
-const statusStyles = {
-  active: "bg-chart-2 text-background",
-  pending: "bg-chart-4 text-foreground",
-  completed: "bg-primary text-primary-foreground",
-};
-
 const priorityStyles = {
-  high: "bg-destructive text-destructive-foreground",
-  medium: "bg-chart-4 text-foreground",
-  low: "bg-secondary text-secondary-foreground border-2 border-border",
-};
-
-const ticketStatusStyles = {
-  open: "bg-chart-1 text-background",
-  "in-progress": "bg-chart-2 text-background",
-  pending: "bg-chart-4 text-foreground",
-  closed: "bg-muted text-muted-foreground",
-};
-
-const invoiceStatusStyles = {
-  draft: "bg-muted text-muted-foreground",
-  sent: "bg-chart-1 text-background",
-  paid: "bg-chart-2 text-background",
-  overdue: "bg-destructive text-destructive-foreground",
-};
-
-const contractTypeStyles = {
-  nda: "bg-chart-1 text-background",
-  service: "bg-chart-2 text-background",
-  employee: "bg-primary text-primary-foreground",
-  contractor: "bg-chart-4 text-foreground",
+  high: "bg-red-600 text-white",
+  medium: "bg-amber-500 text-black",
+  low: "bg-slate-300 text-black border border-slate-400",
 };
 
 const contractTypeLabels = {
@@ -317,21 +305,6 @@ const contractTypeLabels = {
   service: "Service Agreement",
   employee: "Employee Contract",
   contractor: "Contractor Agreement",
-};
-
-const contractStatusStyles = {
-  signed: "bg-chart-2 text-background",
-  active: "bg-primary text-primary-foreground",
-  pending: "bg-chart-4 text-foreground",
-  expired: "bg-muted text-muted-foreground",
-};
-
-const costCategoryStyles = {
-  labor: "bg-chart-1 text-background",
-  infrastructure: "bg-chart-2 text-background",
-  software: "bg-primary text-primary-foreground",
-  external: "bg-chart-4 text-foreground",
-  other: "bg-secondary text-secondary-foreground border-2 border-border",
 };
 
 const costCategoryLabels = {
@@ -344,7 +317,7 @@ const costCategoryLabels = {
 
 export default function ProjectDetail() {
   const { projectId } = useParams();
-  const navigate = useNavigate();
+  const { navigateOrg, getOrgPath } = useOrgNavigation();
   const [todos, setTodos] = useState(initialTodos);
   const [invoices, setInvoices] = useState(initialInvoices);
   const [newTodo, setNewTodo] = useState("");
@@ -403,14 +376,123 @@ export default function ProjectDetail() {
   });
   const [newTodoDueDate, setNewTodoDueDate] = useState("");
 
+  // Fetch the database project by display_id
+  const { data: dbProject, isLoading: projectLoading } = useProjectByDisplayId(projectId);
+
+  // Fetch tickets for this project from the database
+  const { data: projectTickets, isLoading: ticketsLoading } = useTicketsByProject(dbProject?.id);
+
+  // Fetch project team members from database
+  const { data: projectTeamMembers, isLoading: teamLoading } = useProjectTeamMembers(dbProject?.id);
+
+  // Fetch all team members for adding new members
+  const { data: allTeamMembers } = useTeamMembersWithProjects();
+
+  // Fetch time entries for this project
+  const { data: dbTimeEntries, isLoading: timeEntriesLoading } = useTimeEntriesByProject(dbProject?.id);
+
+  // Hooks for updating/deleting projects
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
+
+  // Hooks for team management
+  const addProjectTeamMember = useAddProjectTeamMember();
+  const removeProjectTeamMember = useRemoveProjectTeamMember();
+
+  // Hooks for time entries
+  const createTimeEntry = useCreateTimeEntry();
+  const deleteTimeEntry = useDeleteTimeEntry();
+
+  // Edit project state
+  const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false);
+  const [editProjectData, setEditProjectData] = useState<{
+    name: string;
+    description: string;
+    status: string;
+    progress: number;
+    value: number;
+    client_name: string;
+    client_email: string;
+    start_date: string;
+  } | null>(null);
+
   const projectData = projectsData[projectId || ""];
-  const [internalTeam, setInternalTeam] = useState(projectData?.internalTeam || []);
   const [externalTeam, setExternalTeam] = useState(projectData?.externalTeam || []);
 
-  if (!projectData) {
+  // Map database team members to the format used in the UI
+  const internalTeam = useMemo(() => {
+    if (!projectTeamMembers) return [];
+    return projectTeamMembers.map(ptm => ({
+      id: ptm.team_member_id,
+      name: ptm.team_member?.name || "Unknown",
+      email: ptm.team_member?.email || "",
+      role: ptm.team_member?.role || "Team Member",
+      avatar: ptm.team_member?.avatar || ptm.team_member?.name?.slice(0, 2).toUpperCase() || "??",
+      hourlyRate: ptm.team_member?.hourly_rate || 0,
+      salary: ptm.team_member?.salary || 0,
+      hoursWorked: ptm.hours_logged,
+      contractType: ptm.team_member?.contract_type || "Full-time",
+    }));
+  }, [projectTeamMembers]);
+
+  // Available team members to add (not already on project)
+  const availableTeamMembers = useMemo(() => {
+    if (!allTeamMembers || !projectTeamMembers) return [];
+    const assignedIds = new Set(projectTeamMembers.map(ptm => ptm.team_member_id));
+    return allTeamMembers.filter(tm => !assignedIds.has(tm.id) && tm.status === "active");
+  }, [allTeamMembers, projectTeamMembers]);
+
+  // Calculate labor costs from database time entries (moved before early returns)
+  const laborCosts = useMemo(() => {
+    if (!dbTimeEntries) return 0;
+    return dbTimeEntries.reduce((sum, entry) => {
+      const hourlyRate = entry.team_member?.hourly_rate || 0;
+      return sum + (entry.hours * hourlyRate);
+    }, 0);
+  }, [dbTimeEntries]);
+
+  // Calculate total hours and billable amount from database (moved before early returns)
+  const totalHours = useMemo(() => {
+    if (!dbTimeEntries) return 0;
+    return dbTimeEntries.reduce((sum, e) => sum + e.hours, 0);
+  }, [dbTimeEntries]);
+
+  const billableHours = useMemo(() => {
+    if (!dbTimeEntries) return 0;
+    return dbTimeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0);
+  }, [dbTimeEntries]);
+
+  // Calculate hours by team member using database (moved before early returns)
+  const hoursByMember = useMemo(() => {
+    return internalTeam.map(member => {
+      return {
+        ...member,
+        hoursOnProject: member.hoursWorked,
+        totalPaid: member.hoursWorked * member.hourlyRate,
+      };
+    });
+  }, [internalTeam]);
+
+  // Show loading state while fetching from database
+  if (projectLoading) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate("/projects")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border-2 border-transparent hover:border-border">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Projects
+        </Button>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show not found if no database project exists
+  if (!dbProject) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border-2 border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Projects
         </Button>
@@ -424,7 +506,21 @@ export default function ProjectDetail() {
     );
   }
 
-  const project = { ...projectData, internalTeam, externalTeam };
+  // Use database project as the source of truth, with mock data as fallback for UI elements not yet in DB
+  const project = {
+    id: dbProject.display_id,
+    name: dbProject.name,
+    description: dbProject.description || "",
+    status: dbProject.status,
+    progress: dbProject.progress,
+    tickets: projectTickets?.length || 0,
+    client: dbProject.client_name,
+    clientEmail: dbProject.client_email || "",
+    startDate: dbProject.start_date || "",
+    endDate: "",
+    internalTeam,
+    externalTeam,
+  };
 
   const toggleTodo = (id: string) => {
     setTodos(todos.map(todo =>
@@ -500,22 +596,78 @@ export default function ProjectDetail() {
     toast.success("Invoice marked as paid");
   };
 
-  const addInternalMember = (member: typeof companyTeamMembers[0]) => {
-    if (internalTeam.find(m => m.id === member.id)) {
-      toast.error("Team member already added");
-      return;
+  const addInternalMember = async (member: { id: string; name: string }) => {
+    if (!dbProject) return;
+    try {
+      await addProjectTeamMember.mutateAsync({
+        projectId: dbProject.id,
+        teamMemberId: member.id,
+      });
+    } catch (error) {
+      // Error handled by hook
     }
-    setInternalTeam([...internalTeam, member]);
-    toast.success(`${member.name} added to the project`);
   };
 
-  const removeInternalMember = (memberId: string) => {
-    if (memberId === "1") {
-      toast.error("Cannot remove the project lead");
-      return;
+  const removeInternalMember = async (memberId: string) => {
+    if (!dbProject) return;
+    try {
+      await removeProjectTeamMember.mutateAsync({
+        projectId: dbProject.id,
+        teamMemberId: memberId,
+      });
+    } catch (error) {
+      // Error handled by hook
     }
-    setInternalTeam(internalTeam.filter(m => m.id !== memberId));
-    toast.success("Team member removed");
+  };
+
+  // Edit project handlers
+  const handleStartEditProject = () => {
+    if (!dbProject) return;
+    setEditProjectData({
+      name: dbProject.name,
+      description: dbProject.description || "",
+      status: dbProject.status,
+      progress: dbProject.progress,
+      value: dbProject.value,
+      client_name: dbProject.client_name,
+      client_email: dbProject.client_email || "",
+      start_date: dbProject.start_date ? dbProject.start_date.split("T")[0] : "",
+    });
+    setIsEditProjectDialogOpen(true);
+  };
+
+  const handleSaveProject = async () => {
+    if (!dbProject || !editProjectData) return;
+    try {
+      await updateProject.mutateAsync({
+        id: dbProject.id,
+        name: editProjectData.name,
+        description: editProjectData.description || null,
+        status: editProjectData.status as "active" | "pending" | "completed",
+        progress: editProjectData.progress,
+        value: editProjectData.value,
+        client_name: editProjectData.client_name,
+        client_email: editProjectData.client_email || null,
+        start_date: editProjectData.start_date || null,
+      });
+      toast.success("Project updated successfully");
+      setIsEditProjectDialogOpen(false);
+      setEditProjectData(null);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!dbProject) return;
+    if (!confirm("Are you sure you want to delete this project? This action cannot be undone.")) return;
+    try {
+      await deleteProject.mutateAsync(dbProject.id);
+      toast.success("Project deleted");
+      navigateOrg("/projects");
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
   const addExternalMember = () => {
@@ -645,31 +797,49 @@ export default function ProjectDetail() {
   };
 
   // Time entry functions
-  const addTimeEntry = () => {
-    if (!newTimeEntry.memberId || !newTimeEntry.hours) {
+  const addTimeEntry = async () => {
+    if (!dbProject || !newTimeEntry.memberId || !newTimeEntry.hours) {
       toast.error("Please select a team member and enter hours");
       return;
     }
-    const member = internalTeam.find(m => m.id === newTimeEntry.memberId);
-    const entry = {
-      id: String(Date.now()),
-      memberId: newTimeEntry.memberId,
-      memberName: member?.name || "Unknown",
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      hours: parseFloat(newTimeEntry.hours),
-      description: newTimeEntry.description,
-      billable: newTimeEntry.billable,
-    };
-    setTimeEntries([entry, ...timeEntries]);
-    setNewTimeEntry({ memberId: "", hours: "", description: "", billable: true });
-    setIsTimeEntryDialogOpen(false);
-    toast.success("Time entry added");
+
+    const hoursValue = parseFloat(newTimeEntry.hours);
+    if (isNaN(hoursValue) || hoursValue <= 0 || hoursValue > 24) {
+      toast.error("Hours must be between 0.01 and 24");
+      return;
+    }
+
+    try {
+      await createTimeEntry.mutateAsync({
+        team_member_id: newTimeEntry.memberId,
+        project_id: dbProject.id,
+        date: new Date().toISOString().split("T")[0],
+        hours: hoursValue,
+        description: newTimeEntry.description || null,
+        billable: newTimeEntry.billable,
+      });
+      setNewTimeEntry({ memberId: "", hours: "", description: "", billable: true });
+      setIsTimeEntryDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const deleteTimeEntry = (id: string) => {
-    setTimeEntries(timeEntries.filter(e => e.id !== id));
-    toast.success("Time entry removed");
+  const handleDeleteTimeEntry = async (entryId: string, memberId: string, hours: number) => {
+    if (!dbProject) return;
+    if (!confirm("Delete this time entry?")) return;
+    try {
+      await deleteTimeEntry.mutateAsync({
+        id: entryId,
+        memberId,
+        hours,
+        projectId: dbProject.id,
+      });
+    } catch (error) {
+      // Error handled by hook
+    }
   };
+
 
   // Get milestones for a specific date
   const getMilestonesForDate = (date: Date) => {
@@ -696,13 +866,6 @@ export default function ProjectDetail() {
   const totalPaid = invoices.filter(inv => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0);
   const totalOutstanding = invoices.filter(inv => inv.status === "sent").reduce((sum, inv) => sum + inv.amount, 0);
 
-  // Calculate labor costs from time entries
-  const laborCosts = timeEntries.reduce((sum, entry) => {
-    const memberData = companyTeamMembers.find(m => m.id === entry.memberId);
-    const hourlyRate = memberData?.hourlyRate || 0;
-    return sum + (entry.hours * hourlyRate);
-  }, 0);
-
   // Calculate total costs (non-labor + auto-calculated labor)
   const nonLaborCosts = costs.reduce((sum, cost) => sum + cost.amount, 0);
   const totalCosts = nonLaborCosts + laborCosts;
@@ -716,11 +879,6 @@ export default function ProjectDetail() {
 
   // Total team members
   const totalTeamMembers = internalTeam.length + externalTeam.length;
-
-  // Available company members to add (not already in project)
-  const availableCompanyMembers = companyTeamMembers.filter(
-    m => !internalTeam.find(t => t.id === m.id)
-  );
 
   // Calendar helpers
   const getDaysInMonth = (date: Date) => {
@@ -740,12 +898,35 @@ export default function ProjectDetail() {
   };
 
   const isDateInProjectRange = (day: number) => {
+    // Return false if no valid dates
+    if (!project.startDate) return false;
+
     const checkDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
-    const startParts = project.startDate.split(" ");
-    const endParts = project.endDate.split(" ");
-    const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
-    const startDate = new Date(parseInt(startParts[2]), months[startParts[0]], parseInt(startParts[1].replace(",", "")));
-    const endDate = new Date(parseInt(endParts[2]), months[endParts[0]], parseInt(endParts[1].replace(",", "")));
+
+    // Parse date - handle both ISO format (2024-01-15) and text format (Jan 15, 2024)
+    const parseDate = (dateStr: string): Date | null => {
+      if (!dateStr) return null;
+      // Try ISO format first
+      if (dateStr.includes("-")) {
+        return new Date(dateStr);
+      }
+      // Try text format (Jan 15, 2024)
+      const parts = dateStr.split(" ");
+      if (parts.length < 3) return null;
+      const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+      return new Date(parseInt(parts[2]), months[parts[0]], parseInt(parts[1].replace(",", "")));
+    };
+
+    const startDate = parseDate(project.startDate);
+    const endDate = parseDate(project.endDate);
+
+    if (!startDate) return false;
+
+    // If no end date, just check if on or after start date
+    if (!endDate) {
+      return checkDate >= startDate;
+    }
+
     return checkDate >= startDate && checkDate <= endDate;
   };
 
@@ -806,29 +987,10 @@ export default function ProjectDetail() {
   const completedTodos = todos.filter(t => t.completed).length;
   const todoProgress = todos.length > 0 ? Math.round((completedTodos / todos.length) * 100) : 0;
 
-  // Calculate total hours and billable amount
-  const totalHours = timeEntries.reduce((sum, e) => sum + e.hours, 0);
-  const billableHours = timeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0);
-
-  // Calculate hours by team member
-  const hoursByMember = internalTeam.map(member => {
-    const memberEntries = timeEntries.filter(e => e.memberId === member.id);
-    const hours = memberEntries.reduce((sum, e) => sum + e.hours, 0);
-    const memberData = companyTeamMembers.find(m => m.id === member.id);
-    return {
-      ...member,
-      hoursOnProject: hours,
-      hourlyRate: memberData?.hourlyRate || 0,
-      totalPaid: memberData?.totalPaid || 0,
-      salary: memberData?.salary || 0,
-      contractType: memberData?.contractType || "Unknown",
-    };
-  });
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate("/projects")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border-2 border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -838,7 +1000,7 @@ export default function ProjectDetail() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <span className="font-mono text-sm text-muted-foreground">{project.id}</span>
-            <Badge className={statusStyles[project.status as keyof typeof statusStyles]}>
+            <Badge className={projectStatusStyles[project.status as keyof typeof projectStatusStyles] || "bg-slate-400 text-black"}>
               {project.status}
             </Badge>
           </div>
@@ -846,7 +1008,7 @@ export default function ProjectDetail() {
           <p className="text-muted-foreground mt-2 max-w-2xl">{project.description}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-2">
+          <Button variant="outline" className="border-2" onClick={handleStartEditProject} disabled={!dbProject}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Project
           </Button>
@@ -859,7 +1021,7 @@ export default function ProjectDetail() {
             <DropdownMenuContent align="end" className="border-2">
               <DropdownMenuItem>Duplicate Project</DropdownMenuItem>
               <DropdownMenuItem>Export Data</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">Archive Project</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={handleDeleteProject}>Delete Project</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -911,11 +1073,11 @@ export default function ProjectDetail() {
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-chart-2" : "bg-destructive"}`}>
-                <TrendingUp className={`h-5 w-5 ${projectProfit >= 0 ? "text-background" : "text-destructive-foreground"}`} />
+              <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-emerald-600" : "bg-red-600"}`}>
+                <TrendingUp className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className={`text-2xl font-bold font-mono ${projectProfit >= 0 ? "text-chart-2" : "text-destructive"}`}>
+                <div className={`text-2xl font-bold font-mono ${projectProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                   ${projectProfit.toLocaleString()}
                 </div>
                 <div className="text-sm text-muted-foreground">Profit ({profitMargin}%)</div>
@@ -952,10 +1114,10 @@ export default function ProjectDetail() {
                       <DialogTitle>Add Company Team Member</DialogTitle>
                     </DialogHeader>
                     <div className="py-4 space-y-2 max-h-[300px] overflow-y-auto">
-                      {availableCompanyMembers.length === 0 ? (
-                        <p className="text-muted-foreground text-center py-4">All company members are already on this project</p>
+                      {availableTeamMembers.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4">All team members are already on this project</p>
                       ) : (
-                        availableCompanyMembers.map((member) => (
+                        availableTeamMembers.map((member) => (
                           <div
                             key={member.id}
                             className="flex items-center justify-between p-3 border-2 border-border hover:bg-accent/50 cursor-pointer"
@@ -963,11 +1125,11 @@ export default function ProjectDetail() {
                           >
                             <div className="flex items-center gap-3">
                               <Avatar className="h-8 w-8 border-2 border-border">
-                                <AvatarFallback className="bg-secondary text-xs">{member.avatar}</AvatarFallback>
+                                <AvatarFallback className="bg-secondary text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               <div>
                                 <div className="font-medium">{member.name}</div>
-                                <div className="text-xs text-muted-foreground">{member.role}</div>
+                                <div className="text-xs text-muted-foreground">{member.role} • {member.department}</div>
                               </div>
                             </div>
                             <Plus className="h-4 w-4 text-muted-foreground" />
@@ -1153,7 +1315,7 @@ export default function ProjectDetail() {
                 <CardHeader className="border-b-2 border-border">
                   <div className="flex items-center justify-between">
                     <CardTitle>Project Tickets</CardTitle>
-                    <Link to="/tickets">
+                    <Link to={getOrgPath("/tickets")}>
                       <Button size="sm" className="border-2">
                         <Plus className="h-4 w-4 mr-2" />
                         New Ticket
@@ -1173,27 +1335,43 @@ export default function ProjectDetail() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {projectTickets.map((ticket) => (
-                        <TableRow
-                          key={ticket.id}
-                          className="border-b-2 cursor-pointer hover:bg-accent/50"
-                          onClick={() => navigate(`/tickets/${ticket.id}`)}
-                        >
-                          <TableCell className="font-mono text-sm">{ticket.id}</TableCell>
-                          <TableCell className="font-medium">{ticket.title}</TableCell>
-                          <TableCell>
-                            <Badge className={priorityStyles[ticket.priority as keyof typeof priorityStyles]}>
-                              {ticket.priority}
-                            </Badge>
+                      {ticketsLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            Loading tickets...
                           </TableCell>
-                          <TableCell>
-                            <Badge className={ticketStatusStyles[ticket.status as keyof typeof ticketStatusStyles]}>
-                              {ticket.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{ticket.created}</TableCell>
                         </TableRow>
-                      ))}
+                      ) : !projectTickets || projectTickets.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            No tickets for this project yet.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        projectTickets.map((ticket) => (
+                          <TableRow
+                            key={ticket.id}
+                            className="border-b-2 cursor-pointer hover:bg-accent/50"
+                            onClick={() => navigateOrg(`/tickets/${ticket.display_id}`)}
+                          >
+                            <TableCell className="font-mono text-sm">{ticket.display_id}</TableCell>
+                            <TableCell className="font-medium">{ticket.title}</TableCell>
+                            <TableCell>
+                              <Badge className={ticketPriorityStyles[ticket.priority as keyof typeof ticketPriorityStyles] || "bg-slate-400 text-black"}>
+                                {ticket.priority}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={ticketStatusStyles[ticket.status as keyof typeof ticketStatusStyles] || "bg-slate-400 text-black"}>
+                                {ticket.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -1378,7 +1556,7 @@ export default function ProjectDetail() {
                       <TableCell className="text-right font-mono font-bold">${invoice.amount.toLocaleString()}</TableCell>
                       <TableCell className="text-muted-foreground">{invoice.dueDate}</TableCell>
                       <TableCell>
-                        <Badge className={invoiceStatusStyles[invoice.status as keyof typeof invoiceStatusStyles]}>
+                        <Badge className={invoiceStatusStyles[invoice.status as keyof typeof invoiceStatusStyles] || "bg-slate-400 text-black"}>
                           {invoice.status}
                         </Badge>
                       </TableCell>
@@ -1536,7 +1714,7 @@ export default function ProjectDetail() {
                             )}
                           </div>
                         </div>
-                        <Badge className={priorityStyles[todo.priority as keyof typeof priorityStyles]}>
+                        <Badge className={ticketPriorityStyles[todo.priority as keyof typeof ticketPriorityStyles] || "bg-slate-400 text-black"}>
                           {todo.priority}
                         </Badge>
                         <Button
@@ -1707,10 +1885,10 @@ export default function ProjectDetail() {
                           <div className="flex items-center gap-3 mb-1">
                             <span className="font-mono text-sm text-muted-foreground">{event.date}</span>
                             {event.completed && (
-                              <Badge className="bg-chart-2 text-background">Completed</Badge>
+                              <Badge className="bg-emerald-600 text-white">Completed</Badge>
                             )}
                             {event.missed && (
-                              <Badge className="bg-destructive text-destructive-foreground">Missed</Badge>
+                              <Badge className="bg-red-600 text-white">Missed</Badge>
                             )}
                           </div>
                           <DropdownMenu>
@@ -1897,10 +2075,10 @@ export default function ProjectDetail() {
                         <div className="flex items-center gap-2 mb-1">
                           <h5 className="font-semibold">{milestone.title}</h5>
                           {milestone.completed && (
-                            <Badge className="bg-chart-2 text-background text-xs">Completed</Badge>
+                            <Badge className="bg-emerald-600 text-white text-xs">Completed</Badge>
                           )}
                           {milestone.missed && (
-                            <Badge className="bg-destructive text-destructive-foreground text-xs">Missed</Badge>
+                            <Badge className="bg-red-600 text-white text-xs">Missed</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">{milestone.description}</p>
@@ -2018,12 +2196,12 @@ export default function ProjectDetail() {
                         <TableCell className="font-mono text-sm">{contract.id}</TableCell>
                         <TableCell className="font-medium">{contract.name}</TableCell>
                         <TableCell>
-                          <Badge className={contractTypeStyles[contract.type as keyof typeof contractTypeStyles]}>
+                          <Badge className={documentTypeStyles[contract.type as keyof typeof documentTypeStyles] || "bg-slate-400 text-black"}>
                             {contractTypeLabels[contract.type as keyof typeof contractTypeLabels]}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={contractStatusStyles[contract.status as keyof typeof contractStatusStyles]}>
+                          <Badge className={documentStatusStyles[contract.status as keyof typeof documentStatusStyles] || "bg-slate-400 text-black"}>
                             {contract.status}
                           </Badge>
                         </TableCell>
@@ -2117,11 +2295,11 @@ export default function ProjectDetail() {
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-chart-2" : "bg-destructive"}`}>
-                    <TrendingUp className={`h-5 w-5 ${projectProfit >= 0 ? "text-background" : "text-destructive-foreground"}`} />
+                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-emerald-600" : "bg-red-600"}`}>
+                    <TrendingUp className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <div className={`text-2xl font-bold font-mono ${projectProfit >= 0 ? "text-chart-2" : "text-destructive"}`}>
+                    <div className={`text-2xl font-bold font-mono ${projectProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                       ${projectProfit.toLocaleString()}
                     </div>
                     <div className="text-sm text-muted-foreground">Net Profit</div>
@@ -2132,11 +2310,11 @@ export default function ProjectDetail() {
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${profitMargin >= 20 ? "bg-chart-2" : profitMargin >= 0 ? "bg-chart-4" : "bg-destructive"}`}>
-                    <span className={`text-sm font-bold ${profitMargin >= 20 ? "text-background" : profitMargin >= 0 ? "text-foreground" : "text-destructive-foreground"}`}>%</span>
+                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${profitMargin >= 20 ? "bg-emerald-600" : profitMargin >= 0 ? "bg-amber-500" : "bg-red-600"}`}>
+                    <span className={`text-sm font-bold ${profitMargin >= 20 || profitMargin < 0 ? "text-white" : "text-black"}`}>%</span>
                   </div>
                   <div>
-                    <div className={`text-2xl font-bold font-mono ${profitMargin >= 20 ? "text-chart-2" : profitMargin >= 0 ? "" : "text-destructive"}`}>
+                    <div className={`text-2xl font-bold font-mono ${profitMargin >= 20 ? "text-emerald-600" : profitMargin >= 0 ? "text-amber-600" : "text-red-600"}`}>
                       {profitMargin}%
                     </div>
                     <div className="text-sm text-muted-foreground">Profit Margin</div>
@@ -2253,7 +2431,7 @@ export default function ProjectDetail() {
                         <TableCell className="font-mono text-sm">{cost.id}</TableCell>
                         <TableCell className="font-medium">{cost.description}</TableCell>
                         <TableCell>
-                          <Badge className={costCategoryStyles[cost.category as keyof typeof costCategoryStyles]}>
+                          <Badge className={costCategoryStyles[cost.category as keyof typeof costCategoryStyles] || "bg-slate-400 text-black"}>
                             {costCategoryLabels[cost.category as keyof typeof costCategoryLabels]}
                           </Badge>
                         </TableCell>
@@ -2469,7 +2647,7 @@ export default function ProjectDetail() {
                       </TableCell>
                       <TableCell>{member.role}</TableCell>
                       <TableCell>
-                        <Badge variant={member.contractType === "Full-time" ? "default" : "secondary"} className="border-2 border-border">
+                        <Badge className={contractTypeStyles[member.contractType as keyof typeof contractTypeStyles] || "bg-slate-400 text-black"}>
                           {member.contractType}
                         </Badge>
                       </TableCell>
@@ -2570,7 +2748,11 @@ export default function ProjectDetail() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {timeEntries.length === 0 ? (
+              {timeEntriesLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                </div>
+              ) : !dbTimeEntries || dbTimeEntries.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No time entries yet
                 </div>
@@ -2587,15 +2769,15 @@ export default function ProjectDetail() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {timeEntries.map((entry) => (
+                    {dbTimeEntries?.map((entry) => (
                       <TableRow key={entry.id} className="border-b-2">
-                        <TableCell className="text-muted-foreground">{entry.date}</TableCell>
-                        <TableCell className="font-medium">{entry.memberName}</TableCell>
+                        <TableCell className="text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy")}</TableCell>
+                        <TableCell className="font-medium">{entry.team_member?.name || "Unknown"}</TableCell>
                         <TableCell className="max-w-[200px] truncate">{entry.description || "-"}</TableCell>
                         <TableCell className="text-right font-mono font-bold">{entry.hours}h</TableCell>
                         <TableCell>
                           {entry.billable ? (
-                            <Badge className="bg-chart-2 text-background">Billable</Badge>
+                            <Badge className="bg-emerald-600 text-white">Billable</Badge>
                           ) : (
                             <Badge variant="secondary" className="border-2 border-border">Non-billable</Badge>
                           )}
@@ -2605,7 +2787,7 @@ export default function ProjectDetail() {
                             size="sm"
                             variant="ghost"
                             className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
-                            onClick={() => deleteTimeEntry(entry.id)}
+                            onClick={() => handleDeleteTimeEntry(entry.id, entry.team_member_id, entry.hours)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -2619,6 +2801,123 @@ export default function ProjectDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Project Dialog */}
+      <Dialog open={isEditProjectDialogOpen} onOpenChange={setIsEditProjectDialogOpen}>
+        <DialogContent className="border-2 sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Edit Project</DialogTitle>
+          </DialogHeader>
+          {editProjectData && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-project-name">Project Name *</Label>
+                <Input
+                  id="edit-project-name"
+                  value={editProjectData.name}
+                  onChange={(e) => setEditProjectData({ ...editProjectData, name: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-project-description">Description</Label>
+                <Textarea
+                  id="edit-project-description"
+                  value={editProjectData.description}
+                  onChange={(e) => setEditProjectData({ ...editProjectData, description: e.target.value })}
+                  className="border-2"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={editProjectData.status}
+                    onValueChange={(v) => setEditProjectData({ ...editProjectData, status: v })}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-project-progress">Progress (%)</Label>
+                  <Input
+                    id="edit-project-progress"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editProjectData.progress}
+                    onChange={(e) => setEditProjectData({ ...editProjectData, progress: parseInt(e.target.value) || 0 })}
+                    className="border-2"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-project-value">Project Value ($)</Label>
+                  <Input
+                    id="edit-project-value"
+                    type="number"
+                    value={editProjectData.value}
+                    onChange={(e) => setEditProjectData({ ...editProjectData, value: parseFloat(e.target.value) || 0 })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-project-start-date">Start Date</Label>
+                  <Input
+                    id="edit-project-start-date"
+                    type="date"
+                    value={editProjectData.start_date}
+                    onChange={(e) => setEditProjectData({ ...editProjectData, start_date: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+              </div>
+              <div className="border-t-2 border-border pt-4">
+                <h4 className="font-semibold mb-3">Client Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-project-client-name">Client Name *</Label>
+                    <Input
+                      id="edit-project-client-name"
+                      value={editProjectData.client_name}
+                      onChange={(e) => setEditProjectData({ ...editProjectData, client_name: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-project-client-email">Client Email</Label>
+                    <Input
+                      id="edit-project-client-email"
+                      type="email"
+                      value={editProjectData.client_email}
+                      onChange={(e) => setEditProjectData({ ...editProjectData, client_email: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditProjectDialogOpen(false)} className="border-2">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProject} className="border-2" disabled={updateProject.isPending}>
+              {updateProject.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

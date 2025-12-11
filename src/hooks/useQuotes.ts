@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Quote = Tables<"quotes">;
 export type QuoteInsert = TablesInsert<"quotes">;
@@ -21,19 +22,25 @@ export type QuoteWithRelations = Quote & {
   client?: Tables<"crm_clients"> | null;
 };
 
-// Fetch all quotes
+// Fetch all quotes for the current organization
 export function useQuotes() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["quotes"],
+    queryKey: ["quotes", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data, error } = await supabase
         .from("quotes")
         .select("*")
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as Quote[];
     },
+    enabled: !!organization?.id,
   });
 }
 
@@ -81,12 +88,14 @@ export function useQuote(id: string | undefined) {
   });
 }
 
-// Fetch quote by display_id
+// Fetch quote by display_id (filtered by organization)
 export function useQuoteByDisplayId(displayId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["quotes", "display", displayId],
+    queryKey: ["quotes", "display", displayId, organization?.id],
     queryFn: async () => {
-      if (!displayId) return null;
+      if (!displayId || !organization?.id) return null;
 
       const { data: quote, error: quoteError } = await supabase
         .from("quotes")
@@ -95,6 +104,7 @@ export function useQuoteByDisplayId(displayId: string | undefined) {
           client:crm_clients(*)
         `)
         .eq("display_id", displayId)
+        .eq("organization_id", organization.id)
         .single();
 
       if (quoteError) throw quoteError;
@@ -117,26 +127,52 @@ export function useQuoteByDisplayId(displayId: string | undefined) {
         tasks: tasks || [],
       } as QuoteWithRelations;
     },
-    enabled: !!displayId,
+    enabled: !!displayId && !!organization?.id,
   });
+}
+
+// Helper to generate unique display_id within organization
+async function generateUniqueDisplayId(
+  prefix: string,
+  table: "quotes" | "crm_activities" | "crm_tasks",
+  organizationId: string
+): Promise<string> {
+  // Get the highest existing display_id number within the organization
+  const { data } = await supabase
+    .from(table)
+    .select("display_id")
+    .eq("organization_id", organizationId)
+    .like("display_id", `${prefix}-%`)
+    .order("display_id", { ascending: false })
+    .limit(1);
+
+  let nextNum = 1;
+  if (data && data.length > 0) {
+    const match = data[0].display_id.match(new RegExp(`${prefix}-(?:DEMO-)?(\\d+)`));
+    if (match) {
+      nextNum = parseInt(match[1], 10) + 1;
+    }
+  }
+
+  return `${prefix}-${String(nextNum).padStart(3, "0")}`;
 }
 
 // Create quote
 export function useCreateQuote() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
-    mutationFn: async (quote: Omit<QuoteInsert, "display_id"> & { display_id?: string }) => {
+    mutationFn: async (quote: Omit<QuoteInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       if (!quote.display_id) {
-        const { count } = await supabase
-          .from("quotes")
-          .select("*", { count: "exact", head: true });
-        quote.display_id = `QTE-${String((count || 0) + 1).padStart(3, "0")}`;
+        quote.display_id = await generateUniqueDisplayId("QTE", "quotes", organization.id);
       }
 
       const { data, error } = await supabase
         .from("quotes")
-        .insert(quote as QuoteInsert)
+        .insert({ ...quote, organization_id: organization.id } as QuoteInsert)
         .select()
         .single();
 
@@ -205,19 +241,19 @@ export function useDeleteQuote() {
 // Create activity for quote
 export function useCreateActivity() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
-    mutationFn: async (activity: Omit<CrmActivityInsert, "display_id"> & { display_id?: string }) => {
+    mutationFn: async (activity: Omit<CrmActivityInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       if (!activity.display_id) {
-        const { count } = await supabase
-          .from("crm_activities")
-          .select("*", { count: "exact", head: true });
-        activity.display_id = `ACT-${String((count || 0) + 1).padStart(3, "0")}`;
+        activity.display_id = await generateUniqueDisplayId("ACT", "crm_activities", organization.id);
       }
 
       const { data, error } = await supabase
         .from("crm_activities")
-        .insert(activity as CrmActivityInsert)
+        .insert({ ...activity, organization_id: organization.id } as CrmActivityInsert)
         .select()
         .single();
 
@@ -245,19 +281,19 @@ export function useCreateActivity() {
 // Create task for quote
 export function useCreateTask() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
-    mutationFn: async (task: Omit<CrmTaskInsert, "display_id"> & { display_id?: string }) => {
+    mutationFn: async (task: Omit<CrmTaskInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       if (!task.display_id) {
-        const { count } = await supabase
-          .from("crm_tasks")
-          .select("*", { count: "exact", head: true });
-        task.display_id = `TSK-${String((count || 0) + 1).padStart(3, "0")}`;
+        task.display_id = await generateUniqueDisplayId("TSK", "crm_tasks", organization.id);
       }
 
       const { data, error } = await supabase
         .from("crm_tasks")
-        .insert(task as CrmTaskInsert)
+        .insert({ ...task, organization_id: organization.id } as CrmTaskInsert)
         .select()
         .single();
 
@@ -318,6 +354,161 @@ export function useTasks() {
 
       if (error) throw error;
       return data;
+    },
+  });
+}
+
+// =====================
+// QUOTE LINE ITEMS
+// =====================
+
+export type QuoteLineItem = Tables<"quote_line_items">;
+export type QuoteLineItemInsert = TablesInsert<"quote_line_items">;
+export type QuoteLineItemUpdate = TablesUpdate<"quote_line_items">;
+
+// Fetch line items for a quote
+export function useQuoteLineItems(quoteId: string | undefined) {
+  return useQuery({
+    queryKey: ["quote_line_items", quoteId],
+    queryFn: async () => {
+      if (!quoteId) return [];
+      const { data, error } = await supabase
+        .from("quote_line_items")
+        .select("*")
+        .eq("quote_id", quoteId)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+      return data as QuoteLineItem[];
+    },
+    enabled: !!quoteId,
+  });
+}
+
+// Create line item
+export function useCreateQuoteLineItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (lineItem: QuoteLineItemInsert) => {
+      const { data, error } = await supabase
+        .from("quote_line_items")
+        .insert(lineItem)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as QuoteLineItem;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["quote_line_items", data.quote_id] });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to add line item: " + error.message);
+    },
+  });
+}
+
+// Update line item
+export function useUpdateQuoteLineItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: QuoteLineItemUpdate & { id: string }) => {
+      const { data, error } = await supabase
+        .from("quote_line_items")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as QuoteLineItem;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["quote_line_items", data.quote_id] });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to update line item: " + error.message);
+    },
+  });
+}
+
+// Delete line item
+export function useDeleteQuoteLineItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, quoteId }: { id: string; quoteId: string }) => {
+      const { error } = await supabase
+        .from("quote_line_items")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      return quoteId;
+    },
+    onSuccess: (quoteId) => {
+      queryClient.invalidateQueries({ queryKey: ["quote_line_items", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      toast.success("Line item removed");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete line item: " + error.message);
+    },
+  });
+}
+
+// Bulk update line items (for reordering or batch updates)
+export function useBulkUpdateQuoteLineItems() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ quoteId, lineItems }: { quoteId: string; lineItems: Array<QuoteLineItemInsert | (QuoteLineItemUpdate & { id: string })> }) => {
+      // Delete existing line items
+      await supabase
+        .from("quote_line_items")
+        .delete()
+        .eq("quote_id", quoteId);
+
+      // Insert new line items if any
+      if (lineItems.length > 0) {
+        const itemsToInsert = lineItems.map((item, index) => ({
+          quote_id: quoteId,
+          description: item.description || "",
+          quantity: item.quantity || 1,
+          unit_price: item.unit_price || 0,
+          sort_order: index,
+        }));
+
+        const { error } = await supabase
+          .from("quote_line_items")
+          .insert(itemsToInsert);
+
+        if (error) throw error;
+      }
+
+      // Update the quote's total value
+      const total = lineItems.reduce((sum, item) =>
+        sum + ((item.quantity || 1) * (item.unit_price || 0)), 0
+      );
+
+      await supabase
+        .from("quotes")
+        .update({ value: total })
+        .eq("id", quoteId);
+
+      return quoteId;
+    },
+    onSuccess: (quoteId) => {
+      queryClient.invalidateQueries({ queryKey: ["quote_line_items", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      toast.success("Line items saved");
+    },
+    onError: (error) => {
+      toast.error("Failed to save line items: " + error.message);
     },
   });
 }

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type FeatureRequest = Tables<"feature_requests">;
 export type FeatureRequestInsert = TablesInsert<"feature_requests">;
@@ -15,14 +16,19 @@ export type FeatureRequestWithProjects = FeatureRequest & {
   }>;
 };
 
-// Fetch all feature requests
+// Fetch all feature requests for the current organization
 export function useFeatureRequests() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["feature_requests"],
+    queryKey: ["feature_requests", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data: features, error: featuresError } = await supabase
         .from("feature_requests")
         .select("*")
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (featuresError) throw featuresError;
@@ -50,6 +56,7 @@ export function useFeatureRequests() {
         projects: projectsByFeature.get(feature.id) || [],
       })) as FeatureRequestWithProjects[];
     },
+    enabled: !!organization?.id,
   });
 }
 
@@ -87,17 +94,20 @@ export function useFeatureRequest(id: string | undefined) {
   });
 }
 
-// Fetch by display_id
+// Fetch by display_id (filtered by organization)
 export function useFeatureRequestByDisplayId(displayId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["feature_requests", "display", displayId],
+    queryKey: ["feature_requests", "display", displayId, organization?.id],
     queryFn: async () => {
-      if (!displayId) return null;
+      if (!displayId || !organization?.id) return null;
 
       const { data: feature, error: featureError } = await supabase
         .from("feature_requests")
         .select("*")
         .eq("display_id", displayId)
+        .eq("organization_id", organization.id)
         .single();
 
       if (featureError) throw featureError;
@@ -115,32 +125,53 @@ export function useFeatureRequestByDisplayId(displayId: string | undefined) {
         projects: featureProjects || [],
       } as FeatureRequestWithProjects;
     },
-    enabled: !!displayId,
+    enabled: !!displayId && !!organization?.id,
   });
+}
+
+// Helper to generate unique display_id for feature requests within organization
+async function generateUniqueFeatureDisplayId(organizationId: string): Promise<string> {
+  const { data } = await supabase
+    .from("feature_requests")
+    .select("display_id")
+    .eq("organization_id", organizationId)
+    .like("display_id", "FTR-%")
+    .order("display_id", { ascending: false })
+    .limit(1);
+
+  let nextNum = 1;
+  if (data && data.length > 0) {
+    const match = data[0].display_id.match(/FTR-(?:DEMO-)?(\d+)/);
+    if (match) {
+      nextNum = parseInt(match[1], 10) + 1;
+    }
+  }
+
+  return `FTR-${String(nextNum).padStart(3, "0")}`;
 }
 
 // Create feature request
 export function useCreateFeatureRequest() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({
       projectIds,
       ...feature
-    }: Omit<FeatureRequestInsert, "display_id"> & {
+    }: Omit<FeatureRequestInsert, "display_id" | "organization_id"> & {
       display_id?: string;
       projectIds: string[];
     }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       if (!feature.display_id) {
-        const { count } = await supabase
-          .from("feature_requests")
-          .select("*", { count: "exact", head: true });
-        feature.display_id = `FTR-${String((count || 0) + 1).padStart(3, "0")}`;
+        feature.display_id = await generateUniqueFeatureDisplayId(organization.id);
       }
 
       const { data: newFeature, error: featureError } = await supabase
         .from("feature_requests")
-        .insert(feature as FeatureRequestInsert)
+        .insert({ ...feature, organization_id: organization.id } as FeatureRequestInsert)
         .select()
         .single();
 
@@ -193,13 +224,11 @@ export function useUpdateFeatureRequest() {
 
       // Update project associations if provided
       if (projectIds !== undefined) {
-        // Remove existing associations
         await supabase
           .from("feature_request_projects")
           .delete()
           .eq("feature_request_id", id);
 
-        // Add new associations
         if (projectIds.length > 0) {
           await supabase.from("feature_request_projects").insert(
             projectIds.map((projectId) => ({

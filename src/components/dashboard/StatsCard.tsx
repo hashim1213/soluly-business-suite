@@ -1,6 +1,7 @@
 import { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 
 interface StatsCardProps {
   title: string;
@@ -15,6 +16,7 @@ interface StatsCardProps {
 }
 
 export function StatsCard({ title, value, description, icon: Icon, href, trend }: StatsCardProps) {
+  const { getOrgPath } = useOrgNavigation();
   const cardContent = (
     <Card className={`border-2 border-border shadow-sm hover:shadow-md transition-shadow ${href ? "cursor-pointer hover:border-primary" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -40,7 +42,7 @@ export function StatsCard({ title, value, description, icon: Icon, href, trend }
   );
 
   if (href) {
-    return <Link to={href}>{cardContent}</Link>;
+    return <Link to={getOrgPath(href)}>{cardContent}</Link>;
   }
 
   return cardContent;

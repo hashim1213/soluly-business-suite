@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Ticket = Tables<"tickets">;
 export type TicketInsert = TablesInsert<"tickets">;
@@ -13,11 +14,15 @@ export type TicketWithProject = Ticket & {
   assignee?: { name: string } | null;
 };
 
-// Fetch all tickets
+// Fetch all tickets for the current organization
 export function useTickets() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["tickets"],
+    queryKey: ["tickets", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data, error } = await supabase
         .from("tickets")
         .select(`
@@ -25,20 +30,24 @@ export function useTickets() {
           project:projects(name, display_id),
           assignee:team_members(name)
         `)
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as TicketWithProject[];
     },
+    enabled: !!organization?.id,
   });
 }
 
 // Fetch tickets by project
 export function useTicketsByProject(projectId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["tickets", "project", projectId],
+    queryKey: ["tickets", "project", projectId, organization?.id],
     queryFn: async () => {
-      if (!projectId) return [];
+      if (!projectId || !organization?.id) return [];
       const { data, error } = await supabase
         .from("tickets")
         .select(`
@@ -47,12 +56,13 @@ export function useTicketsByProject(projectId: string | undefined) {
           assignee:team_members(name)
         `)
         .eq("project_id", projectId)
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as TicketWithProject[];
     },
-    enabled: !!projectId,
+    enabled: !!projectId && !!organization?.id,
   });
 }
 
@@ -79,12 +89,14 @@ export function useTicket(id: string | undefined) {
   });
 }
 
-// Fetch ticket by display_id
+// Fetch ticket by display_id (filtered by organization)
 export function useTicketByDisplayId(displayId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["tickets", "display", displayId],
+    queryKey: ["tickets", "display", displayId, organization?.id],
     queryFn: async () => {
-      if (!displayId) return null;
+      if (!displayId || !organization?.id) return null;
       const { data, error } = await supabase
         .from("tickets")
         .select(`
@@ -93,31 +105,53 @@ export function useTicketByDisplayId(displayId: string | undefined) {
           assignee:team_members(name)
         `)
         .eq("display_id", displayId)
+        .eq("organization_id", organization.id)
         .single();
 
       if (error) throw error;
       return data as TicketWithProject;
     },
-    enabled: !!displayId,
+    enabled: !!displayId && !!organization?.id,
   });
+}
+
+// Helper to generate unique display_id for tickets within organization
+async function generateUniqueTicketDisplayId(organizationId: string): Promise<string> {
+  const { data } = await supabase
+    .from("tickets")
+    .select("display_id")
+    .eq("organization_id", organizationId)
+    .like("display_id", "TKT-%")
+    .order("display_id", { ascending: false })
+    .limit(1);
+
+  let nextNum = 1;
+  if (data && data.length > 0) {
+    const match = data[0].display_id.match(/TKT-(?:DEMO-)?(\d+)/);
+    if (match) {
+      nextNum = parseInt(match[1], 10) + 1;
+    }
+  }
+
+  return `TKT-${String(nextNum).padStart(3, "0")}`;
 }
 
 // Create ticket
 export function useCreateTicket() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
-    mutationFn: async (ticket: Omit<TicketInsert, "display_id"> & { display_id?: string }) => {
+    mutationFn: async (ticket: Omit<TicketInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       if (!ticket.display_id) {
-        const { count } = await supabase
-          .from("tickets")
-          .select("*", { count: "exact", head: true });
-        ticket.display_id = `TKT-${String((count || 0) + 1).padStart(3, "0")}`;
+        ticket.display_id = await generateUniqueTicketDisplayId(organization.id);
       }
 
       const { data, error } = await supabase
         .from("tickets")
-        .insert(ticket as TicketInsert)
+        .insert({ ...ticket, organization_id: organization.id } as TicketInsert)
         .select()
         .single();
 
