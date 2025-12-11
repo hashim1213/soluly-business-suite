@@ -22,6 +22,8 @@ import {
   Calendar,
   Clock,
   Edit,
+  User,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,8 +56,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useQuotes, useCreateQuote, useUpdateQuote, useDeleteQuote, useCreateActivity, useTasks, useCreateTask, useUpdateTask, Quote } from "@/hooks/useQuotes";
-import { useCrmClients, useCrmLeads, useCreateCrmClient, useCreateCrmLead, useDeleteCrmClient, useDeleteCrmLead, useConvertLeadToClient, useUpdateCrmLead } from "@/hooks/useCRM";
+import { useCrmClients, useCrmLeads, useCreateCrmClient, useCreateCrmLead, useDeleteCrmClient, useDeleteCrmLead, useConvertLeadToClient, useUpdateCrmLead, useUpdateCrmClient, CrmClient } from "@/hooks/useCRM";
+import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, Contact } from "@/hooks/useContacts";
+import { useBulkAddClientContacts } from "@/hooks/useClientContacts";
 import { Database } from "@/integrations/supabase/types";
+import { X, PlusCircle } from "lucide-react";
 
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 type ActivityType = Database["public"]["Enums"]["activity_type"];
@@ -84,6 +89,7 @@ export default function CRM() {
   const { data: clients, isLoading: clientsLoading } = useCrmClients();
   const { data: leads, isLoading: leadsLoading } = useCrmLeads();
   const { data: tasks, isLoading: tasksLoading } = useTasks();
+  const { data: contacts, isLoading: contactsLoading } = useContacts();
   const createQuote = useCreateQuote();
   const updateQuote = useUpdateQuote();
   const deleteQuote = useDeleteQuote();
@@ -96,6 +102,11 @@ export default function CRM() {
   const convertLead = useConvertLeadToClient();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
+  const createContact = useCreateContact();
+  const updateContact = useUpdateContact();
+  const deleteContact = useDeleteContact();
+  const bulkAddClientContacts = useBulkAddClientContacts();
+  const updateClient = useUpdateCrmClient();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("pipeline");
@@ -104,6 +115,8 @@ export default function CRM() {
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
+  const [isNewContactOpen, setIsNewContactOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [newDeal, setNewDeal] = useState({
     title: "",
@@ -127,6 +140,7 @@ export default function CRM() {
     contact_phone: "",
     industry: "",
   });
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [newLead, setNewLead] = useState({
     name: "",
     contact_name: "",
@@ -141,8 +155,21 @@ export default function CRM() {
     due_date: "",
     quote_id: "",
   });
+  const [newContact, setNewContact] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    job_title: "",
+    company_id: "",
+    notes: "",
+  });
+  const [editingClient, setEditingClient] = useState<CrmClient | null>(null);
+  const [isCreatingCompanyInline, setIsCreatingCompanyInline] = useState(false);
+  const [isCreatingCompanyInlineEdit, setIsCreatingCompanyInlineEdit] = useState(false);
+  const [inlineCompanyName, setInlineCompanyName] = useState("");
+  const [inlineCompanyNameEdit, setInlineCompanyNameEdit] = useState("");
 
-  const isLoading = quotesLoading || clientsLoading || leadsLoading || tasksLoading;
+  const isLoading = quotesLoading || clientsLoading || leadsLoading || tasksLoading || contactsLoading;
 
   // Filter quotes by search
   const filteredQuotes = quotes?.filter((quote) => {
@@ -210,6 +237,18 @@ export default function CRM() {
   const pendingTasks = filteredTasks.filter(t => !t.completed);
   const completedTasks = filteredTasks.filter(t => t.completed);
 
+  // Filter contacts
+  const filteredContacts = contacts?.filter((contact) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      contact.name.toLowerCase().includes(query) ||
+      contact.email?.toLowerCase().includes(query) ||
+      contact.job_title?.toLowerCase().includes(query) ||
+      contact.company?.name?.toLowerCase().includes(query)
+    );
+  }) || [];
+
   const handleCreateDeal = async () => {
     if (!newDeal.title || !newDeal.company_name) {
       toast.error("Please fill in required fields");
@@ -253,7 +292,7 @@ export default function CRM() {
     }
 
     try {
-      await createClient.mutateAsync({
+      const client = await createClient.mutateAsync({
         name: newClient.name,
         contact_name: newClient.contact_name || null,
         contact_email: newClient.contact_email || null,
@@ -262,6 +301,15 @@ export default function CRM() {
         status: "active",
       });
 
+      // Link selected contacts to the client
+      if (selectedContactIds.length > 0 && client.id) {
+        await bulkAddClientContacts.mutateAsync({
+          clientId: client.id,
+          contactIds: selectedContactIds,
+          primaryContactId: selectedContactIds[0], // First selected is primary
+        });
+      }
+
       setNewClient({
         name: "",
         contact_name: "",
@@ -269,7 +317,107 @@ export default function CRM() {
         contact_phone: "",
         industry: "",
       });
+      setSelectedContactIds([]);
       setIsNewClientOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  // Helper to toggle contact selection
+  const handleToggleContactSelection = (contactId: string) => {
+    setSelectedContactIds(prev => {
+      if (prev.includes(contactId)) {
+        return prev.filter(id => id !== contactId);
+      }
+      return [...prev, contactId];
+    });
+  };
+
+  // Auto-fill contact details when first contact is selected
+  const handleSelectContact = (contactId: string) => {
+    const contact = contacts?.find(c => c.id === contactId);
+    if (!contact) return;
+
+    handleToggleContactSelection(contactId);
+
+    // Auto-fill only if this is the first contact being added
+    if (!selectedContactIds.includes(contactId) && selectedContactIds.length === 0) {
+      setNewClient(prev => ({
+        ...prev,
+        contact_name: contact.name || prev.contact_name,
+        contact_email: contact.email || prev.contact_email,
+        contact_phone: contact.phone || prev.contact_phone,
+      }));
+    }
+  };
+
+  // Handle inline company creation when adding a contact
+  const handleCreateInlineCompany = async () => {
+    if (!inlineCompanyName.trim()) {
+      toast.error("Please enter a company name");
+      return;
+    }
+
+    try {
+      const newCompany = await createClient.mutateAsync({
+        name: inlineCompanyName.trim(),
+        status: "active",
+      });
+
+      // Set the new company as the selected company for the contact
+      setNewContact(prev => ({ ...prev, company_id: newCompany.id }));
+      setInlineCompanyName("");
+      setIsCreatingCompanyInline(false);
+      toast.success("Company created successfully");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  // Handle inline company creation when editing a contact
+  const handleCreateInlineCompanyEdit = async () => {
+    if (!inlineCompanyNameEdit.trim()) {
+      toast.error("Please enter a company name");
+      return;
+    }
+
+    try {
+      const newCompany = await createClient.mutateAsync({
+        name: inlineCompanyNameEdit.trim(),
+        status: "active",
+      });
+
+      // Set the new company as the selected company for the editing contact
+      if (editingContact) {
+        setEditingContact({ ...editingContact, company_id: newCompany.id });
+      }
+      setInlineCompanyNameEdit("");
+      setIsCreatingCompanyInlineEdit(false);
+      toast.success("Company created successfully");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  // Handle updating a client
+  const handleUpdateClient = async () => {
+    if (!editingClient || !editingClient.name) {
+      toast.error("Please enter a company name");
+      return;
+    }
+
+    try {
+      await updateClient.mutateAsync({
+        id: editingClient.id,
+        name: editingClient.name,
+        contact_name: editingClient.contact_name || null,
+        contact_email: editingClient.contact_email || null,
+        contact_phone: editingClient.contact_phone || null,
+        industry: editingClient.industry || null,
+      });
+
+      setEditingClient(null);
     } catch (error) {
       // Error handled by hook
     }
@@ -328,6 +476,59 @@ export default function CRM() {
         quote_id: "",
       });
       setIsNewTaskOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleCreateContact = async () => {
+    if (!newContact.name) {
+      toast.error("Please enter a contact name");
+      return;
+    }
+
+    try {
+      await createContact.mutateAsync({
+        name: newContact.name,
+        email: newContact.email || undefined,
+        phone: newContact.phone || undefined,
+        job_title: newContact.job_title || undefined,
+        company_id: newContact.company_id || undefined,
+        notes: newContact.notes || undefined,
+      });
+
+      setNewContact({
+        name: "",
+        email: "",
+        phone: "",
+        job_title: "",
+        company_id: "",
+        notes: "",
+      });
+      setIsNewContactOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleUpdateContact = async () => {
+    if (!editingContact || !editingContact.name) {
+      toast.error("Please enter a contact name");
+      return;
+    }
+
+    try {
+      await updateContact.mutateAsync({
+        id: editingContact.id,
+        name: editingContact.name,
+        email: editingContact.email || undefined,
+        phone: editingContact.phone || undefined,
+        job_title: editingContact.job_title || undefined,
+        company_id: editingContact.company_id || undefined,
+        notes: editingContact.notes || undefined,
+      });
+
+      setEditingContact(null);
     } catch (error) {
       // Error handled by hook
     }
@@ -505,6 +706,9 @@ export default function CRM() {
           </TabsTrigger>
           <TabsTrigger value="tasks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Tasks ({pendingTasks.length})
+          </TabsTrigger>
+          <TabsTrigger value="contacts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Contacts ({contacts?.length || 0})
           </TabsTrigger>
         </TabsList>
 
@@ -895,7 +1099,7 @@ export default function CRM() {
                   New Client
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
+              <DialogContent className="border-2 sm:max-w-[600px]">
                 <DialogHeader className="border-b-2 border-border pb-4">
                   <DialogTitle>Add New Client</DialogTitle>
                 </DialogHeader>
@@ -909,54 +1113,118 @@ export default function CRM() {
                       className="border-2"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>Contact Name</Label>
-                      <Input
-                        placeholder="Contact name"
-                        value={newClient.contact_name}
-                        onChange={(e) => setNewClient({ ...newClient, contact_name: e.target.value })}
-                        className="border-2"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Contact Email</Label>
-                      <Input
-                        type="email"
-                        placeholder="email@company.com"
-                        value={newClient.contact_email}
-                        onChange={(e) => setNewClient({ ...newClient, contact_email: e.target.value })}
-                        className="border-2"
-                      />
-                    </div>
+
+                  {/* Contacts Multi-Select Section */}
+                  <div className="grid gap-2">
+                    <Label>Link Contacts</Label>
+                    <p className="text-xs text-muted-foreground">Select contacts to associate with this client. First selected will be primary.</p>
+
+                    {/* Selected Contacts */}
+                    {selectedContactIds.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {selectedContactIds.map((contactId, index) => {
+                          const contact = contacts?.find(c => c.id === contactId);
+                          return contact ? (
+                            <Badge
+                              key={contactId}
+                              variant={index === 0 ? "default" : "secondary"}
+                              className="flex items-center gap-1 pr-1"
+                            >
+                              {contact.name}
+                              {index === 0 && <span className="text-xs ml-1">(Primary)</span>}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleContactSelection(contactId)}
+                                className="ml-1 hover:bg-black/20 rounded p-0.5"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+
+                    {/* Contact Dropdown */}
+                    <Select
+                      value=""
+                      onValueChange={handleSelectContact}
+                    >
+                      <SelectTrigger className="border-2">
+                        <SelectValue placeholder="Select contacts to add..." />
+                      </SelectTrigger>
+                      <SelectContent className="border-2 max-h-60">
+                        {contacts?.filter(c => !selectedContactIds.includes(c.id)).map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              <span>{contact.name}</span>
+                              {contact.email && (
+                                <span className="text-xs text-muted-foreground">({contact.email})</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                        {contacts?.filter(c => !selectedContactIds.includes(c.id)).length === 0 && (
+                          <div className="p-2 text-sm text-muted-foreground text-center">
+                            No more contacts available
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>Phone</Label>
-                      <Input
-                        placeholder="+1 234 567 8900"
-                        value={newClient.contact_phone}
-                        onChange={(e) => setNewClient({ ...newClient, contact_phone: e.target.value })}
-                        className="border-2"
-                      />
+
+                  <div className="border-t-2 border-border pt-4">
+                    <p className="text-sm font-medium mb-3">Primary Contact Details</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label>Contact Name</Label>
+                        <Input
+                          placeholder="Contact name"
+                          value={newClient.contact_name}
+                          onChange={(e) => setNewClient({ ...newClient, contact_name: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Contact Email</Label>
+                        <Input
+                          type="email"
+                          placeholder="email@company.com"
+                          value={newClient.contact_email}
+                          onChange={(e) => setNewClient({ ...newClient, contact_email: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
                     </div>
-                    <div className="grid gap-2">
-                      <Label>Industry</Label>
-                      <Input
-                        placeholder="e.g., Technology"
-                        value={newClient.industry}
-                        onChange={(e) => setNewClient({ ...newClient, industry: e.target.value })}
-                        className="border-2"
-                      />
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div className="grid gap-2">
+                        <Label>Phone</Label>
+                        <Input
+                          placeholder="+1 234 567 8900"
+                          value={newClient.contact_phone}
+                          onChange={(e) => setNewClient({ ...newClient, contact_phone: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Industry</Label>
+                        <Input
+                          placeholder="e.g., Technology"
+                          value={newClient.industry}
+                          onChange={(e) => setNewClient({ ...newClient, industry: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => setIsNewClientOpen(false)} className="border-2">
+                  <Button variant="outline" onClick={() => { setIsNewClientOpen(false); setSelectedContactIds([]); }} className="border-2">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateClient} className="border-2" disabled={createClient.isPending}>
-                    {createClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  <Button onClick={handleCreateClient} className="border-2" disabled={createClient.isPending || bulkAddClientContacts.isPending}>
+                    {(createClient.isPending || bulkAddClientContacts.isPending) ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Add Client
                   </Button>
                 </div>
@@ -1014,6 +1282,10 @@ export default function CRM() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuItem onClick={() => setEditingClient(client)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Client
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => deleteClient.mutate(client.id)} className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete Client
@@ -1190,7 +1462,345 @@ export default function CRM() {
             </Card>
           </div>
         </TabsContent>
+
+        {/* Contacts Tab */}
+        <TabsContent value="contacts" className="space-y-4">
+          <div className="flex justify-end">
+            <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
+              <DialogTrigger asChild>
+                <Button className="border-2">
+                  <User className="h-4 w-4 mr-2" />
+                  New Contact
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-2 sm:max-w-[500px]">
+                <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogTitle>Add New Contact</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Full Name *</Label>
+                    <Input
+                      placeholder="Contact name"
+                      value={newContact.name}
+                      onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        placeholder="email@company.com"
+                        value={newContact.email}
+                        onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Phone</Label>
+                      <Input
+                        placeholder="+1 234 567 8900"
+                        value={newContact.phone}
+                        onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Job Title</Label>
+                      <Input
+                        placeholder="e.g., Project Manager"
+                        value={newContact.job_title}
+                        onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Company</Label>
+                      <Select value={newContact.company_id} onValueChange={(value) => setNewContact({ ...newContact, company_id: value })}>
+                        <SelectTrigger className="border-2">
+                          <SelectValue placeholder="Select company (optional)" />
+                        </SelectTrigger>
+                        <SelectContent className="border-2">
+                          {clients?.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {/* Add New Company Section */}
+                  {isCreatingCompanyInline ? (
+                    <div className="grid gap-2 p-3 border-2 border-dashed border-border rounded-md bg-muted/30">
+                      <Label className="text-sm font-medium">Create New Company</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter company name"
+                          value={inlineCompanyName}
+                          onChange={(e) => setInlineCompanyName(e.target.value)}
+                          className="border-2 flex-1"
+                          autoFocus
+                        />
+                        <Button
+                          onClick={handleCreateInlineCompany}
+                          disabled={createClient.isPending || !inlineCompanyName.trim()}
+                          className="border-2"
+                        >
+                          {createClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
+                          Create
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => { setIsCreatingCompanyInline(false); setInlineCompanyName(""); }}
+                          className="border-2"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsCreatingCompanyInline(true)}
+                      className="border-2 w-fit"
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Add New Company
+                    </Button>
+                  )}
+                  <div className="grid gap-2">
+                    <Label>Notes</Label>
+                    <Textarea
+                      placeholder="Additional notes..."
+                      value={newContact.notes}
+                      onChange={(e) => setNewContact({ ...newContact, notes: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                  <Button variant="outline" onClick={() => { setIsNewContactOpen(false); setIsCreatingCompanyInline(false); setInlineCompanyName(""); }} className="border-2">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateContact} className="border-2" disabled={createContact.isPending}>
+                    {createContact.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Add Contact
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {filteredContacts.length === 0 ? (
+            <Card className="border-2 border-border">
+              <CardContent className="p-8 text-center">
+                <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="font-semibold mb-2">No Contacts Yet</h3>
+                <p className="text-muted-foreground mb-4">Add contacts to easily link them to deals, quotes, and projects.</p>
+                <Button onClick={() => setIsNewContactOpen(true)} className="border-2">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Contact
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredContacts.map((contact) => (
+                <Card key={contact.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold truncate">{contact.name}</h3>
+                            {contact.job_title && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Briefcase className="h-3 w-3" /> {contact.job_title}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {contact.company && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
+                            <Building className="h-3 w-3" /> {contact.company.name}
+                          </p>
+                        )}
+                        {contact.email && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Mail className="h-3 w-3" /> {contact.email}
+                          </p>
+                        )}
+                        {contact.phone && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <Phone className="h-3 w-3" /> {contact.phone}
+                          </p>
+                        )}
+                        <p className="text-xs font-mono text-muted-foreground mt-2">{contact.display_id}</p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuItem onClick={() => setEditingContact(contact)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Contact
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => deleteContact.mutate(contact.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Contact
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={!!editingContact} onOpenChange={(open) => !open && setEditingContact(null)}>
+        <DialogContent className="border-2 sm:max-w-[500px]">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Edit Contact</DialogTitle>
+          </DialogHeader>
+          {editingContact && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Full Name *</Label>
+                <Input
+                  placeholder="Contact name"
+                  value={editingContact.name}
+                  onChange={(e) => setEditingContact({ ...editingContact, name: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="email@company.com"
+                    value={editingContact.email || ""}
+                    onChange={(e) => setEditingContact({ ...editingContact, email: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Phone</Label>
+                  <Input
+                    placeholder="+1 234 567 8900"
+                    value={editingContact.phone || ""}
+                    onChange={(e) => setEditingContact({ ...editingContact, phone: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Job Title</Label>
+                  <Input
+                    placeholder="e.g., Project Manager"
+                    value={editingContact.job_title || ""}
+                    onChange={(e) => setEditingContact({ ...editingContact, job_title: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Company</Label>
+                  <Select
+                    value={editingContact.company_id || ""}
+                    onValueChange={(value) => setEditingContact({ ...editingContact, company_id: value })}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Select company (optional)" />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      {clients?.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {/* Add New Company Section */}
+              {isCreatingCompanyInlineEdit ? (
+                <div className="grid gap-2 p-3 border-2 border-dashed border-border rounded-md bg-muted/30">
+                  <Label className="text-sm font-medium">Create New Company</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter company name"
+                      value={inlineCompanyNameEdit}
+                      onChange={(e) => setInlineCompanyNameEdit(e.target.value)}
+                      className="border-2 flex-1"
+                      autoFocus
+                    />
+                    <Button
+                      onClick={handleCreateInlineCompanyEdit}
+                      disabled={createClient.isPending || !inlineCompanyNameEdit.trim()}
+                      className="border-2"
+                    >
+                      {createClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
+                      Create
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => { setIsCreatingCompanyInlineEdit(false); setInlineCompanyNameEdit(""); }}
+                      className="border-2"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCreatingCompanyInlineEdit(true)}
+                  className="border-2 w-fit"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add New Company
+                </Button>
+              )}
+              <div className="grid gap-2">
+                <Label>Notes</Label>
+                <Textarea
+                  placeholder="Additional notes..."
+                  value={editingContact.notes || ""}
+                  onChange={(e) => setEditingContact({ ...editingContact, notes: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => { setEditingContact(null); setIsCreatingCompanyInlineEdit(false); setInlineCompanyNameEdit(""); }} className="border-2">
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateContact} className="border-2" disabled={updateContact.isPending}>
+              {updateContact.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Log Activity Dialog */}
       <Dialog open={isActivityDialogOpen} onOpenChange={setIsActivityDialogOpen}>
@@ -1255,6 +1865,78 @@ export default function CRM() {
             <Button onClick={handleLogActivity} className="border-2" disabled={createActivity.isPending}>
               {createActivity.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Log Activity
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Client Dialog */}
+      <Dialog open={!!editingClient} onOpenChange={(open) => !open && setEditingClient(null)}>
+        <DialogContent className="border-2 sm:max-w-[500px]">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Edit Client</DialogTitle>
+          </DialogHeader>
+          {editingClient && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Company Name *</Label>
+                <Input
+                  placeholder="Company name"
+                  value={editingClient.name}
+                  onChange={(e) => setEditingClient({ ...editingClient, name: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Contact Name</Label>
+                  <Input
+                    placeholder="Contact name"
+                    value={editingClient.contact_name || ""}
+                    onChange={(e) => setEditingClient({ ...editingClient, contact_name: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Contact Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="email@company.com"
+                    value={editingClient.contact_email || ""}
+                    onChange={(e) => setEditingClient({ ...editingClient, contact_email: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Phone</Label>
+                  <Input
+                    placeholder="+1 234 567 8900"
+                    value={editingClient.contact_phone || ""}
+                    onChange={(e) => setEditingClient({ ...editingClient, contact_phone: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Industry</Label>
+                  <Input
+                    placeholder="e.g., Technology"
+                    value={editingClient.industry || ""}
+                    onChange={(e) => setEditingClient({ ...editingClient, industry: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => setEditingClient(null)} className="border-2">
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateClient} className="border-2" disabled={updateClient.isPending}>
+              {updateClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Save Changes
             </Button>
           </div>
         </DialogContent>

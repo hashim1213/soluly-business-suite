@@ -6,6 +6,13 @@ import { useTicketsByProject, TicketWithProject } from "@/hooks/useTickets";
 import { useProjectTeamMembers, useAddProjectTeamMember, useRemoveProjectTeamMember } from "@/hooks/useProjectTeamMembers";
 import { useTeamMembersWithProjects } from "@/hooks/useTeamMembers";
 import { useTimeEntriesByProject, useCreateTimeEntry, useDeleteTimeEntry } from "@/hooks/useTimeEntries";
+import { useProjectInvoices, useCreateProjectInvoice, useUpdateProjectInvoice, useDeleteProjectInvoice, INVOICE_STATUSES, ProjectInvoice } from "@/hooks/useProjectInvoices";
+import { useProjectTasks, useCreateProjectTask, useUpdateProjectTask, useToggleProjectTask, useDeleteProjectTask } from "@/hooks/useProjectTasks";
+import { useProjectMilestones, useCreateProjectMilestone, useUpdateProjectMilestone, useToggleProjectMilestone, useDeleteProjectMilestone } from "@/hooks/useProjectMilestones";
+import { useProjectCosts, useCreateProjectCost, useUpdateProjectCost, useDeleteProjectCost, COST_CATEGORIES } from "@/hooks/useProjectCosts";
+import { useProjectContracts, useCreateProjectContract, useUpdateProjectContract, useDeleteProjectContract } from "@/hooks/useProjectContracts";
+import { useProjectExternalMembers, useAddProjectExternalMember, useRemoveProjectExternalMember, useCreateContactAndAddToProject } from "@/hooks/useProjectExternalMembers";
+import { useContacts } from "@/hooks/useContacts";
 import { formatDistanceToNow, format } from "date-fns";
 import { Loader2, Save } from "lucide-react";
 import {
@@ -39,6 +46,7 @@ import {
   Pencil,
   Timer,
   Briefcase,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -239,60 +247,6 @@ const projectsData: Record<string, {
 
 // projectTickets is now fetched from the database using useTicketsByProject hook
 
-const initialInvoices = [
-  { id: "INV-001", description: "Initial deposit - 30%", amount: 13500, status: "paid", dueDate: "Jan 20, 2024", paidDate: "Jan 18, 2024" },
-  { id: "INV-002", description: "Milestone 1 - Discovery phase", amount: 9000, status: "paid", dueDate: "Feb 15, 2024", paidDate: "Feb 14, 2024" },
-  { id: "INV-003", description: "Milestone 2 - Development phase", amount: 13500, status: "sent", dueDate: "Mar 15, 2024", paidDate: null },
-  { id: "INV-004", description: "Final payment - Project completion", amount: 9000, status: "draft", dueDate: "Apr 30, 2024", paidDate: null },
-];
-
-const initialTodos = [
-  { id: "1", text: "Complete requirements documentation", completed: true, priority: "high", assignee: "You", dueDate: "Jan 20, 2024" },
-  { id: "2", text: "Set up development environment", completed: true, priority: "medium", assignee: "Sarah Chen", dueDate: "Jan 25, 2024" },
-  { id: "3", text: "Design system architecture", completed: true, priority: "high", assignee: "You", dueDate: "Feb 1, 2024" },
-  { id: "4", text: "Implement user authentication", completed: false, priority: "high", assignee: "Sarah Chen", dueDate: "Mar 15, 2024" },
-  { id: "5", text: "Build dashboard components", completed: false, priority: "medium", assignee: "Mike Johnson", dueDate: "Mar 20, 2024" },
-  { id: "6", text: "Integrate CRM APIs", completed: false, priority: "medium", assignee: "You", dueDate: "Mar 25, 2024" },
-  { id: "7", text: "Write unit tests", completed: false, priority: "low", assignee: "Emma Wilson", dueDate: "Apr 10, 2024" },
-  { id: "8", text: "Client UAT session", completed: false, priority: "high", assignee: "You", dueDate: "Apr 15, 2024" },
-];
-
-const initialTimelineEvents = [
-  { id: "1", date: "Jan 15, 2024", title: "Project Kickoff", description: "Initial meeting with stakeholders", type: "milestone", completed: true, missed: false },
-  { id: "2", date: "Jan 22, 2024", title: "Discovery Phase Complete", description: "Requirements gathered and documented", type: "milestone", completed: true, missed: false },
-  { id: "3", date: "Feb 5, 2024", title: "Design Approval", description: "UI/UX designs approved by client", type: "milestone", completed: true, missed: false },
-  { id: "4", date: "Feb 20, 2024", title: "Development Sprint 1", description: "Core functionality implemented", type: "milestone", completed: true, missed: false },
-  { id: "5", date: "Mar 10, 2024", title: "Development Sprint 2", description: "Integration features", type: "milestone", completed: false, missed: true },
-  { id: "6", date: "Mar 25, 2024", title: "Testing Phase", description: "QA and bug fixes", type: "milestone", completed: false, missed: false },
-  { id: "7", date: "Apr 15, 2024", title: "UAT", description: "User acceptance testing", type: "milestone", completed: false, missed: false },
-  { id: "8", date: "Apr 30, 2024", title: "Go Live", description: "Production deployment", type: "milestone", completed: false, missed: false },
-];
-
-// Employee time entries for hours tracking
-const initialTimeEntries = [
-  { id: "1", memberId: "1", memberName: "You", date: "Mar 1, 2024", hours: 8, description: "Project planning and client call", billable: true },
-  { id: "2", memberId: "2", memberName: "Sarah Chen", date: "Mar 1, 2024", hours: 6, description: "Authentication module development", billable: true },
-  { id: "3", memberId: "3", memberName: "Mike Johnson", date: "Mar 1, 2024", hours: 4, description: "Dashboard UI mockups", billable: true },
-  { id: "4", memberId: "1", memberName: "You", date: "Mar 2, 2024", hours: 7, description: "Code review and architecture", billable: true },
-  { id: "5", memberId: "2", memberName: "Sarah Chen", date: "Mar 2, 2024", hours: 8, description: "API integration work", billable: true },
-  { id: "6", memberId: "4", memberName: "Emma Wilson", date: "Mar 2, 2024", hours: 5, description: "Database schema design", billable: true },
-  { id: "7", memberId: "5", memberName: "David Brown", date: "Mar 3, 2024", hours: 6, description: "Test case preparation", billable: true },
-  { id: "8", memberId: "1", memberName: "You", date: "Mar 3, 2024", hours: 4, description: "Sprint planning", billable: false },
-];
-
-const initialContracts = [
-  { id: "CON-001", name: "Non-Disclosure Agreement", type: "nda", uploadDate: "Jan 10, 2024", size: "245 KB", status: "signed" },
-  { id: "CON-002", name: "Master Service Agreement", type: "service", uploadDate: "Jan 12, 2024", size: "512 KB", status: "signed" },
-  { id: "CON-003", name: "Developer Contract - Sarah Chen", type: "employee", uploadDate: "Jan 15, 2024", size: "180 KB", status: "active" },
-  { id: "CON-004", name: "Contractor Agreement - Mike Johnson", type: "contractor", uploadDate: "Jan 18, 2024", size: "195 KB", status: "active" },
-];
-
-// Non-labor costs only - labor is auto-calculated from time entries
-const initialCosts = [
-  { id: "COST-001", description: "AWS Cloud Services", category: "infrastructure", amount: 1200, date: "Feb 2024", recurring: true },
-  { id: "COST-002", description: "Software Licenses", category: "software", amount: 800, date: "Jan 2024", recurring: true },
-  { id: "COST-003", description: "Third-party API Integration", category: "external", amount: 2500, date: "Feb 2024", recurring: false },
-];
 
 const priorityStyles = {
   high: "bg-red-600 text-white",
@@ -318,12 +272,12 @@ const costCategoryLabels = {
 export default function ProjectDetail() {
   const { projectId } = useParams();
   const { navigateOrg, getOrgPath } = useOrgNavigation();
-  const [todos, setTodos] = useState(initialTodos);
-  const [invoices, setInvoices] = useState(initialInvoices);
+
+  // Form state
   const [newTodo, setNewTodo] = useState("");
   const [newTodoDescription, setNewTodoDescription] = useState("");
   const [newTodoPriority, setNewTodoPriority] = useState("medium");
-  const [newTodoAssignee, setNewTodoAssignee] = useState("You");
+  const [newTodoAssignee, setNewTodoAssignee] = useState("");
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
@@ -339,10 +293,24 @@ export default function ProjectDetail() {
     description: "",
     amount: "",
     dueDate: "",
+    invoiceNumber: "",
+    notes: "",
+    status: "draft" as "draft" | "sent" | "paid" | "overdue",
   });
+  const [isEditInvoiceDialogOpen, setIsEditInvoiceDialogOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<{
+    id: string;
+    description: string;
+    amount: number;
+    dueDate: string;
+    paidDate: string;
+    invoiceNumber: string;
+    notes: string;
+    status: "draft" | "sent" | "paid" | "overdue";
+    fileUrl: string;
+    fileName: string;
+  } | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(new Date(2024, 0)); // January 2024
-  const [contracts, setContracts] = useState(initialContracts);
-  const [costs, setCosts] = useState(initialCosts);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [isCostDialogOpen, setIsCostDialogOpen] = useState(false);
   const [newContract, setNewContract] = useState({
@@ -351,18 +319,23 @@ export default function ProjectDetail() {
   });
   const [newCost, setNewCost] = useState({
     description: "",
-    category: "labor",
+    category: "Infrastructure",
     amount: "",
     recurring: false,
+    date: new Date().toISOString().split("T")[0],
   });
-  const [milestones, setMilestones] = useState(initialTimelineEvents);
-  const [timeEntries, setTimeEntries] = useState(initialTimeEntries);
   const [isMilestoneDialogOpen, setIsMilestoneDialogOpen] = useState(false);
   const [isEditMilestoneDialogOpen, setIsEditMilestoneDialogOpen] = useState(false);
   const [isCalendarDetailOpen, setIsCalendarDetailOpen] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
   const [isTimeEntryDialogOpen, setIsTimeEntryDialogOpen] = useState(false);
-  const [editingMilestone, setEditingMilestone] = useState<typeof initialTimelineEvents[0] | null>(null);
+  const [editingMilestone, setEditingMilestone] = useState<{
+    id: string;
+    title: string;
+    description: string | null;
+    due_date: string;
+    completed: boolean;
+  } | null>(null);
   const [newMilestone, setNewMilestone] = useState({
     title: "",
     description: "",
@@ -391,6 +364,13 @@ export default function ProjectDetail() {
   // Fetch time entries for this project
   const { data: dbTimeEntries, isLoading: timeEntriesLoading } = useTimeEntriesByProject(dbProject?.id);
 
+  // Fetch project invoices, tasks, milestones, costs, contracts from database
+  const { data: invoices, isLoading: invoicesLoading } = useProjectInvoices(dbProject?.id);
+  const { data: tasks, isLoading: tasksLoading } = useProjectTasks(dbProject?.id);
+  const { data: milestones, isLoading: milestonesLoading } = useProjectMilestones(dbProject?.id);
+  const { data: costs, isLoading: costsLoading } = useProjectCosts(dbProject?.id);
+  const { data: contracts, isLoading: contractsLoading } = useProjectContracts(dbProject?.id);
+
   // Hooks for updating/deleting projects
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
@@ -402,6 +382,42 @@ export default function ProjectDetail() {
   // Hooks for time entries
   const createTimeEntry = useCreateTimeEntry();
   const deleteTimeEntry = useDeleteTimeEntry();
+
+  // Hooks for project invoices
+  const createInvoice = useCreateProjectInvoice();
+  const updateInvoice = useUpdateProjectInvoice();
+  const deleteInvoice = useDeleteProjectInvoice();
+
+  // Hooks for project tasks
+  const createTask = useCreateProjectTask();
+  const updateTask = useUpdateProjectTask();
+  const toggleTask = useToggleProjectTask();
+  const deleteTask = useDeleteProjectTask();
+
+  // Hooks for project milestones
+  const createMilestone = useCreateProjectMilestone();
+  const updateMilestone = useUpdateProjectMilestone();
+  const toggleMilestone = useToggleProjectMilestone();
+  const deleteMilestone = useDeleteProjectMilestone();
+
+  // Hooks for project costs
+  const createCost = useCreateProjectCost();
+  const updateCost = useUpdateProjectCost();
+  const deleteCost = useDeleteProjectCost();
+
+  // Hooks for project contracts
+  const createContract = useCreateProjectContract();
+  const updateContract = useUpdateProjectContract();
+  const deleteContract = useDeleteProjectContract();
+
+  // Hooks for external members
+  const { data: externalMembers } = useProjectExternalMembers(dbProject?.id);
+  const addExternalMemberMutation = useAddProjectExternalMember();
+  const removeExternalMemberMutation = useRemoveProjectExternalMember();
+  const createContactAndAdd = useCreateContactAndAddToProject();
+
+  // Fetch all contacts for selection
+  const { data: allContacts } = useContacts();
 
   // Edit project state
   const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false);
@@ -417,7 +433,32 @@ export default function ProjectDetail() {
   } | null>(null);
 
   const projectData = projectsData[projectId || ""];
-  const [externalTeam, setExternalTeam] = useState(projectData?.externalTeam || []);
+
+  // Map external members from database to UI format
+  const externalTeam = useMemo(() => {
+    if (!externalMembers) return [];
+    return externalMembers.map(em => ({
+      id: em.id,
+      contactId: em.contact_id,
+      name: em.contact?.name || "Unknown",
+      email: em.contact?.email || "",
+      role: em.role || em.contact?.job_title || "Stakeholder",
+      company: em.contact?.company?.name || "",
+      avatar: em.contact?.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "??",
+    }));
+  }, [externalMembers]);
+
+  // Available contacts to add (not already on project)
+  const availableContacts = useMemo(() => {
+    if (!allContacts || !externalMembers) return allContacts || [];
+    const assignedContactIds = new Set(externalMembers.map(em => em.contact_id));
+    return allContacts.filter(c => !assignedContactIds.has(c.id));
+  }, [allContacts, externalMembers]);
+
+  // State for external member dialog
+  const [externalMemberMode, setExternalMemberMode] = useState<"select" | "create">("select");
+  const [selectedContactId, setSelectedContactId] = useState<string>("");
+  const [selectedContactRole, setSelectedContactRole] = useState<string>("");
 
   // Map database team members to the format used in the UI
   const internalTeam = useMemo(() => {
@@ -522,78 +563,138 @@ export default function ProjectDetail() {
     externalTeam,
   };
 
-  const toggleTodo = (id: string) => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
-    const todo = todos.find(t => t.id === id);
-    if (todo) {
-      toast.success(todo.completed ? "Task marked as incomplete" : "Task completed!");
+  const toggleTodo = async (id: string, currentCompleted: boolean) => {
+    try {
+      await toggleTask.mutateAsync({ id, completed: !currentCompleted });
+    } catch (error) {
+      // Error handled by hook
     }
   };
 
-  const addTodo = () => {
-    if (!newTodo.trim()) {
+  const addTodo = async () => {
+    if (!newTodo.trim() || !dbProject) {
       toast.error("Please enter a task title");
       return;
     }
-    const todo = {
-      id: String(Date.now()),
-      text: newTodo,
-      completed: false,
-      priority: newTodoPriority,
-      assignee: newTodoAssignee,
-      dueDate: newTodoDueDate || "TBD",
-    };
-    setTodos([...todos, todo]);
-    setNewTodo("");
-    setNewTodoDescription("");
-    setNewTodoPriority("medium");
-    setNewTodoAssignee("You");
-    setNewTodoDueDate("");
-    setIsTaskDialogOpen(false);
-    toast.success("Task added successfully");
+    try {
+      await createTask.mutateAsync({
+        project_id: dbProject.id,
+        title: newTodo,
+        priority: newTodoPriority as "high" | "medium" | "low",
+        assignee_id: newTodoAssignee || undefined,
+        due_date: newTodoDueDate || undefined,
+      });
+      setNewTodo("");
+      setNewTodoDescription("");
+      setNewTodoPriority("medium");
+      setNewTodoAssignee("");
+      setNewTodoDueDate("");
+      setIsTaskDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const deleteTodo = (id: string) => {
-    setTodos(todos.filter(todo => todo.id !== id));
-    toast.success("Task removed");
+  const deleteTodo = async (id: string) => {
+    try {
+      await deleteTask.mutateAsync(id);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const handleCreateInvoice = () => {
-    if (!newInvoice.description || !newInvoice.amount) {
+  const handleCreateInvoice = async () => {
+    if (!newInvoice.description || !newInvoice.amount || !dbProject) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const invoice = {
-      id: `INV-${String(invoices.length + 1).padStart(3, "0")}`,
-      description: newInvoice.description,
-      amount: parseInt(newInvoice.amount),
-      status: "draft",
-      dueDate: newInvoice.dueDate || "TBD",
-      paidDate: null,
-    };
-
-    setInvoices([...invoices, invoice]);
-    setNewInvoice({ description: "", amount: "", dueDate: "" });
-    setIsInvoiceDialogOpen(false);
-    toast.success("Invoice created");
+    try {
+      await createInvoice.mutateAsync({
+        project_id: dbProject.id,
+        description: newInvoice.description,
+        amount: parseFloat(newInvoice.amount),
+        due_date: newInvoice.dueDate || undefined,
+        invoice_number: newInvoice.invoiceNumber || undefined,
+        notes: newInvoice.notes || undefined,
+        status: newInvoice.status,
+      });
+      setNewInvoice({ description: "", amount: "", dueDate: "", invoiceNumber: "", notes: "", status: "draft" });
+      setIsInvoiceDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const sendInvoice = (invoiceId: string) => {
-    setInvoices(invoices.map(inv =>
-      inv.id === invoiceId ? { ...inv, status: "sent" } : inv
-    ));
-    toast.success("Invoice sent to client");
+  const openEditInvoice = (invoice: ProjectInvoice) => {
+    setEditingInvoice({
+      id: invoice.id,
+      description: invoice.description,
+      amount: invoice.amount,
+      dueDate: invoice.due_date || "",
+      paidDate: invoice.paid_date || "",
+      invoiceNumber: invoice.invoice_number || "",
+      notes: invoice.notes || "",
+      status: invoice.status,
+      fileUrl: invoice.file_url || "",
+      fileName: invoice.file_name || "",
+    });
+    setIsEditInvoiceDialogOpen(true);
   };
 
-  const markInvoicePaid = (invoiceId: string) => {
-    const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    setInvoices(invoices.map(inv =>
-      inv.id === invoiceId ? { ...inv, status: "paid", paidDate: today } : inv
-    ));
-    toast.success("Invoice marked as paid");
+  const handleUpdateInvoice = async () => {
+    if (!editingInvoice) return;
+
+    try {
+      await updateInvoice.mutateAsync({
+        id: editingInvoice.id,
+        description: editingInvoice.description,
+        amount: editingInvoice.amount,
+        due_date: editingInvoice.dueDate || undefined,
+        paid_date: editingInvoice.paidDate || undefined,
+        invoice_number: editingInvoice.invoiceNumber || undefined,
+        notes: editingInvoice.notes || undefined,
+        status: editingInvoice.status,
+        file_url: editingInvoice.fileUrl || undefined,
+        file_name: editingInvoice.fileName || undefined,
+      });
+      setEditingInvoice(null);
+      setIsEditInvoiceDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    if (!confirm("Are you sure you want to delete this invoice?")) return;
+    try {
+      await deleteInvoice.mutateAsync(invoiceId);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const sendInvoice = async (invoiceId: string) => {
+    try {
+      await updateInvoice.mutateAsync({
+        id: invoiceId,
+        status: "sent",
+      });
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const markInvoicePaid = async (invoiceId: string) => {
+    try {
+      await updateInvoice.mutateAsync({
+        id: invoiceId,
+        status: "paid",
+        paid_date: new Date().toISOString().split("T")[0],
+      });
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
   const addInternalMember = async (member: { id: string; name: string }) => {
@@ -670,130 +771,162 @@ export default function ProjectDetail() {
     }
   };
 
-  const addExternalMember = () => {
-    if (!newExternalMember.name || !newExternalMember.email) {
-      toast.error("Please fill in name and email");
+  const handleAddExternalFromContact = async () => {
+    if (!selectedContactId || !dbProject) {
+      toast.error("Please select a contact");
       return;
     }
-    const member = {
-      id: `e${Date.now()}`,
-      name: newExternalMember.name,
-      email: newExternalMember.email,
-      role: newExternalMember.role || "Stakeholder",
-      company: newExternalMember.company || project.name,
-      avatar: newExternalMember.name.split(" ").map(n => n[0]).join("").toUpperCase(),
-    };
-    setExternalTeam([...externalTeam, member]);
-    setNewExternalMember({ name: "", email: "", role: "", company: "" });
-    setIsAddMemberDialogOpen(false);
-    toast.success(`${member.name} added as external team member`);
+    try {
+      await addExternalMemberMutation.mutateAsync({
+        project_id: dbProject.id,
+        contact_id: selectedContactId,
+        role: selectedContactRole || undefined,
+      });
+      setSelectedContactId("");
+      setSelectedContactRole("");
+      setIsAddMemberDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const removeExternalMember = (memberId: string) => {
-    setExternalTeam(externalTeam.filter(m => m.id !== memberId));
-    toast.success("External team member removed");
+  const handleAddExternalNewContact = async () => {
+    if (!newExternalMember.name || !dbProject) {
+      toast.error("Please enter at least a name");
+      return;
+    }
+    try {
+      await createContactAndAdd.mutateAsync({
+        project_id: dbProject.id,
+        name: newExternalMember.name,
+        email: newExternalMember.email || undefined,
+        job_title: newExternalMember.role || undefined,
+        // company_id could be added if we implement company selection
+      });
+      setNewExternalMember({ name: "", email: "", role: "", company: "" });
+      setExternalMemberMode("select");
+      setIsAddMemberDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const handleUploadContract = () => {
-    if (!newContract.name) {
+  const handleRemoveExternalMember = async (memberId: string) => {
+    try {
+      await removeExternalMemberMutation.mutateAsync(memberId);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleUploadContract = async () => {
+    if (!newContract.name || !dbProject) {
       toast.error("Please enter a contract name");
       return;
     }
 
-    const contract = {
-      id: `CON-${String(contracts.length + 1).padStart(3, "0")}`,
-      name: newContract.name,
-      type: newContract.type,
-      uploadDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      size: `${Math.floor(Math.random() * 400 + 100)} KB`,
-      status: "pending",
-    };
-
-    setContracts([...contracts, contract]);
-    setNewContract({ name: "", type: "nda" });
-    setIsContractDialogOpen(false);
-    toast.success("Contract uploaded successfully");
+    try {
+      await createContract.mutateAsync({
+        project_id: dbProject.id,
+        name: newContract.name,
+        type: newContract.type,
+        status: "pending",
+      });
+      setNewContract({ name: "", type: "nda" });
+      setIsContractDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const deleteContract = (contractId: string) => {
-    setContracts(contracts.filter(c => c.id !== contractId));
-    toast.success("Contract deleted");
+  const handleDeleteContract = async (contractId: string) => {
+    try {
+      await deleteContract.mutateAsync(contractId);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const handleAddCost = () => {
-    if (!newCost.description || !newCost.amount) {
+  const handleAddCost = async () => {
+    if (!newCost.description || !newCost.amount || !dbProject) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const cost = {
-      id: `COST-${String(costs.length + 1).padStart(3, "0")}`,
-      description: newCost.description,
-      category: newCost.category,
-      amount: parseInt(newCost.amount),
-      date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
-      recurring: newCost.recurring,
-    };
-
-    setCosts([...costs, cost]);
-    setNewCost({ description: "", category: "labor", amount: "", recurring: false });
-    setIsCostDialogOpen(false);
-    toast.success("Cost added successfully");
+    try {
+      await createCost.mutateAsync({
+        project_id: dbProject.id,
+        description: newCost.description,
+        category: newCost.category,
+        amount: parseFloat(newCost.amount),
+        date: newCost.date || new Date().toISOString().split("T")[0],
+        recurring: newCost.recurring,
+      });
+      setNewCost({ description: "", category: "Infrastructure", amount: "", recurring: false, date: new Date().toISOString().split("T")[0] });
+      setIsCostDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const deleteCost = (costId: string) => {
-    setCosts(costs.filter(c => c.id !== costId));
-    toast.success("Cost removed");
+  const handleDeleteCost = async (costId: string) => {
+    try {
+      await deleteCost.mutateAsync(costId);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
   // Milestone functions
-  const addMilestone = () => {
-    if (!newMilestone.title || !newMilestone.date) {
+  const handleAddMilestone = async () => {
+    if (!newMilestone.title || !newMilestone.date || !dbProject) {
       toast.error("Please fill in title and date");
       return;
     }
-    const milestone = {
-      id: String(Date.now()),
-      title: newMilestone.title,
-      description: newMilestone.description,
-      date: new Date(newMilestone.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      type: "milestone",
-      completed: false,
-      missed: false,
-    };
-    setMilestones([...milestones, milestone].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-    setNewMilestone({ title: "", description: "", date: "" });
-    setIsMilestoneDialogOpen(false);
-    toast.success("Milestone added");
+    try {
+      await createMilestone.mutateAsync({
+        project_id: dbProject.id,
+        title: newMilestone.title,
+        description: newMilestone.description || undefined,
+        due_date: newMilestone.date,
+      });
+      setNewMilestone({ title: "", description: "", date: "" });
+      setIsMilestoneDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const updateMilestone = () => {
+  const handleUpdateMilestone = async () => {
     if (!editingMilestone) return;
-    setMilestones(milestones.map(m => m.id === editingMilestone.id ? editingMilestone : m));
-    setEditingMilestone(null);
-    setIsEditMilestoneDialogOpen(false);
-    toast.success("Milestone updated");
+    try {
+      await updateMilestone.mutateAsync({
+        id: editingMilestone.id,
+        title: editingMilestone.title,
+        description: editingMilestone.description || undefined,
+        due_date: editingMilestone.due_date,
+      });
+      setEditingMilestone(null);
+      setIsEditMilestoneDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const deleteMilestone = (id: string) => {
-    setMilestones(milestones.filter(m => m.id !== id));
-    toast.success("Milestone deleted");
+  const handleDeleteMilestone = async (id: string) => {
+    try {
+      await deleteMilestone.mutateAsync(id);
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
-  const toggleMilestoneComplete = (id: string) => {
-    setMilestones(milestones.map(m =>
-      m.id === id ? { ...m, completed: !m.completed, missed: false } : m
-    ));
-    const milestone = milestones.find(m => m.id === id);
-    toast.success(milestone?.completed ? "Milestone marked incomplete" : "Milestone completed!");
-  };
-
-  const toggleMilestoneMissed = (id: string) => {
-    setMilestones(milestones.map(m =>
-      m.id === id ? { ...m, missed: !m.missed, completed: false } : m
-    ));
-    const milestone = milestones.find(m => m.id === id);
-    toast.success(milestone?.missed ? "Deadline unmarked" : "Deadline marked as missed");
+  const handleToggleMilestoneComplete = async (id: string, currentCompleted: boolean) => {
+    try {
+      await toggleMilestone.mutateAsync({ id, completed: !currentCompleted });
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
   // Time entry functions
@@ -843,10 +976,9 @@ export default function ProjectDetail() {
 
   // Get milestones for a specific date
   const getMilestonesForDate = (date: Date) => {
+    if (!milestones) return [];
     return milestones.filter(event => {
-      const parts = event.date.split(" ");
-      const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
-      const eventDate = new Date(parseInt(parts[2]), months[parts[0]], parseInt(parts[1].replace(",", "")));
+      const eventDate = new Date(event.due_date);
       return eventDate.toDateString() === date.toDateString();
     });
   };
@@ -862,12 +994,12 @@ export default function ProjectDetail() {
   };
 
   // Calculate invoice totals - Project value is total invoiced
-  const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.amount, 0);
-  const totalPaid = invoices.filter(inv => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0);
-  const totalOutstanding = invoices.filter(inv => inv.status === "sent").reduce((sum, inv) => sum + inv.amount, 0);
+  const totalInvoiced = invoices?.reduce((sum, inv) => sum + inv.amount, 0) || 0;
+  const totalPaid = invoices?.filter(inv => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0) || 0;
+  const totalOutstanding = invoices?.filter(inv => inv.status === "sent").reduce((sum, inv) => sum + inv.amount, 0) || 0;
 
   // Calculate total costs (non-labor + auto-calculated labor)
-  const nonLaborCosts = costs.reduce((sum, cost) => sum + cost.amount, 0);
+  const nonLaborCosts = costs?.reduce((sum, cost) => sum + cost.amount, 0) || 0;
   const totalCosts = nonLaborCosts + laborCosts;
 
   // Calculate profit
@@ -932,7 +1064,7 @@ export default function ProjectDetail() {
 
   const getMilestoneForDay = (day: number) => {
     const checkDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
-    return milestones.find(event => {
+    return milestones?.find(event => {
       const parts = event.date.split(" ");
       const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
       const eventDate = new Date(parseInt(parts[2]), months[parts[0]], parseInt(parts[1].replace(",", "")));
@@ -984,8 +1116,9 @@ export default function ProjectDetail() {
     return days;
   };
 
-  const completedTodos = todos.filter(t => t.completed).length;
-  const todoProgress = todos.length > 0 ? Math.round((completedTodos / todos.length) * 100) : 0;
+  const completedTodos = tasks?.filter(t => t.completed).length || 0;
+  const totalTodos = tasks?.length || 0;
+  const todoProgress = totalTodos > 0 ? Math.round((completedTodos / totalTodos) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -1175,67 +1308,143 @@ export default function ProjectDetail() {
                   <h4 className="font-semibold">Client Team ({project.name})</h4>
                   <Badge variant="secondary" className="border-2 border-border">{externalTeam.length}</Badge>
                 </div>
-                <Dialog open={isAddMemberDialogOpen} onOpenChange={setIsAddMemberDialogOpen}>
+                <Dialog open={isAddMemberDialogOpen} onOpenChange={(open) => {
+                    setIsAddMemberDialogOpen(open);
+                    if (!open) {
+                      setExternalMemberMode("select");
+                      setSelectedContactId("");
+                      setSelectedContactRole("");
+                      setNewExternalMember({ name: "", email: "", role: "", company: "" });
+                    }
+                  }}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="border-2">
                       <UserPlus className="h-4 w-4 mr-1" />
                       Add
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[400px]">
+                  <DialogContent className="border-2 sm:max-w-[450px]">
                     <DialogHeader className="border-b-2 border-border pb-4">
                       <DialogTitle>Add External Team Member</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="ext-name">Name *</Label>
-                        <Input
-                          id="ext-name"
-                          placeholder="Full name"
-                          value={newExternalMember.name}
-                          onChange={(e) => setNewExternalMember({ ...newExternalMember, name: e.target.value })}
-                          className="border-2"
-                        />
+                      {/* Mode toggle */}
+                      <div className="flex gap-2">
+                        <Button
+                          variant={externalMemberMode === "select" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1 border-2"
+                          onClick={() => setExternalMemberMode("select")}
+                        >
+                          Select from Contacts
+                        </Button>
+                        <Button
+                          variant={externalMemberMode === "create" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1 border-2"
+                          onClick={() => setExternalMemberMode("create")}
+                        >
+                          Create New Contact
+                        </Button>
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="ext-email">Email *</Label>
-                        <Input
-                          id="ext-email"
-                          type="email"
-                          placeholder="email@company.com"
-                          value={newExternalMember.email}
-                          onChange={(e) => setNewExternalMember({ ...newExternalMember, email: e.target.value })}
-                          className="border-2"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="ext-role">Role</Label>
-                        <Input
-                          id="ext-role"
-                          placeholder="e.g., Product Owner, Technical Lead"
-                          value={newExternalMember.role}
-                          onChange={(e) => setNewExternalMember({ ...newExternalMember, role: e.target.value })}
-                          className="border-2"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="ext-company">Company</Label>
-                        <Input
-                          id="ext-company"
-                          placeholder={project.name}
-                          value={newExternalMember.company}
-                          onChange={(e) => setNewExternalMember({ ...newExternalMember, company: e.target.value })}
-                          className="border-2"
-                        />
-                      </div>
+
+                      {externalMemberMode === "select" ? (
+                        <>
+                          <div className="grid gap-2">
+                            <Label>Select Contact *</Label>
+                            <Select value={selectedContactId} onValueChange={setSelectedContactId}>
+                              <SelectTrigger className="border-2">
+                                <SelectValue placeholder="Choose a contact..." />
+                              </SelectTrigger>
+                              <SelectContent className="border-2">
+                                {availableContacts.length === 0 ? (
+                                  <div className="p-2 text-sm text-muted-foreground text-center">
+                                    No contacts available
+                                  </div>
+                                ) : (
+                                  availableContacts.map((contact) => (
+                                    <SelectItem key={contact.id} value={contact.id}>
+                                      <span className="font-medium">{contact.name}</span>
+                                      {contact.company?.name && (
+                                        <span className="text-muted-foreground ml-2">({contact.company.name})</span>
+                                      )}
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="ext-select-role">Role on Project</Label>
+                            <Input
+                              id="ext-select-role"
+                              placeholder="e.g., Product Owner, Technical Lead"
+                              value={selectedContactRole}
+                              onChange={(e) => setSelectedContactRole(e.target.value)}
+                              className="border-2"
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="grid gap-2">
+                            <Label htmlFor="ext-name">Name *</Label>
+                            <Input
+                              id="ext-name"
+                              placeholder="Full name"
+                              value={newExternalMember.name}
+                              onChange={(e) => setNewExternalMember({ ...newExternalMember, name: e.target.value })}
+                              className="border-2"
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="ext-email">Email</Label>
+                            <Input
+                              id="ext-email"
+                              type="email"
+                              placeholder="email@company.com"
+                              value={newExternalMember.email}
+                              onChange={(e) => setNewExternalMember({ ...newExternalMember, email: e.target.value })}
+                              className="border-2"
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="ext-role">Role / Job Title</Label>
+                            <Input
+                              id="ext-role"
+                              placeholder="e.g., Product Owner, Technical Lead"
+                              value={newExternalMember.role}
+                              onChange={(e) => setNewExternalMember({ ...newExternalMember, role: e.target.value })}
+                              className="border-2"
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            This will create a new contact in your CRM and add them to this project.
+                          </p>
+                        </>
+                      )}
                     </div>
                     <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
                       <Button variant="outline" onClick={() => setIsAddMemberDialogOpen(false)} className="border-2">
                         Cancel
                       </Button>
-                      <Button onClick={addExternalMember} className="border-2">
-                        Add Member
-                      </Button>
+                      {externalMemberMode === "select" ? (
+                        <Button
+                          onClick={handleAddExternalFromContact}
+                          className="border-2"
+                          disabled={!selectedContactId || addExternalMemberMutation.isPending}
+                        >
+                          {addExternalMemberMutation.isPending ? "Adding..." : "Add Member"}
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleAddExternalNewContact}
+                          className="border-2"
+                          disabled={!newExternalMember.name || createContactAndAdd.isPending}
+                        >
+                          {createContactAndAdd.isPending ? "Creating..." : "Create & Add"}
+                        </Button>
+                      )}
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -1252,14 +1461,14 @@ export default function ProjectDetail() {
                         </Avatar>
                         <div>
                           <div className="font-medium">{member.name}</div>
-                          <div className="text-xs text-muted-foreground">{member.role} • {member.company}</div>
+                          <div className="text-xs text-muted-foreground">{member.role}{member.company ? ` • ${member.company}` : member.email ? ` • ${member.email}` : ""}</div>
                         </div>
                       </div>
                       <Button
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
-                        onClick={() => removeExternalMember(member.id)}
+                        onClick={() => handleRemoveExternalMember(member.id)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -1390,6 +1599,10 @@ export default function ProjectDetail() {
                     <div className="text-sm text-muted-foreground">{project.clientEmail}</div>
                   </div>
                   <div className="border-t-2 border-border pt-4">
+                    <div className="text-sm text-muted-foreground mb-1">Contracted Value</div>
+                    <div className="font-mono font-bold text-lg">${Number(dbProject?.value || 0).toLocaleString()}</div>
+                  </div>
+                  <div className="border-t-2 border-border pt-4">
                     <div className="text-sm text-muted-foreground mb-1">Timeline</div>
                     <div className="font-medium">{project.startDate} - {project.endDate}</div>
                   </div>
@@ -1484,11 +1697,11 @@ export default function ProjectDetail() {
                       New Invoice
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[425px]">
+                  <DialogContent className="border-2 sm:max-w-[500px]">
                     <DialogHeader className="border-b-2 border-border pb-4">
                       <DialogTitle>Create Invoice</DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
                       <div className="grid gap-2">
                         <Label htmlFor="inv-desc">Description *</Label>
                         <Input
@@ -1512,6 +1725,18 @@ export default function ProjectDetail() {
                           />
                         </div>
                         <div className="grid gap-2">
+                          <Label htmlFor="inv-number">Invoice Number</Label>
+                          <Input
+                            id="inv-number"
+                            placeholder="e.g., INV-2024-001"
+                            value={newInvoice.invoiceNumber}
+                            onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
+                            className="border-2"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
                           <Label htmlFor="inv-due">Due Date</Label>
                           <Input
                             id="inv-due"
@@ -1521,6 +1746,37 @@ export default function ProjectDetail() {
                             className="border-2"
                           />
                         </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="inv-status">Status</Label>
+                          <Select
+                            value={newInvoice.status}
+                            onValueChange={(value: "draft" | "sent" | "paid" | "overdue") =>
+                              setNewInvoice({ ...newInvoice, status: value })
+                            }
+                          >
+                            <SelectTrigger className="border-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border-2">
+                              {INVOICE_STATUSES.map((status) => (
+                                <SelectItem key={status.value} value={status.value}>
+                                  {status.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="inv-notes">Notes</Label>
+                        <Textarea
+                          id="inv-notes"
+                          placeholder="Additional notes..."
+                          value={newInvoice.notes}
+                          onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
+                          className="border-2"
+                          rows={2}
+                        />
                       </div>
                     </div>
                     <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
@@ -1539,28 +1795,48 @@ export default function ProjectDetail() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-b-2 hover:bg-transparent">
-                    <TableHead className="font-bold uppercase text-xs">Invoice</TableHead>
+                    <TableHead className="font-bold uppercase text-xs">ID</TableHead>
+                    <TableHead className="font-bold uppercase text-xs">Invoice #</TableHead>
                     <TableHead className="font-bold uppercase text-xs">Description</TableHead>
                     <TableHead className="font-bold uppercase text-xs text-right">Amount</TableHead>
                     <TableHead className="font-bold uppercase text-xs">Due Date</TableHead>
                     <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Paid Date</TableHead>
+                    <TableHead className="font-bold uppercase text-xs">File</TableHead>
                     <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices.map((invoice) => (
+                  {invoices?.map((invoice) => (
                     <TableRow key={invoice.id} className="border-b-2">
-                      <TableCell className="font-mono text-sm">{invoice.id}</TableCell>
-                      <TableCell className="font-medium">{invoice.description}</TableCell>
+                      <TableCell className="font-mono text-sm">{invoice.display_id}</TableCell>
+                      <TableCell className="font-mono text-sm">{invoice.invoice_number || "-"}</TableCell>
+                      <TableCell className="font-medium max-w-[200px] truncate" title={invoice.description}>
+                        {invoice.description}
+                      </TableCell>
                       <TableCell className="text-right font-mono font-bold">${invoice.amount.toLocaleString()}</TableCell>
-                      <TableCell className="text-muted-foreground">{invoice.dueDate}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {invoice.due_date ? format(new Date(invoice.due_date), "MMM d, yyyy") : "-"}
+                      </TableCell>
                       <TableCell>
                         <Badge className={invoiceStatusStyles[invoice.status as keyof typeof invoiceStatusStyles] || "bg-slate-400 text-black"}>
                           {invoice.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{invoice.paidDate || "-"}</TableCell>
+                      <TableCell>
+                        {invoice.file_url ? (
+                          <a
+                            href={invoice.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-primary hover:underline text-sm"
+                          >
+                            <FileText className="h-3 w-3" />
+                            {invoice.file_name || "View"}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           {invoice.status === "draft" && (
@@ -1585,6 +1861,22 @@ export default function ProjectDetail() {
                               Mark Paid
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 border-2 border-transparent hover:border-border"
+                            onClick={() => openEditInvoice(invoice)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                            onClick={() => handleDeleteInvoice(invoice.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1593,6 +1885,135 @@ export default function ProjectDetail() {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Edit Invoice Dialog */}
+          <Dialog open={isEditInvoiceDialogOpen} onOpenChange={setIsEditInvoiceDialogOpen}>
+            <DialogContent className="border-2 sm:max-w-[500px]">
+              <DialogHeader className="border-b-2 border-border pb-4">
+                <DialogTitle>Edit Invoice</DialogTitle>
+              </DialogHeader>
+              {editingInvoice && (
+                <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-inv-desc">Description *</Label>
+                    <Input
+                      id="edit-inv-desc"
+                      placeholder="Invoice description"
+                      value={editingInvoice.description}
+                      onChange={(e) => setEditingInvoice({ ...editingInvoice, description: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-inv-amount">Amount ($) *</Label>
+                      <Input
+                        id="edit-inv-amount"
+                        type="number"
+                        placeholder="0"
+                        value={editingInvoice.amount}
+                        onChange={(e) => setEditingInvoice({ ...editingInvoice, amount: parseFloat(e.target.value) || 0 })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-inv-number">Invoice Number</Label>
+                      <Input
+                        id="edit-inv-number"
+                        placeholder="e.g., INV-2024-001"
+                        value={editingInvoice.invoiceNumber}
+                        onChange={(e) => setEditingInvoice({ ...editingInvoice, invoiceNumber: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-inv-due">Due Date</Label>
+                      <Input
+                        id="edit-inv-due"
+                        type="date"
+                        value={editingInvoice.dueDate}
+                        onChange={(e) => setEditingInvoice({ ...editingInvoice, dueDate: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-inv-status">Status</Label>
+                      <Select
+                        value={editingInvoice.status}
+                        onValueChange={(value: "draft" | "sent" | "paid" | "overdue") =>
+                          setEditingInvoice({ ...editingInvoice, status: value })
+                        }
+                      >
+                        <SelectTrigger className="border-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="border-2">
+                          {INVOICE_STATUSES.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {editingInvoice.status === "paid" && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-inv-paid">Paid Date</Label>
+                      <Input
+                        id="edit-inv-paid"
+                        type="date"
+                        value={editingInvoice.paidDate}
+                        onChange={(e) => setEditingInvoice({ ...editingInvoice, paidDate: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                  )}
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-inv-file-url">File URL</Label>
+                    <Input
+                      id="edit-inv-file-url"
+                      placeholder="https://..."
+                      value={editingInvoice.fileUrl}
+                      onChange={(e) => setEditingInvoice({ ...editingInvoice, fileUrl: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-inv-file-name">File Name</Label>
+                    <Input
+                      id="edit-inv-file-name"
+                      placeholder="invoice.pdf"
+                      value={editingInvoice.fileName}
+                      onChange={(e) => setEditingInvoice({ ...editingInvoice, fileName: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-inv-notes">Notes</Label>
+                    <Textarea
+                      id="edit-inv-notes"
+                      placeholder="Additional notes..."
+                      value={editingInvoice.notes}
+                      onChange={(e) => setEditingInvoice({ ...editingInvoice, notes: e.target.value })}
+                      className="border-2"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                <Button variant="outline" onClick={() => setIsEditInvoiceDialogOpen(false)} className="border-2">
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateInvoice} className="border-2">
+                  Save Changes
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Tasks Tab */}
@@ -1605,7 +2026,7 @@ export default function ProjectDetail() {
                     <div>
                       <CardTitle>Project Tasks</CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {completedTodos} of {todos.length} tasks completed
+                        {completedTodos} of {totalTodos} tasks completed
                       </p>
                     </div>
                     <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
@@ -1685,49 +2106,51 @@ export default function ProjectDetail() {
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="space-y-2">
-                    {todos.map((todo) => (
+                    {tasks?.map((task) => (
                       <div
-                        key={todo.id}
+                        key={task.id}
                         className={`flex items-center gap-3 p-3 border-2 border-border ${
-                          todo.completed ? "bg-muted/50" : "bg-background"
+                          task.completed ? "bg-muted/50" : "bg-background"
                         }`}
                       >
                         <Checkbox
-                          checked={todo.completed}
-                          onCheckedChange={() => toggleTodo(todo.id)}
+                          checked={task.completed}
+                          onCheckedChange={() => toggleTodo(task.id, task.completed)}
                           className="border-2"
                         />
                         <div className="flex-1">
-                          <span className={`${todo.completed ? "line-through text-muted-foreground" : ""}`}>
-                            {todo.text}
+                          <span className={`${task.completed ? "line-through text-muted-foreground" : ""}`}>
+                            {task.title}
                           </span>
                           <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                            <span>Assigned to {todo.assignee}</span>
-                            {todo.dueDate && (
+                            {task.assignee?.profiles?.full_name && (
+                              <span>Assigned to {task.assignee.profiles.full_name}</span>
+                            )}
+                            {task.due_date && (
                               <>
-                                <span>•</span>
+                                {task.assignee?.profiles?.full_name && <span>•</span>}
                                 <span className="flex items-center gap-1">
                                   <CalendarIcon className="h-3 w-3" />
-                                  Due: {todo.dueDate}
+                                  Due: {new Date(task.due_date).toLocaleDateString()}
                                 </span>
                               </>
                             )}
                           </div>
                         </div>
-                        <Badge className={ticketPriorityStyles[todo.priority as keyof typeof ticketPriorityStyles] || "bg-slate-400 text-black"}>
-                          {todo.priority}
+                        <Badge className={ticketPriorityStyles[task.priority as keyof typeof ticketPriorityStyles] || "bg-slate-400 text-black"}>
+                          {task.priority}
                         </Badge>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
-                          onClick={() => deleteTodo(todo.id)}
+                          onClick={() => deleteTodo(task.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
-                    {todos.length === 0 && (
+                    {(!tasks || tasks.length === 0) && (
                       <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border">
                         No tasks yet. Add one to get started!
                       </div>
@@ -1754,7 +2177,7 @@ export default function ProjectDetail() {
                     <div className="border-t-2 border-border pt-4 space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Total Tasks</span>
-                        <span className="font-bold">{todos.length}</span>
+                        <span className="font-bold">{totalTodos}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Completed</span>
@@ -1762,22 +2185,22 @@ export default function ProjectDetail() {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Remaining</span>
-                        <span className="font-bold">{todos.length - completedTodos}</span>
+                        <span className="font-bold">{totalTodos - completedTodos}</span>
                       </div>
                     </div>
                     <div className="border-t-2 border-border pt-4 space-y-3">
                       <div className="text-sm font-medium">By Priority</div>
                       <div className="flex justify-between text-sm">
                         <span className="text-destructive">High</span>
-                        <span className="font-bold">{todos.filter(t => t.priority === "high" && !t.completed).length} remaining</span>
+                        <span className="font-bold">{tasks?.filter(t => t.priority === "high" && !t.completed).length || 0} remaining</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-chart-4">Medium</span>
-                        <span className="font-bold">{todos.filter(t => t.priority === "medium" && !t.completed).length} remaining</span>
+                        <span className="font-bold">{tasks?.filter(t => t.priority === "medium" && !t.completed).length || 0} remaining</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Low</span>
-                        <span className="font-bold">{todos.filter(t => t.priority === "low" && !t.completed).length} remaining</span>
+                        <span className="font-bold">{tasks?.filter(t => t.priority === "low" && !t.completed).length || 0} remaining</span>
                       </div>
                     </div>
                   </div>
@@ -1795,7 +2218,7 @@ export default function ProjectDetail() {
                 <div>
                   <CardTitle>Project Timeline</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {milestones.filter(m => m.completed).length} of {milestones.length} milestones completed
+                    {milestones?.filter(m => m.completed).length || 0} of {milestones?.length || 0} milestones completed
                   </p>
                 </div>
                 <Dialog open={isMilestoneDialogOpen} onOpenChange={setIsMilestoneDialogOpen}>
@@ -1845,8 +2268,8 @@ export default function ProjectDetail() {
                       <Button variant="outline" onClick={() => setIsMilestoneDialogOpen(false)} className="border-2">
                         Cancel
                       </Button>
-                      <Button onClick={addMilestone} className="border-2">
-                        Add Milestone
+                      <Button onClick={handleAddMilestone} className="border-2" disabled={createMilestone.isPending}>
+                        {createMilestone.isPending ? "Adding..." : "Add Milestone"}
                       </Button>
                     </div>
                   </DialogContent>
@@ -1859,36 +2282,29 @@ export default function ProjectDetail() {
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
 
                 <div className="space-y-6">
-                  {milestones.map((event, index) => (
+                  {milestones?.map((event, index) => (
                     <div key={event.id} className="relative flex gap-4 pl-10">
                       {/* Timeline dot */}
                       <div
                         className={`absolute left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           event.completed
                             ? "bg-chart-2 border-chart-2"
-                            : event.missed
-                            ? "bg-destructive border-destructive"
                             : "bg-background border-border"
                         }`}
                       >
                         {event.completed ? (
                           <Check className="h-3 w-3 text-background" />
-                        ) : event.missed ? (
-                          <AlertTriangle className="h-3 w-3 text-destructive-foreground" />
                         ) : (
                           <Circle className="h-2 w-2 text-muted-foreground" />
                         )}
                       </div>
 
-                      <div className={`flex-1 pb-6 ${index === milestones.length - 1 ? "pb-0" : ""}`}>
+                      <div className={`flex-1 pb-6 ${index === (milestones?.length || 0) - 1 ? "pb-0" : ""}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3 mb-1">
-                            <span className="font-mono text-sm text-muted-foreground">{event.date}</span>
+                            <span className="font-mono text-sm text-muted-foreground">{event.due_date}</span>
                             {event.completed && (
                               <Badge className="bg-emerald-600 text-white">Completed</Badge>
-                            )}
-                            {event.missed && (
-                              <Badge className="bg-red-600 text-white">Missed</Badge>
                             )}
                           </div>
                           <DropdownMenu>
@@ -1898,13 +2314,9 @@ export default function ProjectDetail() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="border-2">
-                              <DropdownMenuItem onClick={() => toggleMilestoneComplete(event.id)}>
+                              <DropdownMenuItem onClick={() => handleToggleMilestoneComplete(event.id, event.completed)}>
                                 <Check className="h-4 w-4 mr-2" />
                                 {event.completed ? "Mark Incomplete" : "Mark Complete"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toggleMilestoneMissed(event.id)}>
-                                <AlertTriangle className="h-4 w-4 mr-2" />
-                                {event.missed ? "Unmark Missed" : "Mark as Missed"}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 setEditingMilestone(event);
@@ -1913,7 +2325,7 @@ export default function ProjectDetail() {
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive" onClick={() => deleteMilestone(event.id)}>
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteMilestone(event.id)}>
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
@@ -1925,7 +2337,7 @@ export default function ProjectDetail() {
                       </div>
                     </div>
                   ))}
-                  {milestones.length === 0 && (
+                  {(!milestones || milestones.length === 0) && (
                     <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border ml-10">
                       No milestones yet. Add one to get started!
                     </div>
@@ -1982,8 +2394,8 @@ export default function ProjectDetail() {
                 <Button variant="outline" onClick={() => setIsEditMilestoneDialogOpen(false)} className="border-2">
                   Cancel
                 </Button>
-                <Button onClick={updateMilestone} className="border-2">
-                  Save Changes
+                <Button onClick={handleUpdateMilestone} className="border-2" disabled={updateMilestone.isPending}>
+                  {updateMilestone.isPending ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </DialogContent>
@@ -2164,8 +2576,8 @@ export default function ProjectDetail() {
                       <Button variant="outline" onClick={() => setIsContractDialogOpen(false)} className="border-2">
                         Cancel
                       </Button>
-                      <Button onClick={handleUploadContract} className="border-2">
-                        Upload
+                      <Button onClick={handleUploadContract} className="border-2" disabled={createContract.isPending}>
+                        {createContract.isPending ? "Uploading..." : "Upload"}
                       </Button>
                     </div>
                   </DialogContent>
@@ -2173,7 +2585,7 @@ export default function ProjectDetail() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {contracts.length === 0 ? (
+              {(!contracts || contracts.length === 0) ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No contracts uploaded yet
                 </div>
@@ -2185,15 +2597,14 @@ export default function ProjectDetail() {
                       <TableHead className="font-bold uppercase text-xs">Name</TableHead>
                       <TableHead className="font-bold uppercase text-xs">Type</TableHead>
                       <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Uploaded</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Size</TableHead>
+                      <TableHead className="font-bold uppercase text-xs">Created</TableHead>
                       <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {contracts.map((contract) => (
+                    {contracts?.map((contract) => (
                       <TableRow key={contract.id} className="border-b-2">
-                        <TableCell className="font-mono text-sm">{contract.id}</TableCell>
+                        <TableCell className="font-mono text-sm">{contract.display_id}</TableCell>
                         <TableCell className="font-medium">{contract.name}</TableCell>
                         <TableCell>
                           <Badge className={documentTypeStyles[contract.type as keyof typeof documentTypeStyles] || "bg-slate-400 text-black"}>
@@ -2205,23 +2616,27 @@ export default function ProjectDetail() {
                             {contract.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{contract.uploadDate}</TableCell>
-                        <TableCell className="text-muted-foreground">{contract.size}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(contract.created_at).toLocaleDateString()}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 px-2 border-2 border-transparent hover:border-border"
-                            >
-                              <Download className="h-3 w-3 mr-1" />
-                              Download
-                            </Button>
+                            {contract.file_url && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 px-2 border-2 border-transparent hover:border-border"
+                                onClick={() => window.open(contract.file_url!, '_blank')}
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                Download
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
-                              onClick={() => deleteContract(contract.id)}
+                              onClick={() => handleDeleteContract(contract.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -2238,25 +2653,25 @@ export default function ProjectDetail() {
           <div className="grid gap-4 md:grid-cols-4">
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{contracts.length}</div>
+                <div className="text-2xl font-bold">{contracts?.length || 0}</div>
                 <div className="text-sm text-muted-foreground">Total Contracts</div>
               </CardContent>
             </Card>
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{contracts.filter(c => c.type === "nda").length}</div>
+                <div className="text-2xl font-bold">{contracts?.filter(c => c.type === "nda").length || 0}</div>
                 <div className="text-sm text-muted-foreground">NDAs</div>
               </CardContent>
             </Card>
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{contracts.filter(c => c.type === "employee" || c.type === "contractor").length}</div>
+                <div className="text-2xl font-bold">{contracts?.filter(c => c.type === "employee" || c.type === "contractor").length || 0}</div>
                 <div className="text-sm text-muted-foreground">Team Contracts</div>
               </CardContent>
             </Card>
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{contracts.filter(c => c.status === "signed" || c.status === "active").length}</div>
+                <div className="text-2xl font-bold">{contracts?.filter(c => c.status === "signed" || c.status === "active").length || 0}</div>
                 <div className="text-sm text-muted-foreground">Active</div>
               </CardContent>
             </Card>
@@ -2408,7 +2823,7 @@ export default function ProjectDetail() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {costs.length === 0 ? (
+              {(!costs || costs.length === 0) ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No costs recorded yet
                 </div>
@@ -2426,7 +2841,7 @@ export default function ProjectDetail() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {costs.map((cost) => (
+                    {costs?.map((cost) => (
                       <TableRow key={cost.id} className="border-b-2">
                         <TableCell className="font-mono text-sm">{cost.id}</TableCell>
                         <TableCell className="font-medium">{cost.description}</TableCell>
@@ -2483,7 +2898,7 @@ export default function ProjectDetail() {
                 )}
                 {/* Other costs from manual entries */}
                 {Object.entries(costCategoryLabels).filter(([key]) => key !== "labor").map(([key, label]) => {
-                  const categoryTotal = costs.filter(c => c.category === key).reduce((sum, c) => sum + c.amount, 0);
+                  const categoryTotal = costs?.filter(c => c.category === key).reduce((sum, c) => sum + c.amount, 0) || 0;
                   const percentage = totalCosts > 0 ? Math.round((categoryTotal / totalCosts) * 100) : 0;
                   return categoryTotal > 0 ? (
                     <div key={key} className="space-y-1">
@@ -2861,7 +3276,7 @@ export default function ProjectDetail() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-project-value">Project Value ($)</Label>
+                  <Label htmlFor="edit-project-value">Contracted Value ($)</Label>
                   <Input
                     id="edit-project-value"
                     type="number"

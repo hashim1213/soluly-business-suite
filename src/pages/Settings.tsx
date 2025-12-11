@@ -3,14 +3,12 @@ import {
   User,
   Bell,
   Mail,
-  Key,
   Building2,
   Users,
   Shield,
   Plus,
   Trash2,
   Copy,
-  MoreVertical,
   Loader2,
   Check,
   X,
@@ -19,7 +17,6 @@ import {
   Moon,
   Monitor,
   Upload,
-  Image,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,12 +43,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Table,
   TableBody,
   TableCell,
@@ -59,37 +50,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRoles, useCreateRole, useUpdateRole, useDeleteRole, defaultPermissions } from "@/hooks/useRoles";
-import { useInvitations, useCreateInvitation, useDeleteInvitation, useResendInvitation } from "@/hooks/useInvitations";
+import { useRoles } from "@/hooks/useRoles";
+import { useInvitations, useCreateInvitation, useDeleteInvitation } from "@/hooks/useInvitations";
 import { useUpdateOrganization, useOrganizationStats } from "@/hooks/useOrganization";
 import { useUploadOrgLogo, useRemoveOrgLogo } from "@/hooks/useOrgLogo";
 import { useTeamMembers, useUpdateTeamMember, useDeleteTeamMember } from "@/hooks/useTeamMembers";
-import { Can } from "@/components/auth/PermissionGuard";
-import { Permissions, Permission } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { useTheme, ThemeMode, ThemeStyle } from "@/contexts/ThemeContext";
 
 export default function Settings() {
   const { member, organization, role, hasPermission, refreshUserData } = useAuth();
   const { mode, style, setMode, setStyle, resolvedMode } = useTheme();
-  const { data: roles, isLoading: rolesLoading } = useRoles();
-  const { data: invitations, isLoading: invitationsLoading } = useInvitations();
-  const { data: teamMembers, isLoading: membersLoading } = useTeamMembers();
+  const { data: roles } = useRoles();
+  const { data: invitations } = useInvitations();
+  const { data: teamMembers } = useTeamMembers();
   const { data: orgStats } = useOrganizationStats();
 
-  const createRole = useCreateRole();
-  const updateRole = useUpdateRole();
-  const deleteRole = useDeleteRole();
   const createInvitation = useCreateInvitation();
   const deleteInvitation = useDeleteInvitation();
-  const resendInvitation = useResendInvitation();
   const updateOrganization = useUpdateOrganization();
   const uploadOrgLogo = useUploadOrgLogo();
   const removeOrgLogo = useRemoveOrgLogo();
@@ -114,13 +98,6 @@ export default function Settings() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRoleId, setInviteRoleId] = useState("");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-
-  // Role state
-  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<any>(null);
-  const [newRoleName, setNewRoleName] = useState("");
-  const [newRoleDescription, setNewRoleDescription] = useState("");
-  const [newRolePermissions, setNewRolePermissions] = useState<Permissions>(defaultPermissions);
 
   const canManageUsers = hasPermission("settings", "manage_users");
   const canManageRoles = hasPermission("settings", "manage_roles");
@@ -196,61 +173,6 @@ export default function Settings() {
     toast.success("Invite link copied to clipboard");
   };
 
-  // Create/update role
-  const handleSaveRole = async () => {
-    if (!newRoleName) {
-      toast.error("Please enter a role name");
-      return;
-    }
-
-    try {
-      if (editingRole) {
-        await updateRole.mutateAsync({
-          id: editingRole.id,
-          name: newRoleName,
-          description: newRoleDescription,
-          permissions: newRolePermissions,
-        });
-      } else {
-        await createRole.mutateAsync({
-          name: newRoleName,
-          description: newRoleDescription,
-          permissions: newRolePermissions,
-        });
-      }
-      setIsRoleDialogOpen(false);
-      resetRoleForm();
-    } catch (error) {
-      // Error handled by hook
-    }
-  };
-
-  const resetRoleForm = () => {
-    setEditingRole(null);
-    setNewRoleName("");
-    setNewRoleDescription("");
-    setNewRolePermissions(defaultPermissions);
-  };
-
-  const openEditRole = (role: any) => {
-    setEditingRole(role);
-    setNewRoleName(role.name);
-    setNewRoleDescription(role.description || "");
-    setNewRolePermissions(role.permissions);
-    setIsRoleDialogOpen(true);
-  };
-
-  // Update permission
-  const updatePermission = (resource: keyof Permissions, action: string, value: Permission) => {
-    setNewRolePermissions((prev) => ({
-      ...prev,
-      [resource]: {
-        ...(prev[resource] as any),
-        [action]: value,
-      },
-    }));
-  };
-
   // Remove team member
   const handleRemoveMember = async (memberId: string) => {
     if (!confirm("Are you sure you want to remove this team member?")) return;
@@ -287,6 +209,7 @@ export default function Settings() {
           {canManageOrg && <TabsTrigger value="organization">Organization</TabsTrigger>}
           {canManageUsers && <TabsTrigger value="team">Team</TabsTrigger>}
           {canManageRoles && <TabsTrigger value="roles">Roles</TabsTrigger>}
+          {hasPermission("emails", "edit") && <TabsTrigger value="email-accounts">Email Accounts</TabsTrigger>}
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
@@ -938,204 +861,41 @@ export default function Settings() {
           </TabsContent>
         )}
 
-        {/* Roles Tab */}
+        {/* Roles Tab - Coming Soon */}
         {canManageRoles && (
           <TabsContent value="roles" className="space-y-6">
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
-                      <Shield className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <CardTitle>Roles & Permissions</CardTitle>
-                      <CardDescription>Create and manage custom roles</CardDescription>
-                    </div>
-                  </div>
-                  <Dialog open={isRoleDialogOpen} onOpenChange={(open) => {
-                    setIsRoleDialogOpen(open);
-                    if (!open) resetRoleForm();
-                  }}>
-                    <DialogTrigger asChild>
-                      <Button className="border-2">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Role
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="border-2 max-w-2xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>{editingRole ? "Edit Role" : "Create Role"}</DialogTitle>
-                        <DialogDescription>
-                          {editingRole ? "Update role settings and permissions" : "Create a new role with custom permissions"}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 pt-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div className="space-y-2">
-                            <Label htmlFor="roleName">Role Name</Label>
-                            <Input
-                              id="roleName"
-                              placeholder="e.g., Marketing Manager"
-                              value={newRoleName}
-                              onChange={(e) => setNewRoleName(e.target.value)}
-                              className="border-2"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="roleDesc">Description</Label>
-                            <Input
-                              id="roleDesc"
-                              placeholder="Brief description"
-                              value={newRoleDescription}
-                              onChange={(e) => setNewRoleDescription(e.target.value)}
-                              className="border-2"
-                            />
-                          </div>
-                        </div>
-
-                        <Separator />
-
-                        <div className="space-y-4">
-                          <h4 className="font-medium">Permissions</h4>
-                          <div className="space-y-3">
-                            {(["dashboard", "projects", "tickets", "team", "crm", "quotes", "features", "feedback", "emails"] as const).map((resource) => (
-                              <div key={resource} className="flex items-center justify-between p-3 border-2 rounded-lg">
-                                <span className="font-medium capitalize">{resource}</span>
-                                <div className="flex items-center gap-4">
-                                  {["view", "create", "edit", "delete"].map((action) => (
-                                    <label key={action} className="flex items-center gap-2 text-sm">
-                                      <Checkbox
-                                        checked={(newRolePermissions[resource] as any)?.[action] === true}
-                                        onCheckedChange={(checked) =>
-                                          updatePermission(resource, action, checked ? true : false)
-                                        }
-                                      />
-                                      <span className="capitalize">{action}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-
-                            <div className="p-3 border-2 rounded-lg">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="font-medium">Settings</span>
-                              </div>
-                              <div className="flex items-center gap-6">
-                                <label className="flex items-center gap-2 text-sm">
-                                  <Checkbox
-                                    checked={newRolePermissions.settings?.manage_org === true}
-                                    onCheckedChange={(checked) =>
-                                      updatePermission("settings", "manage_org", checked ? true : false)
-                                    }
-                                  />
-                                  <span>Manage Organization</span>
-                                </label>
-                                <label className="flex items-center gap-2 text-sm">
-                                  <Checkbox
-                                    checked={newRolePermissions.settings?.manage_users === true}
-                                    onCheckedChange={(checked) =>
-                                      updatePermission("settings", "manage_users", checked ? true : false)
-                                    }
-                                  />
-                                  <span>Manage Users</span>
-                                </label>
-                                <label className="flex items-center gap-2 text-sm">
-                                  <Checkbox
-                                    checked={newRolePermissions.settings?.manage_roles === true}
-                                    onCheckedChange={(checked) =>
-                                      updatePermission("settings", "manage_roles", checked ? true : false)
-                                    }
-                                  />
-                                  <span>Manage Roles</span>
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-4">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setIsRoleDialogOpen(false);
-                              resetRoleForm();
-                            }}
-                            className="border-2"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={handleSaveRole}
-                            disabled={createRole.isPending || updateRole.isPending}
-                            className="border-2"
-                          >
-                            {(createRole.isPending || updateRole.isPending) ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
-                              </>
-                            ) : editingRole ? (
-                              "Update Role"
-                            ) : (
-                              "Create Role"
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+            <Card className="border-2 border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                  <Shield className="h-8 w-8 text-primary" />
                 </div>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-b-2">
-                      <TableHead>Role</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="w-[70px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {roles?.map((r) => (
-                      <TableRow key={r.id} className="border-b-2">
-                        <TableCell className="font-medium">{r.name}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {r.description || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={r.is_system ? "secondary" : "outline"}>
-                            {r.is_system ? "System" : "Custom"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openEditRole(r)}>
-                                Edit
-                              </DropdownMenuItem>
-                              {!r.is_system && (
-                                <DropdownMenuItem
-                                  onClick={() => deleteRole.mutate(r.id)}
-                                  className="text-destructive"
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <h2 className="text-xl font-bold mb-2">Roles & Permissions</h2>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                  Create custom roles with granular permissions to control access across your organization.
+                </p>
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-100 text-yellow-800 font-medium">
+                  Coming Soon
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Email Accounts Tab - Coming Soon */}
+        {hasPermission("emails", "edit") && (
+          <TabsContent value="email-accounts" className="space-y-6">
+            <Card className="border-2 border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                  <Mail className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold mb-2">Email Accounts</h2>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                  Connect Gmail and other email accounts to automatically sync and categorize incoming emails.
+                </p>
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-100 text-yellow-800 font-medium">
+                  Coming Soon
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

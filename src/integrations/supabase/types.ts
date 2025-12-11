@@ -340,56 +340,194 @@ export type Database = {
           }
         ]
       }
-      emails: {
+      email_accounts: {
         Row: {
-          ai_summary: string | null
-          body: string
-          category: Database["public"]["Enums"]["email_category"] | null
-          confidence_score: number | null
-          created_at: string
-          extracted_data: Json | null
           id: string
-          processed_at: string | null
-          received_at: string
-          sender_email: string
-          sender_name: string | null
-          status: Database["public"]["Enums"]["email_status"]
-          subject: string
+          organization_id: string
+          display_name: string
+          email_address: string
+          imap_host: string
+          imap_port: number
+          imap_username: string
+          imap_password: string
+          imap_use_ssl: boolean
+          status: "active" | "inactive" | "error" | "syncing"
+          auto_categorize: boolean
+          auto_create_records: boolean
+          sync_folder: string
+          last_sync_at: string | null
+          last_sync_uid: string | null
+          last_error: string | null
+          created_at: string
           updated_at: string
         }
         Insert: {
-          ai_summary?: string | null
-          body: string
-          category?: Database["public"]["Enums"]["email_category"] | null
-          confidence_score?: number | null
-          created_at?: string
-          extracted_data?: Json | null
           id?: string
-          processed_at?: string | null
-          received_at?: string
-          sender_email: string
-          sender_name?: string | null
-          status?: Database["public"]["Enums"]["email_status"]
-          subject: string
+          organization_id: string
+          display_name: string
+          email_address: string
+          imap_host: string
+          imap_port?: number
+          imap_username: string
+          imap_password: string
+          imap_use_ssl?: boolean
+          status?: "active" | "inactive" | "error" | "syncing"
+          auto_categorize?: boolean
+          auto_create_records?: boolean
+          sync_folder?: string
+          last_sync_at?: string | null
+          last_sync_uid?: string | null
+          last_error?: string | null
+          created_at?: string
           updated_at?: string
         }
         Update: {
-          ai_summary?: string | null
-          body?: string
-          category?: Database["public"]["Enums"]["email_category"] | null
-          confidence_score?: number | null
-          created_at?: string
-          extracted_data?: Json | null
           id?: string
-          processed_at?: string | null
-          received_at?: string
-          sender_email?: string
-          sender_name?: string | null
-          status?: Database["public"]["Enums"]["email_status"]
-          subject?: string
+          organization_id?: string
+          display_name?: string
+          email_address?: string
+          imap_host?: string
+          imap_port?: number
+          imap_username?: string
+          imap_password?: string
+          imap_use_ssl?: boolean
+          status?: "active" | "inactive" | "error" | "syncing"
+          auto_categorize?: boolean
+          auto_create_records?: boolean
+          sync_folder?: string
+          last_sync_at?: string | null
+          last_sync_uid?: string | null
+          last_error?: string | null
+          created_at?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "email_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      emails: {
+        Row: {
+          id: string
+          organization_id: string
+          email_account_id: string | null
+          display_id: string | null
+          message_id: string | null
+          imap_uid: string | null
+          sender_email: string
+          sender_name: string | null
+          subject: string
+          body: string
+          received_at: string
+          status: Database["public"]["Enums"]["email_status"]
+          category: Database["public"]["Enums"]["email_category"] | null
+          confidence_score: number | null
+          ai_summary: string | null
+          ai_suggested_title: string | null
+          ai_confidence: number | null
+          extracted_data: Json | null
+          processed_at: string | null
+          linked_ticket_id: string | null
+          linked_feature_request_id: string | null
+          linked_quote_id: string | null
+          linked_feedback_id: string | null
+          linked_project_id: string | null
+          review_status: "pending" | "approved" | "dismissed"
+          reviewed_by: string | null
+          reviewed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          email_account_id?: string | null
+          display_id?: string | null
+          message_id?: string | null
+          imap_uid?: string | null
+          sender_email: string
+          sender_name?: string | null
+          subject: string
+          body: string
+          received_at?: string
+          status?: Database["public"]["Enums"]["email_status"]
+          category?: Database["public"]["Enums"]["email_category"] | null
+          confidence_score?: number | null
+          ai_summary?: string | null
+          ai_suggested_title?: string | null
+          ai_confidence?: number | null
+          extracted_data?: Json | null
+          processed_at?: string | null
+          linked_ticket_id?: string | null
+          linked_feature_request_id?: string | null
+          linked_quote_id?: string | null
+          linked_feedback_id?: string | null
+          linked_project_id?: string | null
+          review_status?: "pending" | "approved" | "dismissed"
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          email_account_id?: string | null
+          display_id?: string | null
+          message_id?: string | null
+          imap_uid?: string | null
+          sender_email?: string
+          sender_name?: string | null
+          subject?: string
+          body?: string
+          received_at?: string
+          status?: Database["public"]["Enums"]["email_status"]
+          category?: Database["public"]["Enums"]["email_category"] | null
+          confidence_score?: number | null
+          ai_summary?: string | null
+          ai_suggested_title?: string | null
+          ai_confidence?: number | null
+          extracted_data?: Json | null
+          processed_at?: string | null
+          linked_ticket_id?: string | null
+          linked_feature_request_id?: string | null
+          linked_quote_id?: string | null
+          linked_feedback_id?: string | null
+          linked_project_id?: string | null
+          review_status?: "pending" | "approved" | "dismissed"
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emails_email_account_id_fkey"
+            columns: ["email_account_id"]
+            isOneToOne: false
+            referencedRelation: "email_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emails_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emails_linked_project_id_fkey"
+            columns: ["linked_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       feature_request_projects: {
         Row: {
@@ -1041,7 +1179,7 @@ export type Database = {
       activity_type: "call" | "email" | "meeting" | "note"
       client_status: "active" | "inactive"
       contract_type: "Full-time" | "Part-time" | "Contractor"
-      email_category: "feature_request" | "customer_quote" | "feedback" | "other"
+      email_category: "ticket" | "feature_request" | "customer_quote" | "feedback" | "other"
       email_status: "pending" | "processed" | "failed"
       feature_priority: "high" | "medium" | "low"
       feature_status: "backlog" | "in-review" | "planned" | "in-progress" | "completed"
@@ -1189,7 +1327,7 @@ export const Constants = {
       activity_type: ["call", "email", "meeting", "note"],
       client_status: ["active", "inactive"],
       contract_type: ["Full-time", "Part-time", "Contractor"],
-      email_category: ["feature_request", "customer_quote", "feedback", "other"],
+      email_category: ["ticket", "feature_request", "customer_quote", "feedback", "other"],
       email_status: ["pending", "processed", "failed"],
       feature_priority: ["high", "medium", "low"],
       feature_status: ["backlog", "in-review", "planned", "in-progress", "completed"],

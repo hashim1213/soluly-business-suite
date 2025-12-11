@@ -8,7 +8,10 @@
       "Bash(timeout 10 npm run dev)",
       "Bash(npx supabase db push:*)",
       "Bash(npx supabase:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

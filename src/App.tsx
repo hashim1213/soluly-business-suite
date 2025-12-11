@@ -35,6 +35,9 @@ import Feedback from "./pages/Feedback";
 import FeedbackDetail from "./pages/FeedbackDetail";
 import Emails from "./pages/Emails";
 import Settings from "./pages/Settings";
+import GmailCallback from "./pages/GmailCallback";
+import Financials from "./pages/Financials";
+import BusinessCosts from "./pages/BusinessCosts";
 import NotFound from "./pages/NotFound";
 
 // Configure QueryClient with better defaults for stability
@@ -76,6 +79,9 @@ const App = () => (
             <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+
+            {/* OAuth callback routes */}
+            <Route path="/auth/gmail/callback" element={<GmailCallback />} />
 
             {/* Root redirect to organization workspace */}
             <Route path="/" element={<OrgRedirect />} />
@@ -200,6 +206,22 @@ const App = () => (
                   element={
                     <AppLayout>
                       <Emails />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="financials"
+                  element={
+                    <AppLayout>
+                      <Financials />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="expenses"
+                  element={
+                    <AppLayout>
+                      <BusinessCosts />
                     </AppLayout>
                   }
                 />

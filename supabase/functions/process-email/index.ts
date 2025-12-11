@@ -7,11 +7,7 @@ const corsHeaders = {
 };
 
 interface EmailProcessRequest {
-  emailId?: string;
-  subject: string;
-  body: string;
-  senderEmail: string;
-  senderName?: string;
+  emailId: string;
 }
 
 serve(async (req) => {
@@ -20,75 +16,100 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
-    const { emailId, subject, body, senderEmail, senderName }: EmailProcessRequest = await req.json();
-    console.log("Processing email:", { emailId, subject, senderEmail });
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const systemPrompt = `You are an AI assistant that categorizes business emails for a consulting company. 
+    const { emailId }: EmailProcessRequest = await req.json();
+
+    if (!emailId) {
+      throw new Error("emailId is required");
+    }
+
+    // Fetch the email from database
+    const { data: email, error: fetchError } = await supabase
+      .from("emails")
+      .select("*")
+      .eq("id", emailId)
+      .single();
+
+    if (fetchError || !email) {
+      throw new Error("Email not found");
+    }
+
+    console.log("Processing email:", { emailId, subject: email.subject, sender: email.sender_email });
+
+    const systemPrompt = `You are an AI assistant that categorizes business emails for a consulting company.
 Analyze the email and categorize it into one of these categories:
+- ticket: Customer reporting an issue, bug, problem, or support request
 - feature_request: Customer asking for new features or improvements
 - customer_quote: Customer requesting a quote, pricing, or proposal
-- feedback: Customer providing feedback, complaints, or praise
-- other: Emails that don't fit the above categories
+- feedback: Customer providing feedback, complaints, praise, or general comments
+- other: Emails that don't fit the above categories (newsletters, spam, personal, etc.)
 
 Also extract relevant data based on the category:
+- For ticket: extract issue_type, urgency (low/medium/high/critical), description
 - For feature_request: extract the feature name, urgency, and description
 - For customer_quote: extract project name, estimated budget if mentioned, timeline
 - For feedback: extract sentiment (positive/negative/neutral), topic
 
 Respond ONLY with valid JSON in this exact format:
 {
-  "category": "feature_request" | "customer_quote" | "feedback" | "other",
+  "category": "ticket" | "feature_request" | "customer_quote" | "feedback" | "other",
   "confidence": 0.0-1.0,
   "summary": "Brief 1-2 sentence summary",
+  "suggested_title": "Short title for creating a record",
+  "suggested_priority": "low" | "medium" | "high" | "critical",
   "extracted_data": { ... relevant extracted fields based on category }
 }`;
 
     const userPrompt = `Analyze and categorize this email:
 
-From: ${senderName || senderEmail}
-Subject: ${subject}
+From: ${email.sender_name || email.sender_email}
+Subject: ${email.subject}
 
 Body:
-${body}`;
+${email.body}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4-turbo-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
         temperature: 0.3,
+        response_format: { type: "json_object" },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      
+      console.error("OpenAI API error:", response.status, errorText);
+
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
+        return new Response(JSON.stringify({ success: false, error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add more credits." }), {
-          status: 402,
+      if (response.status === 401) {
+        return new Response(JSON.stringify({ success: false, error: "Invalid OpenAI API key." }), {
+          status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
@@ -102,45 +123,37 @@ ${body}`;
     // Parse the JSON response from AI
     let parsed;
     try {
-      // Extract JSON from the response (in case there's extra text)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("No JSON found in response");
-      }
+      parsed = JSON.parse(content);
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       parsed = {
         category: "other",
         confidence: 0.5,
         summary: "Unable to categorize email",
+        suggested_title: email.subject,
+        suggested_priority: "medium",
         extracted_data: {}
       };
     }
 
-    // If emailId provided, update the database
-    if (emailId) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
+    // Update the email in database
+    const { error: updateError } = await supabase
+      .from("emails")
+      .update({
+        status: "processed",
+        category: parsed.category,
+        confidence_score: parsed.confidence,
+        ai_summary: parsed.summary,
+        ai_suggested_title: parsed.suggested_title,
+        ai_confidence: parsed.confidence,
+        extracted_data: parsed.extracted_data,
+        processed_at: new Date().toISOString(),
+      })
+      .eq("id", emailId);
 
-      const { error: updateError } = await supabase
-        .from("emails")
-        .update({
-          status: "processed",
-          category: parsed.category,
-          confidence_score: parsed.confidence,
-          ai_summary: parsed.summary,
-          extracted_data: parsed.extracted_data,
-          processed_at: new Date().toISOString(),
-        })
-        .eq("id", emailId);
-
-      if (updateError) {
-        console.error("Database update error:", updateError);
-        throw updateError;
-      }
+    if (updateError) {
+      console.error("Database update error:", updateError);
+      throw updateError;
     }
 
     return new Response(JSON.stringify({
@@ -148,6 +161,8 @@ ${body}`;
       category: parsed.category,
       confidence: parsed.confidence,
       summary: parsed.summary,
+      suggested_title: parsed.suggested_title,
+      suggested_priority: parsed.suggested_priority,
       extracted_data: parsed.extracted_data,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -155,8 +170,9 @@ ${body}`;
 
   } catch (error) {
     console.error("Error in process-email function:", error);
-    return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Unknown error" 
+    return new Response(JSON.stringify({
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

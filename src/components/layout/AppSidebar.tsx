@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Users,
   Contact,
+  DollarSign,
+  Receipt,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -44,6 +46,8 @@ const mainNavItems: NavItem[] = [
   { title: "Tickets", path: "tickets", icon: Ticket, permission: "tickets" },
   { title: "Team Members", path: "team", icon: Users, permission: "team" },
   { title: "CRM", path: "crm", icon: Contact, permission: "crm" },
+  { title: "Financials", path: "financials", icon: DollarSign, permission: "projects" },
+  { title: "Expenses", path: "expenses", icon: Receipt, permission: "projects" },
 ];
 
 const ticketCategories: NavItem[] = [
