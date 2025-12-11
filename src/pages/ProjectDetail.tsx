@@ -310,7 +310,7 @@ export default function ProjectDetail() {
     fileUrl: string;
     fileName: string;
   } | null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(new Date(2024, 0)); // January 2024
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [isCostDialogOpen, setIsCostDialogOpen] = useState(false);
   const [newContract, setNewContract] = useState({
