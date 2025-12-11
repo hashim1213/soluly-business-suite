@@ -2085,7 +2085,7 @@ export default function ProjectDetail() {
                               id="task-due"
                               type="date"
                               value={newTodoDueDate}
-                              onChange={(e) => setNewTodoDueDate(e.target.value ? new Date(e.target.value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "")}
+                              onChange={(e) => setNewTodoDueDate(e.target.value)}
                               className="border-2"
                             />
                           </div>
