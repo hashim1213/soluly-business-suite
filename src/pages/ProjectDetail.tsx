@@ -1065,10 +1065,8 @@ export default function ProjectDetail() {
   const getMilestoneForDay = (day: number) => {
     const checkDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
     return milestones?.find(event => {
-      const parts = event.date.split(" ");
-      const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
-      const eventDate = new Date(parseInt(parts[2]), months[parts[0]], parseInt(parts[1].replace(",", "")));
-      return eventDate.getTime() === checkDate.getTime();
+      const eventDate = new Date(event.due_date);
+      return eventDate.toDateString() === checkDate.toDateString();
     });
   };
 
@@ -2380,13 +2378,12 @@ export default function ProjectDetail() {
                       type="date"
                       onChange={(e) => {
                         if (e.target.value) {
-                          const formattedDate = new Date(e.target.value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-                          setEditingMilestone({ ...editingMilestone, date: formattedDate });
+                          setEditingMilestone({ ...editingMilestone, due_date: e.target.value });
                         }
                       }}
                       className="border-2"
                     />
-                    <p className="text-xs text-muted-foreground">Current: {editingMilestone.date}</p>
+                    <p className="text-xs text-muted-foreground">Current: {new Date(editingMilestone.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                   </div>
                 </div>
               )}
