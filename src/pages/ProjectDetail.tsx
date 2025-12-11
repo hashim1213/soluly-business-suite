@@ -2071,7 +2071,7 @@ export default function ProjectDetail() {
                                 </SelectTrigger>
                                 <SelectContent className="border-2">
                                   {internalTeam.map((member) => (
-                                    <SelectItem key={member.id} value={member.name}>
+                                    <SelectItem key={member.id} value={member.id}>
                                       {member.name}
                                     </SelectItem>
                                   ))}
