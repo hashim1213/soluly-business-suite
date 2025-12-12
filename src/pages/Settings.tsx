@@ -167,9 +167,9 @@ export default function Settings() {
     }
   };
 
-  // Copy invite link - use soluly.com for production
+  // Copy invite link - use app.soluly.com for production
   const copyInviteLink = (token: string) => {
-    const baseUrl = import.meta.env.PROD ? "https://soluly.com" : window.location.origin;
+    const baseUrl = import.meta.env.PROD ? "https://app.soluly.com" : window.location.origin;
     const link = `${baseUrl}/invite/${token}`;
     navigator.clipboard.writeText(link);
     toast.success("Invite link copied to clipboard");
