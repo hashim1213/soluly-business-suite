@@ -87,11 +87,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r-2 border-border">
-      <SidebarHeader className="border-b-2 border-border p-4">
-        <div className="flex items-center justify-between">
+      <SidebarHeader className="h-14 border-b-2 border-border px-4 flex items-center">
+        <div className="flex items-center justify-between w-full">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-primary flex items-center justify-center rounded-md overflow-hidden">
+              <div className="h-7 w-7 bg-primary flex items-center justify-center rounded-md overflow-hidden shrink-0">
                 {organization?.logo_url ? (
                   <img
                     src={organization.logo_url}
@@ -99,9 +99,9 @@ export function AppSidebar() {
                     className="h-full w-full object-cover"
                   />
                 ) : organization?.icon ? (
-                  <span className="text-lg">{organization.icon}</span>
+                  <span className="text-sm">{organization.icon}</span>
                 ) : (
-                  <span className="text-primary-foreground font-bold text-sm">
+                  <span className="text-primary-foreground font-bold text-xs">
                     {organization?.name?.[0]?.toUpperCase() || "S"}
                   </span>
                 )}
@@ -112,7 +112,7 @@ export function AppSidebar() {
             </div>
           )}
           {collapsed && (
-            <div className="h-8 w-8 bg-primary flex items-center justify-center mx-auto rounded-md overflow-hidden">
+            <div className="h-7 w-7 bg-primary flex items-center justify-center mx-auto rounded-md overflow-hidden">
               {organization?.logo_url ? (
                 <img
                   src={organization.logo_url}
@@ -120,9 +120,9 @@ export function AppSidebar() {
                   className="h-full w-full object-cover"
                 />
               ) : organization?.icon ? (
-                <span className="text-lg">{organization.icon}</span>
+                <span className="text-sm">{organization.icon}</span>
               ) : (
-                <span className="text-primary-foreground font-bold text-sm">
+                <span className="text-primary-foreground font-bold text-xs">
                   {organization?.name?.[0]?.toUpperCase() || "S"}
                 </span>
               )}
