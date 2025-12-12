@@ -16,12 +16,12 @@ export type FeatureRequestWithProjects = FeatureRequest & {
   }>;
 };
 
-// Fetch all feature requests for the current organization
+// Fetch all feature requests for the current organization (filtered by project access)
 export function useFeatureRequests() {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["feature_requests", organization?.id],
+    queryKey: ["feature_requests", organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!organization?.id) return [];
 
@@ -33,13 +33,23 @@ export function useFeatureRequests() {
 
       if (featuresError) throw featuresError;
 
-      const { data: featureProjects, error: projectsError } = await supabase
+      let featureProjectsQuery = supabase
         .from("feature_request_projects")
         .select(`
           feature_request_id,
           project_id,
           project:projects(id, name, display_id)
         `);
+
+      // If user has project restrictions, filter by allowed projects
+      if (!hasFullProjectAccess() && allowedProjectIds !== null) {
+        if (allowedProjectIds.length === 0) {
+          return []; // No projects allowed = no feature requests
+        }
+        featureProjectsQuery = featureProjectsQuery.in("project_id", allowedProjectIds);
+      }
+
+      const { data: featureProjects, error: projectsError } = await featureProjectsQuery;
 
       if (projectsError) throw projectsError;
 
@@ -51,7 +61,14 @@ export function useFeatureRequests() {
         projectsByFeature.set(fp.feature_request_id, existing);
       });
 
-      return (features || []).map((feature) => ({
+      // Filter features - only include those that have at least one allowed project (if restricted)
+      let filteredFeatures = features || [];
+      if (!hasFullProjectAccess() && allowedProjectIds !== null) {
+        const featureIdsWithAllowedProjects = new Set(featureProjects?.map((fp) => fp.feature_request_id) || []);
+        filteredFeatures = filteredFeatures.filter((f) => featureIdsWithAllowedProjects.has(f.id));
+      }
+
+      return filteredFeatures.map((feature) => ({
         ...feature,
         projects: projectsByFeature.get(feature.id) || [],
       })) as FeatureRequestWithProjects[];
@@ -60,17 +77,20 @@ export function useFeatureRequests() {
   });
 }
 
-// Fetch single feature request
+// Fetch single feature request (filtered by organization)
 export function useFeatureRequest(id: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["feature_requests", id],
+    queryKey: ["feature_requests", id, organization?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
 
       const { data: feature, error: featureError } = await supabase
         .from("feature_requests")
         .select("*")
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (featureError) throw featureError;
@@ -90,7 +110,7 @@ export function useFeatureRequest(id: string | undefined) {
         projects: featureProjects || [],
       } as FeatureRequestWithProjects;
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
@@ -203,9 +223,10 @@ export function useCreateFeatureRequest() {
   });
 }
 
-// Update feature request
+// Update feature request (filtered by organization)
 export function useUpdateFeatureRequest() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -213,10 +234,13 @@ export function useUpdateFeatureRequest() {
       projectIds,
       ...updates
     }: FeatureRequestUpdate & { id: string; projectIds?: string[] }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("feature_requests")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -252,16 +276,20 @@ export function useUpdateFeatureRequest() {
   });
 }
 
-// Delete feature request
+// Delete feature request (filtered by organization)
 export function useDeleteFeatureRequest() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("feature_requests")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

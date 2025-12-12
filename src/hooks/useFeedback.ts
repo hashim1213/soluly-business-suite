@@ -33,12 +33,14 @@ export function useFeedback() {
   });
 }
 
-// Fetch single feedback
+// Fetch single feedback (filtered by organization)
 export function useFeedbackItem(id: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["feedback", id],
+    queryKey: ["feedback", id, organization?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
       const { data, error } = await supabase
         .from("feedback")
         .select(`
@@ -46,12 +48,13 @@ export function useFeedbackItem(id: string | undefined) {
           project:projects(name, display_id)
         `)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (error) throw error;
       return data as Feedback & { project?: { name: string; display_id: string } | null };
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
@@ -115,16 +118,20 @@ export function useCreateFeedback() {
   });
 }
 
-// Update feedback
+// Update feedback (filtered by organization)
 export function useUpdateFeedback() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: FeedbackUpdate & { id: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("feedback")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -142,16 +149,20 @@ export function useUpdateFeedback() {
   });
 }
 
-// Delete feedback
+// Delete feedback (filtered by organization)
 export function useDeleteFeedback() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("feedback")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

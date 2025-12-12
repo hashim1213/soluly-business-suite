@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoles } from "@/hooks/useRoles";
+import { RoleManagement } from "@/components/settings/RoleManagement";
 import { useInvitations, useCreateInvitation, useDeleteInvitation } from "@/hooks/useInvitations";
 import { useUpdateOrganization, useOrganizationStats } from "@/hooks/useOrganization";
 import { useUploadOrgLogo, useRemoveOrgLogo } from "@/hooks/useOrgLogo";
@@ -166,9 +167,10 @@ export default function Settings() {
     }
   };
 
-  // Copy invite link
+  // Copy invite link - use soluly.com for production
   const copyInviteLink = (token: string) => {
-    const link = `${window.location.origin}/invite/${token}`;
+    const baseUrl = import.meta.env.PROD ? "https://soluly.com" : window.location.origin;
+    const link = `${baseUrl}/invite/${token}`;
     navigator.clipboard.writeText(link);
     toast.success("Invite link copied to clipboard");
   };
@@ -861,23 +863,10 @@ export default function Settings() {
           </TabsContent>
         )}
 
-        {/* Roles Tab - Coming Soon */}
+        {/* Roles Tab */}
         {canManageRoles && (
           <TabsContent value="roles" className="space-y-6">
-            <Card className="border-2 border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                  <Shield className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold mb-2">Roles & Permissions</h2>
-                <p className="text-muted-foreground mb-6 max-w-md">
-                  Create custom roles with granular permissions to control access across your organization.
-                </p>
-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-100 text-yellow-800 font-medium">
-                  Coming Soon
-                </div>
-              </CardContent>
-            </Card>
+            <RoleManagement />
           </TabsContent>
         )}
 

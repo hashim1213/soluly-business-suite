@@ -127,6 +127,7 @@ export default function CRM() {
     value: "",
     valid_until: "",
     notes: "",
+    contact_id: "",
   });
   const [newActivity, setNewActivity] = useState({
     type: "call" as ActivityType,
@@ -278,6 +279,7 @@ export default function CRM() {
         value: "",
         valid_until: "",
         notes: "",
+        contact_id: "",
       });
       setIsNewDealOpen(false);
     } catch (error) {
@@ -726,7 +728,7 @@ export default function CRM() {
                 <DialogHeader className="border-b-2 border-border pb-4">
                   <DialogTitle>Create New Deal</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
                   <div className="grid gap-2">
                     <Label>Deal Title *</Label>
                     <Input
@@ -744,6 +746,49 @@ export default function CRM() {
                       onChange={(e) => setNewDeal({ ...newDeal, description: e.target.value })}
                       className="border-2"
                     />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Select Contact</Label>
+                    <Select
+                      value={newDeal.contact_id}
+                      onValueChange={(contactId) => {
+                        if (contactId === "manual") {
+                          setNewDeal({
+                            ...newDeal,
+                            contact_id: "",
+                            contact_name: "",
+                            contact_email: "",
+                            company_name: "",
+                          });
+                        } else {
+                          const selectedContact = contacts?.find((c) => c.id === contactId);
+                          if (selectedContact) {
+                            setNewDeal({
+                              ...newDeal,
+                              contact_id: contactId,
+                              contact_name: selectedContact.name,
+                              contact_email: selectedContact.email || "",
+                              company_name: selectedContact.company?.name || "",
+                            });
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="border-2">
+                        <SelectValue placeholder="Select from contacts or enter manually" />
+                      </SelectTrigger>
+                      <SelectContent className="border-2">
+                        <SelectItem value="manual">Enter manually</SelectItem>
+                        {contacts?.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {contact.name}
+                            {contact.company?.name && (
+                              <span className="text-muted-foreground"> - {contact.company.name}</span>
+                            )}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">

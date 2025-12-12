@@ -19,7 +19,15 @@ import {
 import { toast } from "sonner";
 import { useQuotes, useCreateQuote, useUpdateQuote, useDeleteQuote, Quote } from "@/hooks/useQuotes";
 import { useTickets, useDeleteTicket } from "@/hooks/useTickets";
+import { useContacts } from "@/hooks/useContacts";
 import { Database } from "@/integrations/supabase/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 
@@ -71,6 +79,7 @@ export default function CustomerQuotes() {
   const { navigateOrg } = useOrgNavigation();
   const { data: quotes, isLoading: quotesLoading, error } = useQuotes();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
+  const { data: contacts } = useContacts();
   const createQuote = useCreateQuote();
   const updateQuote = useUpdateQuote();
   const deleteTicket = useDeleteTicket();
@@ -86,6 +95,8 @@ export default function CustomerQuotes() {
     company_name: "",
     value: "",
     contact_email: "",
+    contact_name: "",
+    contact_id: "",
     valid_until: "",
   });
 
@@ -304,7 +315,7 @@ export default function CustomerQuotes() {
             <DialogHeader className="border-b-2 border-border pb-4">
               <DialogTitle>Create New Quote</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
               <div className="grid gap-2">
                 <Label htmlFor="title">Quote Title *</Label>
                 <Input
@@ -324,6 +335,49 @@ export default function CustomerQuotes() {
                   onChange={(e) => setNewQuote({ ...newQuote, description: e.target.value })}
                   className="border-2"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label>Select Contact</Label>
+                <Select
+                  value={newQuote.contact_id}
+                  onValueChange={(contactId) => {
+                    if (contactId === "manual") {
+                      setNewQuote({
+                        ...newQuote,
+                        contact_id: "",
+                        contact_name: "",
+                        contact_email: "",
+                        company_name: "",
+                      });
+                    } else {
+                      const selectedContact = contacts?.find((c) => c.id === contactId);
+                      if (selectedContact) {
+                        setNewQuote({
+                          ...newQuote,
+                          contact_id: contactId,
+                          contact_name: selectedContact.name,
+                          contact_email: selectedContact.email || "",
+                          company_name: selectedContact.company?.name || "",
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="border-2">
+                    <SelectValue placeholder="Select from contacts or enter manually" />
+                  </SelectTrigger>
+                  <SelectContent className="border-2">
+                    <SelectItem value="manual">Enter manually</SelectItem>
+                    {contacts?.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {contact.name}
+                        {contact.company?.name && (
+                          <span className="text-muted-foreground"> - {contact.company.name}</span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -350,6 +404,16 @@ export default function CustomerQuotes() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
+                  <Label htmlFor="contact_name">Contact Name</Label>
+                  <Input
+                    id="contact_name"
+                    placeholder="Contact name"
+                    value={newQuote.contact_name}
+                    onChange={(e) => setNewQuote({ ...newQuote, contact_name: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
                   <Label htmlFor="contact_email">Contact Email</Label>
                   <Input
                     id="contact_email"
@@ -360,16 +424,16 @@ export default function CustomerQuotes() {
                     className="border-2"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="valid_until">Valid Until</Label>
-                  <Input
-                    id="valid_until"
-                    type="date"
-                    value={newQuote.valid_until}
-                    onChange={(e) => setNewQuote({ ...newQuote, valid_until: e.target.value })}
-                    className="border-2"
-                  />
-                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="valid_until">Valid Until</Label>
+                <Input
+                  id="valid_until"
+                  type="date"
+                  value={newQuote.valid_until}
+                  onChange={(e) => setNewQuote({ ...newQuote, valid_until: e.target.value })}
+                  className="border-2"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-3 border-t-2 border-border pt-4">

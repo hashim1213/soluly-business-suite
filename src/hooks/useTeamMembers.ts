@@ -86,17 +86,20 @@ export function useTeamMembersWithProjects() {
   });
 }
 
-// Fetch single team member
+// Fetch single team member (filtered by organization)
 export function useTeamMember(id: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["team_members", id],
+    queryKey: ["team_members", id, organization?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
 
       const { data: member, error: memberError } = await supabase
         .from("team_members")
         .select("*")
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (memberError) throw memberError;
@@ -117,16 +120,28 @@ export function useTeamMember(id: string | undefined) {
         projects: assignments || [],
       } as TeamMemberWithProjects;
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
-// Fetch team members by project
+// Fetch team members by project (filtered by organization)
 export function useTeamMembersByProject(projectId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["team_members", "project", projectId],
+    queryKey: ["team_members", "project", projectId, organization?.id],
     queryFn: async () => {
-      if (!projectId) return [];
+      if (!projectId || !organization?.id) return [];
+
+      // Verify project belongs to organization
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", projectId)
+        .eq("organization_id", organization.id)
+        .single();
+
+      if (projectError || !project) return [];
 
       const { data, error } = await supabase
         .from("project_team_members")
@@ -142,7 +157,7 @@ export function useTeamMembersByProject(projectId: string | undefined) {
         hours_on_project: d.hours_logged,
       })) || [];
     },
-    enabled: !!projectId,
+    enabled: !!projectId && !!organization?.id,
   });
 }
 
@@ -184,16 +199,20 @@ export function useCreateTeamMember() {
   });
 }
 
-// Update team member
+// Update team member (filtered by organization)
 export function useUpdateTeamMember() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: TeamMemberUpdate & { id: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("team_members")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -211,16 +230,20 @@ export function useUpdateTeamMember() {
   });
 }
 
-// Delete team member
+// Delete team member (filtered by organization)
 export function useDeleteTeamMember() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("team_members")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

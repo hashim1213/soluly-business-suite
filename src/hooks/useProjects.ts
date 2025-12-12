@@ -8,20 +8,29 @@ export type Project = Tables<"projects">;
 export type ProjectInsert = TablesInsert<"projects">;
 export type ProjectUpdate = TablesUpdate<"projects">;
 
-// Fetch all projects for the current organization
+// Fetch all projects for the current organization (filtered by user's allowed projects)
 export function useProjects() {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["projects", organization?.id],
+    queryKey: ["projects", organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!organization?.id) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("projects")
         .select("*")
-        .eq("organization_id", organization.id)
-        .order("created_at", { ascending: false });
+        .eq("organization_id", organization.id);
+
+      // If user has project restrictions, filter by allowed projects
+      if (!hasFullProjectAccess() && allowedProjectIds !== null) {
+        if (allowedProjectIds.length === 0) {
+          return []; // No projects allowed
+        }
+        query = query.in("id", allowedProjectIds);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as Project[];
@@ -30,22 +39,31 @@ export function useProjects() {
   });
 }
 
-// Fetch single project by ID
+// Fetch single project by ID (filtered by organization and access)
 export function useProject(id: string | undefined) {
+  const { organization, hasProjectAccess } = useAuth();
+
   return useQuery({
-    queryKey: ["projects", id],
+    queryKey: ["projects", id, organization?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
+
+      // Check if user has access to this project
+      if (!hasProjectAccess(id)) {
+        throw new Error("Access denied to this project");
+      }
+
       const { data, error } = await supabase
         .from("projects")
         .select("*")
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (error) throw error;
       return data as Project;
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
@@ -126,16 +144,20 @@ export function useCreateProject() {
   });
 }
 
-// Update project
+// Update project (filtered by organization)
 export function useUpdateProject() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: ProjectUpdate & { id: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("projects")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -152,16 +174,20 @@ export function useUpdateProject() {
   });
 }
 
-// Delete project
+// Delete project (filtered by organization)
 export function useDeleteProject() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("projects")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },
@@ -175,21 +201,24 @@ export function useDeleteProject() {
   });
 }
 
-// Get ticket count for a project
+// Get ticket count for a project (filtered by organization)
 export function useProjectTicketCount(projectId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["projects", projectId, "ticket-count"],
+    queryKey: ["projects", projectId, "ticket-count", organization?.id],
     queryFn: async () => {
-      if (!projectId) return 0;
+      if (!projectId || !organization?.id) return 0;
       const { count, error } = await supabase
         .from("tickets")
         .select("*", { count: "exact", head: true })
         .eq("project_id", projectId)
+        .eq("organization_id", organization.id)
         .neq("status", "closed");
 
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!projectId,
+    enabled: !!projectId && !!organization?.id,
   });
 }

@@ -38,17 +38,20 @@ export function useCrmClients() {
   });
 }
 
-// Fetch single client with deals
+// Fetch single client with deals (filtered by organization)
 export function useCrmClient(id: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["crm_clients", id],
+    queryKey: ["crm_clients", id, organization?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
 
       const { data: client, error: clientError } = await supabase
         .from("crm_clients")
         .select("*")
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (clientError) throw clientError;
@@ -57,6 +60,7 @@ export function useCrmClient(id: string | undefined) {
         .from("quotes")
         .select("*")
         .eq("client_id", id)
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (dealsError) throw dealsError;
@@ -66,21 +70,24 @@ export function useCrmClient(id: string | undefined) {
         deals: deals || [],
       };
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
-// Fetch client by display_id
+// Fetch client by display_id (filtered by organization)
 export function useCrmClientByDisplayId(displayId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["crm_clients", "display", displayId],
+    queryKey: ["crm_clients", "display", displayId, organization?.id],
     queryFn: async () => {
-      if (!displayId) return null;
+      if (!displayId || !organization?.id) return null;
 
       const { data: client, error: clientError } = await supabase
         .from("crm_clients")
         .select("*")
         .eq("display_id", displayId)
+        .eq("organization_id", organization.id)
         .single();
 
       if (clientError) throw clientError;
@@ -89,6 +96,7 @@ export function useCrmClientByDisplayId(displayId: string | undefined) {
         .from("quotes")
         .select("*")
         .eq("client_id", client.id)
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       return {
@@ -96,7 +104,7 @@ export function useCrmClientByDisplayId(displayId: string | undefined) {
         deals: deals || [],
       };
     },
-    enabled: !!displayId,
+    enabled: !!displayId && !!organization?.id,
   });
 }
 
@@ -135,16 +143,20 @@ export function useCreateCrmClient() {
   });
 }
 
-// Update client
+// Update client (filtered by organization)
 export function useUpdateCrmClient() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: CrmClientUpdate & { id: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("crm_clients")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -162,16 +174,20 @@ export function useUpdateCrmClient() {
   });
 }
 
-// Delete client
+// Delete client (filtered by organization)
 export function useDeleteCrmClient() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("crm_clients")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },
@@ -211,22 +227,25 @@ export function useCrmLeads() {
   });
 }
 
-// Fetch single lead
+// Fetch single lead (filtered by organization)
 export function useCrmLead(id: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["crm_leads", id],
+    queryKey: ["crm_leads", id, organization?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
       const { data, error } = await supabase
         .from("crm_leads")
         .select("*")
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (error) throw error;
       return data as CrmLead;
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
@@ -265,16 +284,20 @@ export function useCreateCrmLead() {
   });
 }
 
-// Update lead
+// Update lead (filtered by organization)
 export function useUpdateCrmLead() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: CrmLeadUpdate & { id: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("crm_leads")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -292,16 +315,20 @@ export function useUpdateCrmLead() {
   });
 }
 
-// Delete lead
+// Delete lead (filtered by organization)
 export function useDeleteCrmLead() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("crm_leads")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },
@@ -315,31 +342,37 @@ export function useDeleteCrmLead() {
   });
 }
 
-// Convert lead to client
+// Convert lead to client (filtered by organization)
 export function useConvertLeadToClient() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (leadId: string) => {
-      // Fetch the lead
+      if (!organization?.id) throw new Error("No organization found");
+
+      // Fetch the lead (with org filter)
       const { data: lead, error: leadError } = await supabase
         .from("crm_leads")
         .select("*")
         .eq("id", leadId)
+        .eq("organization_id", organization.id)
         .single();
 
       if (leadError) throw leadError;
 
-      // Get next client display_id
+      // Get next client display_id for this org
       const { count } = await supabase
         .from("crm_clients")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", organization.id);
       const displayId = `CLT-${String((count || 0) + 1).padStart(3, "0")}`;
 
       // Create client from lead
       const { data: client, error: clientError } = await supabase
         .from("crm_clients")
         .insert({
+          organization_id: organization.id,
           display_id: displayId,
           name: lead.name,
           contact_name: lead.contact_name,
@@ -354,7 +387,11 @@ export function useConvertLeadToClient() {
       if (clientError) throw clientError;
 
       // Delete the lead
-      await supabase.from("crm_leads").delete().eq("id", leadId);
+      await supabase
+        .from("crm_leads")
+        .delete()
+        .eq("id", leadId)
+        .eq("organization_id", organization.id);
 
       return client as CrmClient;
     },

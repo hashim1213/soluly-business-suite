@@ -14,24 +14,33 @@ export type TicketWithProject = Ticket & {
   assignee?: { name: string } | null;
 };
 
-// Fetch all tickets for the current organization
+// Fetch all tickets for the current organization (filtered by project access)
 export function useTickets() {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["tickets", organization?.id],
+    queryKey: ["tickets", organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!organization?.id) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("tickets")
         .select(`
           *,
           project:projects(name, display_id),
           assignee:team_members(name)
         `)
-        .eq("organization_id", organization.id)
-        .order("created_at", { ascending: false });
+        .eq("organization_id", organization.id);
+
+      // If user has project restrictions, filter tickets by allowed projects
+      if (!hasFullProjectAccess() && allowedProjectIds !== null) {
+        if (allowedProjectIds.length === 0) {
+          return []; // No projects allowed = no tickets
+        }
+        query = query.in("project_id", allowedProjectIds);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as TicketWithProject[];
@@ -66,12 +75,14 @@ export function useTicketsByProject(projectId: string | undefined) {
   });
 }
 
-// Fetch single ticket
+// Fetch single ticket (filtered by organization)
 export function useTicket(id: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["tickets", id],
+    queryKey: ["tickets", id, organization?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
       const { data, error } = await supabase
         .from("tickets")
         .select(`
@@ -80,12 +91,13 @@ export function useTicket(id: string | undefined) {
           assignee:team_members(name)
         `)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (error) throw error;
       return data as TicketWithProject;
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
@@ -168,16 +180,20 @@ export function useCreateTicket() {
   });
 }
 
-// Update ticket
+// Update ticket (filtered by organization)
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: TicketUpdate & { id: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("tickets")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -194,16 +210,20 @@ export function useUpdateTicket() {
   });
 }
 
-// Delete ticket
+// Delete ticket (filtered by organization)
 export function useDeleteTicket() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("tickets")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

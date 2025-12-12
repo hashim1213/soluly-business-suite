@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type TimeEntry = Tables<"time_entries">;
 export type TimeEntryInsert = TablesInsert<"time_entries">;
@@ -17,12 +18,25 @@ export type TimeEntryWithTeamMember = TimeEntry & {
   team_member?: { name: string; avatar: string | null; hourly_rate: number } | null;
 };
 
-// Fetch all time entries for a team member
+// Fetch all time entries for a team member (validates member belongs to org)
 export function useTimeEntriesByMember(memberId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["time_entries", "member", memberId],
+    queryKey: ["time_entries", "member", memberId, organization?.id],
     queryFn: async () => {
-      if (!memberId) return [];
+      if (!memberId || !organization?.id) return [];
+
+      // Verify the team member belongs to this organization
+      const { data: member, error: memberError } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("id", memberId)
+        .eq("organization_id", organization.id)
+        .single();
+
+      if (memberError || !member) return [];
+
       const { data, error } = await supabase
         .from("time_entries")
         .select(`
@@ -35,16 +49,29 @@ export function useTimeEntriesByMember(memberId: string | undefined) {
       if (error) throw error;
       return data as TimeEntryWithProject[];
     },
-    enabled: !!memberId,
+    enabled: !!memberId && !!organization?.id,
   });
 }
 
-// Fetch time entries for a project
+// Fetch time entries for a project (validates project belongs to org)
 export function useTimeEntriesByProject(projectId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["time_entries", "project", projectId],
+    queryKey: ["time_entries", "project", projectId, organization?.id],
     queryFn: async () => {
-      if (!projectId) return [];
+      if (!projectId || !organization?.id) return [];
+
+      // Verify the project belongs to this organization
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", projectId)
+        .eq("organization_id", organization.id)
+        .single();
+
+      if (projectError || !project) return [];
+
       const { data, error } = await supabase
         .from("time_entries")
         .select(`
@@ -57,16 +84,45 @@ export function useTimeEntriesByProject(projectId: string | undefined) {
       if (error) throw error;
       return data as TimeEntryWithTeamMember[];
     },
-    enabled: !!projectId,
+    enabled: !!projectId && !!organization?.id,
   });
 }
 
-// Create time entry
+// Create time entry (validates team member belongs to org)
 export function useCreateTimeEntry() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (entry: TimeEntryInsert) => {
+      if (!organization?.id) throw new Error("No organization found");
+
+      // Verify the team member belongs to this organization
+      const { data: member, error: memberError } = await supabase
+        .from("team_members")
+        .select("id, total_hours")
+        .eq("id", entry.team_member_id)
+        .eq("organization_id", organization.id)
+        .single();
+
+      if (memberError || !member) {
+        throw new Error("Team member not found in your organization");
+      }
+
+      // If project_id is provided, verify it belongs to this organization
+      if (entry.project_id) {
+        const { data: project, error: projectError } = await supabase
+          .from("projects")
+          .select("id")
+          .eq("id", entry.project_id)
+          .eq("organization_id", organization.id)
+          .single();
+
+        if (projectError || !project) {
+          throw new Error("Project not found in your organization");
+        }
+      }
+
       const { data, error } = await supabase
         .from("time_entries")
         .insert(entry)
@@ -76,18 +132,11 @@ export function useCreateTimeEntry() {
       if (error) throw error;
 
       // Update team member's total_hours
-      const { data: memberData } = await supabase
+      await supabase
         .from("team_members")
-        .select("total_hours")
+        .update({ total_hours: member.total_hours + entry.hours })
         .eq("id", entry.team_member_id)
-        .single();
-
-      if (memberData) {
-        await supabase
-          .from("team_members")
-          .update({ total_hours: memberData.total_hours + entry.hours })
-          .eq("id", entry.team_member_id);
-      }
+        .eq("organization_id", organization.id);
 
       // Update project_team_members hours_logged if project is assigned
       if (entry.project_id) {
@@ -121,12 +170,37 @@ export function useCreateTimeEntry() {
   });
 }
 
-// Update time entry
+// Update time entry (validates entry belongs to org via team member)
 export function useUpdateTimeEntry() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, oldHours, ...updates }: TimeEntryUpdate & { id: string; oldHours?: number }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
+      // Get the time entry and verify ownership via team member
+      const { data: entry, error: entryError } = await supabase
+        .from("time_entries")
+        .select("team_member_id")
+        .eq("id", id)
+        .single();
+
+      if (entryError || !entry) {
+        throw new Error("Time entry not found");
+      }
+
+      const { data: member, error: memberError } = await supabase
+        .from("team_members")
+        .select("id, total_hours")
+        .eq("id", entry.team_member_id)
+        .eq("organization_id", organization.id)
+        .single();
+
+      if (memberError || !member) {
+        throw new Error("Time entry not found in your organization");
+      }
+
       const { data, error } = await supabase
         .from("time_entries")
         .update(updates)
@@ -140,18 +214,11 @@ export function useUpdateTimeEntry() {
       if (oldHours !== undefined && updates.hours !== undefined) {
         const hoursDiff = updates.hours - oldHours;
         if (hoursDiff !== 0) {
-          const { data: memberData } = await supabase
+          await supabase
             .from("team_members")
-            .select("total_hours")
+            .update({ total_hours: member.total_hours + hoursDiff })
             .eq("id", data.team_member_id)
-            .single();
-
-          if (memberData) {
-            await supabase
-              .from("team_members")
-              .update({ total_hours: memberData.total_hours + hoursDiff })
-              .eq("id", data.team_member_id);
-          }
+            .eq("organization_id", organization.id);
         }
       }
 
@@ -168,12 +235,27 @@ export function useUpdateTimeEntry() {
   });
 }
 
-// Delete time entry
+// Delete time entry (validates entry belongs to org via team member)
 export function useDeleteTimeEntry() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, memberId, hours, projectId }: { id: string; memberId: string; hours: number; projectId?: string | null }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
+      // Verify the team member belongs to this organization
+      const { data: member, error: memberError } = await supabase
+        .from("team_members")
+        .select("id, total_hours")
+        .eq("id", memberId)
+        .eq("organization_id", organization.id)
+        .single();
+
+      if (memberError || !member) {
+        throw new Error("Time entry not found in your organization");
+      }
+
       const { error } = await supabase
         .from("time_entries")
         .delete()
@@ -182,18 +264,11 @@ export function useDeleteTimeEntry() {
       if (error) throw error;
 
       // Update team member's total_hours
-      const { data: memberData } = await supabase
+      await supabase
         .from("team_members")
-        .select("total_hours")
+        .update({ total_hours: Math.max(0, member.total_hours - hours) })
         .eq("id", memberId)
-        .single();
-
-      if (memberData) {
-        await supabase
-          .from("team_members")
-          .update({ total_hours: Math.max(0, memberData.total_hours - hours) })
-          .eq("id", memberId);
-      }
+        .eq("organization_id", organization.id);
 
       // Update project_team_members hours_logged if project was assigned
       if (projectId) {

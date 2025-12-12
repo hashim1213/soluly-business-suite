@@ -18,6 +18,8 @@ const defaultPermissions: Permissions = {
   features: { view: false, create: false, edit: false, delete: false },
   feedback: { view: false, create: false, edit: false, delete: false },
   emails: { view: false, create: false, edit: false, delete: false },
+  financials: { view: false, create: false, edit: false, delete: false },
+  expenses: { view: false, create: false, edit: false, delete: false },
   settings: { view: false, manage_org: false, manage_users: false, manage_roles: false },
 };
 
@@ -37,6 +39,7 @@ interface AuthContextType {
   organization: Organization | null;
   role: Role | null;
   permissions: Permissions;
+  allowedProjectIds: string[] | null; // null = all projects, [] = no projects, [...] = specific projects
   isLoading: boolean;
   isAuthenticated: boolean;
   authError: string | null;
@@ -52,6 +55,8 @@ interface AuthContextType {
   // Permission helpers
   hasPermission: (resource: keyof Permissions, action: string) => boolean;
   canViewOwn: (resource: keyof Permissions) => boolean;
+  hasProjectAccess: (projectId: string) => boolean;
+  hasFullProjectAccess: () => boolean;
 
   // Refresh data
   refreshUserData: () => Promise<void>;
@@ -103,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [permissions, setPermissions] = useState<Permissions>(defaultPermissions);
+  const [allowedProjectIds, setAllowedProjectIds] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -179,7 +185,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!roleError && roleData) {
           setRole(roleData);
           setPermissions(roleData.permissions as Permissions);
+
+          // Determine allowed project IDs
+          // Priority: member's allowed_project_ids > role's project_scope
+          if (memberData.allowed_project_ids !== null) {
+            setAllowedProjectIds(memberData.allowed_project_ids);
+          } else if (roleData.project_scope !== null) {
+            setAllowedProjectIds(roleData.project_scope);
+          } else {
+            setAllowedProjectIds(null); // null = access to all projects
+          }
         }
+      } else {
+        // No role assigned - default to no project restrictions
+        setAllowedProjectIds(null);
       }
 
       return true;
@@ -248,6 +267,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Complete pending invitation (called after sign in)
+  const completePendingInvitation = useCallback(async (userId: string): Promise<boolean> => {
+    const pendingData = safeStorage.getItem("pending_invitation");
+
+    if (!pendingData) {
+      // Also try to complete any server-side pending invitation
+      try {
+        const { data: result } = await withTimeout(
+          supabase.rpc("complete_pending_invitation", {
+            p_user_id: userId,
+          }),
+          AUTH_TIMEOUT.RPC
+        );
+
+        const response = result as { success: boolean };
+        return response?.success || false;
+      } catch {
+        return false;
+      }
+    }
+
+    try {
+      const data = JSON.parse(pendingData);
+
+      // Try to complete the invitation
+      const { data: result, error: rpcError } = await withTimeout(
+        supabase.rpc("handle_invitation_acceptance", {
+          p_user_id: userId,
+          p_token: data.token,
+          p_name: data.name,
+        }),
+        AUTH_TIMEOUT.RPC
+      );
+
+      if (!rpcError) {
+        const response = result as { success: boolean };
+        if (response?.success) {
+          safeStorage.removeItem("pending_invitation");
+          return true;
+        }
+      }
+
+      // Also try the complete_pending_invitation RPC
+      const { data: completeResult } = await withTimeout(
+        supabase.rpc("complete_pending_invitation", {
+          p_user_id: userId,
+        }),
+        AUTH_TIMEOUT.RPC
+      );
+
+      const completeResponse = completeResult as { success: boolean };
+      if (completeResponse?.success) {
+        safeStorage.removeItem("pending_invitation");
+        return true;
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
   // Initialize auth state - only runs once
   useEffect(() => {
     if (isInitialized.current) {
@@ -276,8 +357,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Try to complete any pending signup first
+          // Try to complete any pending signup or invitation first
           await completePendingSignup(session.user.id);
+          await completePendingInvitation(session.user.id);
           // Then fetch user data
           await fetchUserData(session.user.id);
         }
@@ -313,9 +395,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // On SIGNED_IN, try to complete pending signup
+          // On SIGNED_IN, try to complete pending signup or invitation
           if (event === "SIGNED_IN") {
             await completePendingSignup(newSession.user.id);
+            await completePendingInvitation(newSession.user.id);
           }
           await fetchUserData(newSession.user.id);
         } else {
@@ -324,6 +407,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setOrganization(null);
           setRole(null);
           setPermissions(defaultPermissions);
+          setAllowedProjectIds(null);
           lastFetchedUserId.current = null;
         }
 
@@ -338,7 +422,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       subscription.unsubscribe();
     };
-  }, [fetchUserData, completePendingSignup]);
+  }, [fetchUserData, completePendingSignup, completePendingInvitation]);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
@@ -501,6 +585,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: "Failed to create account" };
       }
 
+      // Store pending invitation data in localStorage for completion after email confirmation
+      safeStorage.setItem("pending_invitation", JSON.stringify({
+        token,
+        name,
+        user_id: authData.user.id,
+      }));
+
       // Accept invitation via RPC
       const { data: result, error: rpcError } = await withTimeout(
         supabase.rpc("handle_invitation_acceptance", {
@@ -515,10 +606,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: rpcError.message || "Failed to accept invitation" };
       }
 
-      const response = result as { success: boolean; error?: string };
+      const response = result as { success: boolean; error?: string; pending?: boolean };
       if (!response || !response.success) {
+        // If pending, it means user needs to confirm email first
+        if (response?.pending) {
+          return { error: null }; // Success - user will complete after email confirmation
+        }
         return { error: response?.error || "Failed to accept invitation" };
       }
+
+      // Clear pending invitation on success
+      safeStorage.removeItem("pending_invitation");
 
       return { error: null };
     } catch (error) {
@@ -544,6 +642,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOrganization(null);
     setRole(null);
     setPermissions(defaultPermissions);
+    setAllowedProjectIds(null);
     setAuthError(null);
     lastFetchedUserId.current = null;
   };
@@ -611,6 +710,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (resourcePerms as Record<string, Permission>).view === "own";
   };
 
+  // Check if user has access to a specific project
+  const hasProjectAccess = (projectId: string): boolean => {
+    // null means access to all projects
+    if (allowedProjectIds === null) return true;
+    // Empty array means no project access
+    if (allowedProjectIds.length === 0) return false;
+    // Check if project is in allowed list
+    return allowedProjectIds.includes(projectId);
+  };
+
+  // Check if user has access to all projects (not scoped)
+  const hasFullProjectAccess = (): boolean => {
+    return allowedProjectIds === null;
+  };
+
   // Refresh user data
   const refreshUserData = async () => {
     if (user) {
@@ -625,6 +739,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     organization,
     role,
     permissions,
+    allowedProjectIds,
     isLoading,
     authError,
     isAuthenticated: !!user && !!member && !!organization,
@@ -636,6 +751,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     updatePassword,
     hasPermission,
     canViewOwn,
+    hasProjectAccess,
+    hasFullProjectAccess,
     refreshUserData,
     clearAuthError,
   };

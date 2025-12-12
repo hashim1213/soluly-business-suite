@@ -46,10 +46,12 @@ export function useQuotes() {
 
 // Fetch quote with all relations
 export function useQuote(id: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["quotes", id],
+    queryKey: ["quotes", id, organization?.id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
 
       const { data: quote, error: quoteError } = await supabase
         .from("quotes")
@@ -58,6 +60,7 @@ export function useQuote(id: string | undefined) {
           client:crm_clients(*)
         `)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (quoteError) throw quoteError;
@@ -66,6 +69,7 @@ export function useQuote(id: string | undefined) {
         .from("crm_activities")
         .select("*")
         .eq("quote_id", id)
+        .eq("organization_id", organization.id)
         .order("activity_date", { ascending: false });
 
       if (activitiesError) throw activitiesError;
@@ -74,6 +78,7 @@ export function useQuote(id: string | undefined) {
         .from("crm_tasks")
         .select("*")
         .eq("quote_id", id)
+        .eq("organization_id", organization.id)
         .order("due_date", { ascending: true });
 
       if (tasksError) throw tasksError;
@@ -84,7 +89,7 @@ export function useQuote(id: string | undefined) {
         tasks: tasks || [],
       } as QuoteWithRelations;
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
@@ -192,13 +197,17 @@ export function useCreateQuote() {
 // Update quote
 export function useUpdateQuote() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: QuoteUpdate & { id: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("quotes")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -218,13 +227,17 @@ export function useUpdateQuote() {
 // Delete quote
 export function useDeleteQuote() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("quotes")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },
@@ -315,13 +328,17 @@ export function useCreateTask() {
 // Update task
 export function useUpdateTask() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: CrmTaskUpdate & { id: string }) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { data, error } = await supabase
         .from("crm_tasks")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -339,22 +356,28 @@ export function useUpdateTask() {
   });
 }
 
-// Fetch all tasks
+// Fetch all tasks for the current organization
 export function useTasks() {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["crm_tasks"],
+    queryKey: ["crm_tasks", organization?.id],
     queryFn: async () => {
+      if (!organization?.id) return [];
+
       const { data, error } = await supabase
         .from("crm_tasks")
         .select(`
           *,
           quote:quotes(title, company_name)
         `)
+        .eq("organization_id", organization.id)
         .order("due_date", { ascending: true });
 
       if (error) throw error;
       return data;
     },
+    enabled: !!organization?.id,
   });
 }
 

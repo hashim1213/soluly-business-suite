@@ -15,9 +15,9 @@ import {
   Receipt,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Permissions } from "@/integrations/supabase/types";
+import { OrgSwitcher } from "@/components/OrgSwitcher";
 import {
   Sidebar,
   SidebarContent,
@@ -46,8 +46,8 @@ const mainNavItems: NavItem[] = [
   { title: "Tickets", path: "tickets", icon: Ticket, permission: "tickets" },
   { title: "Team Members", path: "team", icon: Users, permission: "team" },
   { title: "CRM", path: "crm", icon: Contact, permission: "crm" },
-  { title: "Financials", path: "financials", icon: DollarSign, permission: "projects" },
-  { title: "Expenses", path: "expenses", icon: Receipt, permission: "projects" },
+  { title: "Financials", path: "financials", icon: DollarSign, permission: "financials" },
+  { title: "Expenses", path: "expenses", icon: Receipt, permission: "expenses" },
 ];
 
 const ticketCategories: NavItem[] = [
@@ -64,7 +64,6 @@ const systemItems: NavItem[] = [
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
   const { hasPermission, organization } = useAuth();
 
   // Build the base URL for the organization
@@ -87,48 +86,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r-2 border-border">
-      <SidebarHeader className="h-14 border-b-2 border-border px-4 flex items-center">
-        <div className="flex items-center justify-between w-full">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 bg-primary flex items-center justify-center rounded-md overflow-hidden shrink-0">
-                {organization?.logo_url ? (
-                  <img
-                    src={organization.logo_url}
-                    alt={organization.name || "Organization"}
-                    className="h-full w-full object-cover"
-                  />
-                ) : organization?.icon ? (
-                  <span className="text-sm">{organization.icon}</span>
-                ) : (
-                  <span className="text-primary-foreground font-bold text-xs">
-                    {organization?.name?.[0]?.toUpperCase() || "S"}
-                  </span>
-                )}
-              </div>
-              <span className="font-bold text-lg tracking-tight truncate max-w-[140px]">
-                {organization?.name || "SOLULY"}
-              </span>
-            </div>
-          )}
-          {collapsed && (
-            <div className="h-7 w-7 bg-primary flex items-center justify-center mx-auto rounded-md overflow-hidden">
-              {organization?.logo_url ? (
-                <img
-                  src={organization.logo_url}
-                  alt={organization.name || "Organization"}
-                  className="h-full w-full object-cover"
-                />
-              ) : organization?.icon ? (
-                <span className="text-sm">{organization.icon}</span>
-              ) : (
-                <span className="text-primary-foreground font-bold text-xs">
-                  {organization?.name?.[0]?.toUpperCase() || "S"}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+      <SidebarHeader className="h-14 border-b-2 border-border px-2 flex items-center">
+        <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
       <SidebarContent className="p-2">

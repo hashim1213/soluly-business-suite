@@ -30,7 +30,36 @@ export type Permissions = {
   features: ResourcePermissions;
   feedback: ResourcePermissions;
   emails: ResourcePermissions;
+  financials: ResourcePermissions;
+  expenses: ResourcePermissions;
   settings: SettingsPermissions;
+};
+
+// Human-readable labels for permissions
+export const PERMISSION_LABELS: Record<keyof Permissions, string> = {
+  dashboard: "Dashboard",
+  projects: "Projects",
+  tickets: "Tickets",
+  team: "Team Members",
+  crm: "CRM (Clients & Leads)",
+  quotes: "Customer Quotes",
+  features: "Feature Requests",
+  feedback: "Feedback",
+  emails: "Emails",
+  financials: "Financials",
+  expenses: "Expenses",
+  settings: "Settings",
+};
+
+// Permission action labels
+export const ACTION_LABELS: Record<string, string> = {
+  view: "View",
+  create: "Create",
+  edit: "Edit",
+  delete: "Delete",
+  manage_org: "Manage Organization",
+  manage_users: "Manage Users",
+  manage_roles: "Manage Roles",
 };
 
 export type Database = {
@@ -77,6 +106,7 @@ export type Database = {
           description: string | null
           is_system: boolean
           permissions: Permissions
+          project_scope: string[] | null
           created_at: string
           updated_at: string
         }
@@ -87,6 +117,7 @@ export type Database = {
           description?: string | null
           is_system?: boolean
           permissions: Permissions
+          project_scope?: string[] | null
           created_at?: string
           updated_at?: string
         }
@@ -97,6 +128,7 @@ export type Database = {
           description?: string | null
           is_system?: boolean
           permissions?: Permissions
+          project_scope?: string[] | null
           created_at?: string
           updated_at?: string
         }
@@ -864,6 +896,7 @@ export type Database = {
         Row: {
           avatar: string | null
           auth_user_id: string | null
+          allowed_project_ids: string[] | null
           contract_type: Database["public"]["Enums"]["contract_type"]
           created_at: string
           department: string
@@ -884,6 +917,7 @@ export type Database = {
         Insert: {
           avatar?: string | null
           auth_user_id?: string | null
+          allowed_project_ids?: string[] | null
           contract_type?: Database["public"]["Enums"]["contract_type"]
           created_at?: string
           department: string
@@ -904,6 +938,7 @@ export type Database = {
         Update: {
           avatar?: string | null
           auth_user_id?: string | null
+          allowed_project_ids?: string[] | null
           contract_type?: Database["public"]["Enums"]["contract_type"]
           created_at?: string
           department?: string

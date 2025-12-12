@@ -14,6 +14,13 @@ import {
   calculateRecurringPeriods,
   getFrequencyLabel,
 } from "@/hooks/useBusinessCosts";
+import {
+  useExpenseTemplates,
+  useCreateExpenseTemplate,
+  useDeleteExpenseTemplate,
+  useIncrementTemplateUse,
+  ExpenseTemplate,
+} from "@/hooks/useExpenseTemplates";
 import { format } from "date-fns";
 import {
   DollarSign,
@@ -32,6 +39,8 @@ import {
   CreditCard,
   FileText,
   MoreVertical,
+  Bookmark,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,16 +112,23 @@ export default function BusinessCosts() {
   const { navigateOrg } = useOrgNavigation();
   const { data: costs, isLoading } = useBusinessCosts();
   const { data: summary } = useBusinessCostsSummary();
+  const { data: templates } = useExpenseTemplates();
   const createCost = useCreateBusinessCost();
   const updateCost = useUpdateBusinessCost();
   const deleteCost = useDeleteBusinessCost();
+  const createTemplate = useCreateExpenseTemplate();
+  const deleteTemplate = useDeleteExpenseTemplate();
+  const incrementTemplateUse = useIncrementTemplateUse();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isManageTemplatesOpen, setIsManageTemplatesOpen] = useState(false);
   const [editingCost, setEditingCost] = useState<BusinessCost | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [recurringFilter, setRecurringFilter] = useState<string>("all");
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
 
   const [newCost, setNewCost] = useState({
     description: "",
@@ -141,6 +157,79 @@ export default function BusinessCosts() {
     return BUSINESS_COST_CATEGORIES[cat]?.subcategories || [];
   }, [editingCost]);
 
+  // Extract unique vendors with their most recent expense data for auto-fill
+  const savedVendors = useMemo(() => {
+    if (!costs) return [];
+    const vendorMap = new Map<string, BusinessCost>();
+    // Get most recent expense for each vendor
+    costs.forEach((cost) => {
+      if (cost.vendor) {
+        const existing = vendorMap.get(cost.vendor);
+        if (!existing || new Date(cost.date) > new Date(existing.date)) {
+          vendorMap.set(cost.vendor, cost);
+        }
+      }
+    });
+    return Array.from(vendorMap.entries())
+      .map(([vendor, cost]) => ({
+        vendor,
+        category: cost.category,
+        subcategory: cost.subcategory,
+        description: cost.description,
+        amount: cost.amount,
+        payment_method: cost.payment_method,
+        recurring: cost.recurring,
+        recurring_frequency: cost.recurring_frequency,
+      }))
+      .sort((a, b) => a.vendor.localeCompare(b.vendor));
+  }, [costs]);
+
+  // Extract unique descriptions for suggestions
+  const savedDescriptions = useMemo(() => {
+    if (!costs) return [];
+    const descSet = new Set<string>();
+    costs.forEach((cost) => {
+      if (cost.description) {
+        descSet.add(cost.description);
+      }
+    });
+    return Array.from(descSet).sort();
+  }, [costs]);
+
+  // Handle vendor selection from saved vendors (legacy - from expense history)
+  const handleSelectSavedVendor = (vendorData: typeof savedVendors[0]) => {
+    setNewCost({
+      ...newCost,
+      vendor: vendorData.vendor,
+      category: vendorData.category,
+      subcategory: vendorData.subcategory || "",
+      description: vendorData.description,
+      amount: String(vendorData.amount),
+      payment_method: vendorData.payment_method || "",
+      recurring: vendorData.recurring,
+      recurring_frequency: vendorData.recurring_frequency || "",
+    });
+  };
+
+  // Handle template selection
+  const handleSelectTemplate = (template: ExpenseTemplate) => {
+    setNewCost({
+      ...newCost,
+      vendor: template.vendor,
+      category: template.category,
+      subcategory: template.subcategory || "",
+      description: template.description,
+      amount: template.default_amount ? String(template.default_amount) : "",
+      payment_method: template.payment_method || "",
+      recurring: template.recurring,
+      recurring_frequency: template.recurring_frequency || "",
+      tax_deductible: template.tax_deductible,
+      notes: template.notes || "",
+    });
+    // Track template usage
+    incrementTemplateUse.mutate(template.id);
+  };
+
   // Filter and search costs
   const filteredCosts = useMemo(() => {
     if (!costs) return [];
@@ -166,6 +255,11 @@ export default function BusinessCosts() {
       return;
     }
 
+    if (saveAsTemplate && !templateName) {
+      toast.error("Please enter a template name");
+      return;
+    }
+
     try {
       await createCost.mutateAsync({
         description: newCost.description,
@@ -182,6 +276,23 @@ export default function BusinessCosts() {
         notes: newCost.notes || undefined,
       });
 
+      // Save as template if requested
+      if (saveAsTemplate && templateName) {
+        await createTemplate.mutateAsync({
+          name: templateName,
+          vendor: newCost.vendor,
+          description: newCost.description,
+          category: newCost.category,
+          subcategory: newCost.subcategory || undefined,
+          default_amount: parseFloat(newCost.amount) || undefined,
+          payment_method: newCost.payment_method || undefined,
+          recurring: newCost.recurring,
+          recurring_frequency: newCost.recurring ? newCost.recurring_frequency || undefined : undefined,
+          tax_deductible: newCost.tax_deductible,
+          notes: newCost.notes || undefined,
+        });
+      }
+
       setNewCost({
         description: "",
         category: "software",
@@ -196,6 +307,8 @@ export default function BusinessCosts() {
         tax_deductible: true,
         notes: "",
       });
+      setSaveAsTemplate(false);
+      setTemplateName("");
       setIsAddDialogOpen(false);
     } catch (error) {
       // Error handled by hook
@@ -286,15 +399,122 @@ export default function BusinessCosts() {
               <DialogTitle>Add Business Expense</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Quick Fill from Saved Templates */}
+              {(templates && templates.length > 0) && (
+                <div className="grid gap-2 p-3 bg-primary/5 rounded-lg border-2 border-primary/20">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary" />
+                    Quick Fill from Saved Template
+                  </Label>
+                  <Select
+                    value=""
+                    onValueChange={(templateId) => {
+                      const template = templates.find((t) => t.id === templateId);
+                      if (template) {
+                        handleSelectTemplate(template);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="border-2 bg-background">
+                      <SelectValue placeholder="Select a saved template..." />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      {templates.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="font-medium">{t.name}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {t.vendor} • {t.default_amount ? `$${t.default_amount}` : ""}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Templates auto-fill all expense details
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-6 px-2"
+                      onClick={() => setIsManageTemplatesOpen(true)}
+                    >
+                      Manage Templates
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Fill from Recent Vendors (fallback if no templates) */}
+              {(!templates || templates.length === 0) && savedVendors.length > 0 && (
+                <div className="grid gap-2 p-3 bg-muted/50 rounded-lg border-2 border-dashed border-border">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Quick Fill from Recent Vendor
+                  </Label>
+                  <Select
+                    value=""
+                    onValueChange={(vendorName) => {
+                      const vendorData = savedVendors.find((v) => v.vendor === vendorName);
+                      if (vendorData) {
+                        handleSelectSavedVendor(vendorData);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="border-2 bg-background">
+                      <SelectValue placeholder="Select a recent vendor to auto-fill..." />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      {savedVendors.map((v) => (
+                        <SelectItem key={v.vendor} value={v.vendor}>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="font-medium">{v.vendor}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {BUSINESS_COST_CATEGORIES[v.category as keyof typeof BUSINESS_COST_CATEGORIES]?.label}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Selecting a vendor will auto-fill from your most recent expense with them
+                  </p>
+                </div>
+              )}
+
               <div className="grid gap-2">
                 <Label htmlFor="description">Description *</Label>
-                <Input
-                  id="description"
-                  placeholder="e.g., Monthly Slack subscription"
+                <Select
                   value={newCost.description}
-                  onChange={(e) => setNewCost({ ...newCost, description: e.target.value })}
-                  className="border-2"
-                />
+                  onValueChange={(v) => setNewCost({ ...newCost, description: v })}
+                >
+                  <SelectTrigger className="border-2">
+                    <SelectValue placeholder="Select or type a description..." />
+                  </SelectTrigger>
+                  <SelectContent className="border-2">
+                    <SelectItem value="__custom__">
+                      <span className="text-muted-foreground">Type custom description...</span>
+                    </SelectItem>
+                    {savedDescriptions.slice(0, 20).map((desc) => (
+                      <SelectItem key={desc} value={desc}>
+                        {desc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(newCost.description === "__custom__" || !savedDescriptions.includes(newCost.description)) && (
+                  <Input
+                    id="description"
+                    placeholder="e.g., Monthly Slack subscription"
+                    value={newCost.description === "__custom__" ? "" : newCost.description}
+                    onChange={(e) => setNewCost({ ...newCost, description: e.target.value })}
+                    className="border-2"
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -367,13 +587,51 @@ export default function BusinessCosts() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="vendor">Vendor</Label>
-                  <Input
-                    id="vendor"
-                    placeholder="e.g., Slack Technologies"
-                    value={newCost.vendor}
-                    onChange={(e) => setNewCost({ ...newCost, vendor: e.target.value })}
-                    className="border-2"
-                  />
+                  {savedVendors.length > 0 ? (
+                    <>
+                      <Select
+                        value={savedVendors.some((v) => v.vendor === newCost.vendor) ? newCost.vendor : "__custom__"}
+                        onValueChange={(v) => {
+                          if (v === "__custom__") {
+                            setNewCost({ ...newCost, vendor: "" });
+                          } else {
+                            setNewCost({ ...newCost, vendor: v });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="border-2">
+                          <SelectValue placeholder="Select or type..." />
+                        </SelectTrigger>
+                        <SelectContent className="border-2">
+                          <SelectItem value="__custom__">
+                            <span className="text-muted-foreground">Type new vendor...</span>
+                          </SelectItem>
+                          {savedVendors.map((v) => (
+                            <SelectItem key={v.vendor} value={v.vendor}>
+                              {v.vendor}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {(!savedVendors.some((v) => v.vendor === newCost.vendor) || newCost.vendor === "") && (
+                        <Input
+                          id="vendor"
+                          placeholder="e.g., Slack Technologies"
+                          value={newCost.vendor}
+                          onChange={(e) => setNewCost({ ...newCost, vendor: e.target.value })}
+                          className="border-2"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <Input
+                      id="vendor"
+                      placeholder="e.g., Slack Technologies"
+                      value={newCost.vendor}
+                      onChange={(e) => setNewCost({ ...newCost, vendor: e.target.value })}
+                      className="border-2"
+                    />
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="reference">Reference #</Label>
@@ -466,13 +724,36 @@ export default function BusinessCosts() {
                   rows={2}
                 />
               </div>
+
+              {/* Save as Template Option */}
+              <div className="p-3 bg-muted/30 rounded-lg border-2 border-dashed border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Checkbox
+                    id="save_template"
+                    checked={saveAsTemplate}
+                    onCheckedChange={(checked) => setSaveAsTemplate(checked as boolean)}
+                  />
+                  <Label htmlFor="save_template" className="cursor-pointer flex items-center gap-2">
+                    <Bookmark className="h-4 w-4" />
+                    Save as template for quick reuse
+                  </Label>
+                </div>
+                {saveAsTemplate && (
+                  <Input
+                    placeholder="Template name (e.g., 'Slack Monthly')"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    className="border-2 mt-2"
+                  />
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-2">
                 Cancel
               </Button>
-              <Button onClick={handleAddCost} className="border-2" disabled={createCost.isPending}>
-                {createCost.isPending ? "Adding..." : "Add Expense"}
+              <Button onClick={handleAddCost} className="border-2" disabled={createCost.isPending || createTemplate.isPending}>
+                {(createCost.isPending || createTemplate.isPending) ? "Adding..." : "Add Expense"}
               </Button>
             </div>
           </DialogContent>
@@ -925,6 +1206,81 @@ export default function BusinessCosts() {
             </Button>
             <Button onClick={handleEditCost} className="border-2" disabled={updateCost.isPending}>
               {updateCost.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Templates Dialog */}
+      <Dialog open={isManageTemplatesOpen} onOpenChange={setIsManageTemplatesOpen}>
+        <DialogContent className="border-2 sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Bookmark className="h-5 w-5" />
+              Manage Expense Templates
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {templates && templates.length > 0 ? (
+              <div className="space-y-3">
+                {templates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="flex items-center justify-between p-3 border-2 rounded-lg hover:bg-muted/50"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{template.name}</span>
+                        {template.recurring && (
+                          <Badge variant="outline" className="text-xs">
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            {template.recurring_frequency}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {template.vendor} • {template.description}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                        <span>
+                          <Badge className={categoryColors[template.category] || "bg-gray-500 text-white"}>
+                            {BUSINESS_COST_CATEGORIES[template.category as keyof typeof BUSINESS_COST_CATEGORIES]?.label || template.category}
+                          </Badge>
+                        </span>
+                        {template.default_amount && (
+                          <span className="font-mono">${template.default_amount}</span>
+                        )}
+                        <span>Used {template.use_count} times</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm(`Delete template "${template.name}"?`)) {
+                          deleteTemplate.mutate(template.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Bookmark className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">No templates saved yet</p>
+                <p className="text-sm mt-1">
+                  When adding an expense, check "Save as template" to create reusable templates
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => setIsManageTemplatesOpen(false)} className="border-2">
+              Close
             </Button>
           </div>
         </DialogContent>

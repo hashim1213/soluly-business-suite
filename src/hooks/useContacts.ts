@@ -189,13 +189,16 @@ export function useCreateContact() {
 }
 
 /**
- * Hook to update an existing contact
+ * Hook to update an existing contact (filtered by organization)
  */
 export function useUpdateContact() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (input: UpdateContactInput) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { id, ...updates } = input;
 
       const { data, error } = await supabase
@@ -205,6 +208,7 @@ export function useUpdateContact() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -222,17 +226,21 @@ export function useUpdateContact() {
 }
 
 /**
- * Hook to delete a contact
+ * Hook to delete a contact (filtered by organization)
  */
 export function useDeleteContact() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) throw new Error("No organization found");
+
       const { error } = await supabase
         .from("contacts")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },
