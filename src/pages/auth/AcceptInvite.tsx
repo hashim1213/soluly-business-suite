@@ -151,10 +151,10 @@ export default function AcceptInvite() {
         toast.success("Successfully joined the organization!");
       }
 
-      // Redirect to new org dashboard after delay
+      // Redirect to settings page after delay (all users have access to settings)
       setTimeout(() => {
         if (result.organization_slug) {
-          navigate(`/org/${result.organization_slug}`);
+          navigate(`/org/${result.organization_slug}/settings`);
         } else {
           navigate("/");
         }
@@ -190,10 +190,10 @@ export default function AcceptInvite() {
     } else {
       setSuccess(true);
       setSuccessOrg(invitation?.organization || null);
-      // Auto-redirect after success
+      // Auto-redirect to settings page after success (all users have access to settings)
       setTimeout(() => {
         if (invitation?.organization?.slug) {
-          navigate(`/org/${invitation.organization.slug}`);
+          navigate(`/org/${invitation.organization.slug}/settings`);
         } else {
           navigate("/");
         }

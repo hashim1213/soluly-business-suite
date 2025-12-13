@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useFeatureRequestByDisplayId, useUpdateFeatureRequest, useDeleteFeatureRequest } from "@/hooks/useFeatureRequests";
+import { CommentsSection } from "@/components/comments/CommentsSection";
 import { Database } from "@/integrations/supabase/types";
 import { ticketPriorityStyles, featureStatusStyles } from "@/lib/styles";
 
@@ -235,6 +236,9 @@ export default function FeatureRequestDetail() {
               </CardContent>
             </Card>
           )}
+
+          {/* Comments */}
+          <CommentsSection entityType="feature_request" entityId={feature.id} />
         </div>
 
         {/* Sidebar */}

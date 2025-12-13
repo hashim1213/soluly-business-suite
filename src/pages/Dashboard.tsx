@@ -6,12 +6,20 @@ import { useProjects } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
 import { useFeatureRequests } from "@/hooks/useFeatureRequests";
 import { useQuotes } from "@/hooks/useQuotes";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
+  const { hasPermission, member } = useAuth();
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: features, isLoading: featuresLoading } = useFeatureRequests();
   const { data: quotes, isLoading: quotesLoading } = useQuotes();
+
+  const canViewProjects = hasPermission("projects", "view");
+  const canViewTickets = hasPermission("tickets", "view");
+  const canViewFeatures = hasPermission("features", "view");
+  const canViewQuotes = hasPermission("quotes", "view");
+  const canViewCrm = hasPermission("crm", "view");
 
   const isLoading = projectsLoading || ticketsLoading || featuresLoading || quotesLoading;
 
@@ -52,43 +60,53 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your consulting business</p>
+        <p className="text-muted-foreground">
+          {member?.name ? `Welcome, ${member.name}!` : "Overview of your consulting business"}
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Active Projects"
-          value={activeProjects}
-          description={`${newProjectsThisMonth} starting this month`}
-          icon={FolderKanban}
-          href="/projects"
-        />
-        <StatsCard
-          title="Open Tickets"
-          value={openTickets}
-          description={`${highPriorityTickets} high priority`}
-          icon={Ticket}
-          href="/tickets"
-        />
-        <StatsCard
-          title="Feature Requests"
-          value={totalFeatures}
-          description={`${inProgressFeatures} in progress`}
-          icon={Lightbulb}
-          href="/tickets/features"
-        />
-        <StatsCard
-          title="Pipeline Value"
-          value={formatPipelineValue(pipelineValue)}
-          description="From active quotes"
-          icon={DollarSign}
-          href="/tickets/quotes"
-        />
+        {canViewProjects && (
+          <StatsCard
+            title="Active Projects"
+            value={activeProjects}
+            description={`${newProjectsThisMonth} starting this month`}
+            icon={FolderKanban}
+            href="/projects"
+          />
+        )}
+        {canViewTickets && (
+          <StatsCard
+            title="Open Tickets"
+            value={openTickets}
+            description={`${highPriorityTickets} high priority`}
+            icon={Ticket}
+            href="/tickets"
+          />
+        )}
+        {canViewFeatures && (
+          <StatsCard
+            title="Feature Requests"
+            value={totalFeatures}
+            description={`${inProgressFeatures} in progress`}
+            icon={Lightbulb}
+            href="/tickets/features"
+          />
+        )}
+        {(canViewQuotes && canViewCrm) && (
+          <StatsCard
+            title="Pipeline Value"
+            value={formatPipelineValue(pipelineValue)}
+            description="From active quotes"
+            icon={DollarSign}
+            href="/tickets/quotes"
+          />
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <RecentTickets />
-        <ProjectsOverview />
+        {canViewTickets && <RecentTickets />}
+        {canViewProjects && <ProjectsOverview />}
       </div>
     </div>
   );

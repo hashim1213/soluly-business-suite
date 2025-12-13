@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
-import { useState, useEffect } from "react";
-import { ArrowLeft, Edit, Lightbulb, FileText, MessageSquare, Send, MoreVertical, Clock, User, Loader2, Save, X, FolderOpen, Tag } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Edit, Lightbulb, FileText, MessageSquare, MoreVertical, Clock, Loader2, Save, X, FolderOpen, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ import {
 import { toast } from "sonner";
 import { useTicketByDisplayId, useUpdateTicket, useDeleteTicket } from "@/hooks/useTickets";
 import { useProjects } from "@/hooks/useProjects";
+import { CommentsSection } from "@/components/comments/CommentsSection";
 import { formatDistanceToNow } from "date-fns";
 import { ticketStatusStyles, ticketPriorityStyles } from "@/lib/styles";
 
@@ -56,7 +57,6 @@ export default function TicketDetail() {
   const updateTicket = useUpdateTicket();
   const deleteTicket = useDeleteTicket();
 
-  const [newComment, setNewComment] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<{
     title: string;
@@ -135,14 +135,6 @@ export default function TicketDetail() {
       navigateOrg("/tickets");
     } catch (error) {
       // Error handled by hook
-    }
-  };
-
-  const handleAddComment = () => {
-    if (newComment.trim()) {
-      // In a real app, this would call an API to add a comment
-      toast.info("Comment functionality coming soon");
-      setNewComment("");
     }
   };
 
@@ -264,29 +256,8 @@ export default function TicketDetail() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
-              <CardTitle>Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              <p className="text-muted-foreground text-center py-4">No comments yet</p>
-
-              <div className="pt-4 border-t-2 border-border">
-                <Textarea
-                  placeholder="Add a comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  className="border-2 min-h-[100px] mb-3"
-                />
-                <div className="flex justify-end">
-                  <Button onClick={handleAddComment} disabled={!newComment.trim()} className="border-2">
-                    <Send className="h-4 w-4 mr-2" />
-                    Add Comment
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Comments */}
+          <CommentsSection entityType="ticket" entityId={ticket.id} />
         </div>
 
         <div className="space-y-6">

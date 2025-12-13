@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
-import { ArrowLeft, ThumbsUp, ThumbsDown, Meh, Mail, Phone, HeadphonesIcon, Building, Calendar, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, ThumbsUp, ThumbsDown, Meh, Mail, Phone, HeadphonesIcon, Building, Calendar, Loader2, Trash2, Edit, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,8 +27,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useFeedbackByDisplayId, useUpdateFeedback, useDeleteFeedback } from "@/hooks/useFeedback";
+import { useProjects } from "@/hooks/useProjects";
+import { CommentsSection } from "@/components/comments/CommentsSection";
 import { Database } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
 type FeedbackStatus = Database["public"]["Enums"]["feedback_status"];
 
@@ -75,16 +88,75 @@ const categoryLabels: Record<string, string> = {
   general: "General",
 };
 
+type FeedbackSentiment = Database["public"]["Enums"]["feedback_sentiment"];
+type FeedbackSource = Database["public"]["Enums"]["feedback_source"];
+type FeedbackCategory = Database["public"]["Enums"]["feedback_category"];
+
+interface EditData {
+  title: string;
+  description: string;
+  notes: string;
+  status: FeedbackStatus;
+  sentiment: FeedbackSentiment;
+  source: FeedbackSource;
+  category: FeedbackCategory;
+  from_contact: string;
+  project_id: string | null;
+}
+
 export default function FeedbackDetail() {
   const { feedbackId } = useParams<{ feedbackId: string }>();
   const { navigateOrg } = useOrgNavigation();
   const { data: feedback, isLoading, error } = useFeedbackByDisplayId(feedbackId);
+  const { data: projects } = useProjects();
   const updateFeedback = useUpdateFeedback();
   const deleteFeedback = useDeleteFeedback();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<EditData | null>(null);
 
   const handleStatusChange = (newStatus: FeedbackStatus) => {
     if (feedback) {
       updateFeedback.mutate({ id: feedback.id, status: newStatus });
+    }
+  };
+
+  const handleStartEdit = () => {
+    if (!feedback) return;
+    setEditData({
+      title: feedback.title,
+      description: feedback.description || "",
+      notes: feedback.notes || "",
+      status: feedback.status as FeedbackStatus,
+      sentiment: feedback.sentiment as FeedbackSentiment,
+      source: feedback.source as FeedbackSource,
+      category: feedback.category as FeedbackCategory,
+      from_contact: feedback.from_contact || "",
+      project_id: feedback.project_id,
+    });
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!feedback || !editData) return;
+    try {
+      await updateFeedback.mutateAsync({
+        id: feedback.id,
+        title: editData.title,
+        description: editData.description || null,
+        notes: editData.notes || null,
+        status: editData.status,
+        sentiment: editData.sentiment,
+        source: editData.source,
+        category: editData.category,
+        from_contact: editData.from_contact || null,
+        project_id: editData.project_id,
+      });
+      toast.success("Feedback updated successfully");
+      setIsEditing(false);
+      setEditData(null);
+    } catch (error) {
+      // Error handled by hook
     }
   };
 
@@ -159,6 +231,10 @@ export default function FeedbackDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" className="border-2" onClick={handleStartEdit}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
           <Select value={feedback.status} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-[160px] border-2">
               <SelectValue />
@@ -223,6 +299,9 @@ export default function FeedbackDetail() {
               </CardContent>
             </Card>
           )}
+
+          {/* Comments */}
+          <CommentsSection entityType="feedback" entityId={feedback.id} />
         </div>
 
         {/* Sidebar */}
@@ -301,6 +380,150 @@ export default function FeedbackDetail() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Feedback Dialog */}
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="border-2 sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Edit Feedback</DialogTitle>
+          </DialogHeader>
+          {editData && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-title">Title *</Label>
+                <Input
+                  id="edit-title"
+                  value={editData.title}
+                  onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                  className="border-2"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editData.description}
+                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                  className="border-2"
+                  rows={4}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-notes">Internal Notes</Label>
+                <Textarea
+                  id="edit-notes"
+                  value={editData.notes}
+                  onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                  className="border-2"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Status</Label>
+                  <Select value={editData.status} onValueChange={(v) => setEditData({ ...editData, status: v as FeedbackStatus })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                      <SelectItem value="under-review">Under Review</SelectItem>
+                      <SelectItem value="investigating">Investigating</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Sentiment</Label>
+                  <Select value={editData.sentiment} onValueChange={(v) => setEditData({ ...editData, sentiment: v as FeedbackSentiment })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="positive">Positive</SelectItem>
+                      <SelectItem value="neutral">Neutral</SelectItem>
+                      <SelectItem value="negative">Negative</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Category</Label>
+                  <Select value={editData.category} onValueChange={(v) => setEditData({ ...editData, category: v as FeedbackCategory })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="performance">Performance</SelectItem>
+                      <SelectItem value="ui-ux">UI/UX</SelectItem>
+                      <SelectItem value="feature">Feature</SelectItem>
+                      <SelectItem value="bug">Bug</SelectItem>
+                      <SelectItem value="mobile">Mobile</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Source</Label>
+                  <Select value={editData.source} onValueChange={(v) => setEditData({ ...editData, source: v as FeedbackSource })}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="call">Phone Call</SelectItem>
+                      <SelectItem value="support">Support Ticket</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-from">From Contact</Label>
+                  <Input
+                    id="edit-from"
+                    value={editData.from_contact}
+                    onChange={(e) => setEditData({ ...editData, from_contact: e.target.value })}
+                    className="border-2"
+                    placeholder="Contact name or email"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Project</Label>
+                  <Select
+                    value={editData.project_id || "none"}
+                    onValueChange={(v) => setEditData({ ...editData, project_id: v === "none" ? null : v })}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      <SelectItem value="none">No project</SelectItem>
+                      {projects?.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditing(false)} className="border-2">
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} className="border-2" disabled={updateFeedback.isPending}>
+              {updateFeedback.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

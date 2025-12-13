@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Building2, CheckCircle2, Mail, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, Mail, Building2, AlertCircle } from "lucide-react";
 import { validatePassword, validateSlug, getPasswordStrength, PASSWORD_MIN_LENGTH } from "@/lib/validation";
 
 export default function Signup() {
@@ -135,9 +135,7 @@ export default function Signup() {
       <Card className="w-full max-w-md border-2">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 bg-primary flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src="/logo.png" alt="Logo" className="h-32 w-auto" />
           </div>
           <CardTitle className="text-2xl font-bold">Create your organization</CardTitle>
           <CardDescription>

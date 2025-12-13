@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Building2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -58,9 +58,7 @@ export default function Login() {
       <Card className="w-full max-w-md border-2">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 bg-primary flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src="/logo.png" alt="Logo" className="h-32 w-auto" />
           </div>
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
           <CardDescription>
