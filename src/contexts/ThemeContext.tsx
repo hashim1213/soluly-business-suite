@@ -35,7 +35,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   const [style, setStyleState] = useState<ThemeStyle>(() => {
-    return safeLocalStorage(THEME_STYLE_KEY, "professional") as ThemeStyle;
+    return safeLocalStorage(THEME_STYLE_KEY, "default") as ThemeStyle;
   });
 
   const [resolvedMode, setResolvedMode] = useState<"light" | "dark">(() => {

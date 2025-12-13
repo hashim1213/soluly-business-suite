@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export type ProjectTeamMember = Tables<"project_team_members">;
@@ -58,15 +59,45 @@ export function useProjectTeamMembers(projectId: string | undefined) {
 // Add team member to project
 export function useAddProjectTeamMember() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ projectId, teamMemberId }: { projectId: string; teamMemberId: string }) => {
-      // Check if already exists
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
+      // Verify team member belongs to this organization
+      const { data: teamMember, error: memberError } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("id", teamMemberId)
+        .eq("organization_id", organization.id)
+        .single();
+
+      if (memberError || !teamMember) {
+        throw new Error("Team member not found");
+      }
+
+      // Verify project belongs to this organization
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", projectId)
+        .eq("organization_id", organization.id)
+        .single();
+
+      if (projectError || !project) {
+        throw new Error("Project not found");
+      }
+
+      // Check if already exists (with org filter)
       const { data: existing } = await supabase
         .from("project_team_members")
         .select("id")
         .eq("project_id", projectId)
         .eq("team_member_id", teamMemberId)
+        .eq("organization_id", organization.id)
         .single();
 
       if (existing) {
@@ -78,6 +109,7 @@ export function useAddProjectTeamMember() {
         .insert({
           project_id: projectId,
           team_member_id: teamMemberId,
+          organization_id: organization.id,
         })
         .select(`
           *,
@@ -113,14 +145,20 @@ export function useAddProjectTeamMember() {
 // Remove team member from project
 export function useRemoveProjectTeamMember() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ projectId, teamMemberId }: { projectId: string; teamMemberId: string }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("project_team_members")
         .delete()
         .eq("project_id", projectId)
-        .eq("team_member_id", teamMemberId);
+        .eq("team_member_id", teamMemberId)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },
@@ -138,14 +176,20 @@ export function useRemoveProjectTeamMember() {
 // Update hours logged for a team member on a project
 export function useUpdateProjectTeamMemberHours() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ projectId, teamMemberId, hoursLogged }: { projectId: string; teamMemberId: string; hoursLogged: number }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { data, error } = await supabase
         .from("project_team_members")
         .update({ hours_logged: hoursLogged })
         .eq("project_id", projectId)
         .eq("team_member_id", teamMemberId)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 

@@ -366,9 +366,14 @@ export function useCreateBusinessCost() {
  */
 export function useUpdateBusinessCost() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (input: UpdateBusinessCostInput) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { id, ...updates } = input;
 
       const { data, error } = await supabase
@@ -378,6 +383,7 @@ export function useUpdateBusinessCost() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -400,13 +406,19 @@ export function useUpdateBusinessCost() {
  */
 export function useDeleteBusinessCost() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("business_costs")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

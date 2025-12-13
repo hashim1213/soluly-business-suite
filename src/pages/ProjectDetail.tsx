@@ -13,6 +13,7 @@ import { useProjectCosts, useCreateProjectCost, useUpdateProjectCost, useDeleteP
 import { useProjectContracts, useCreateProjectContract, useUpdateProjectContract, useDeleteProjectContract } from "@/hooks/useProjectContracts";
 import { useProjectExternalMembers, useAddProjectExternalMember, useRemoveProjectExternalMember, useCreateContactAndAddToProject } from "@/hooks/useProjectExternalMembers";
 import { useContacts } from "@/hooks/useContacts";
+import { ProjectAccessManager } from "@/components/projects/ProjectAccessManager";
 import { formatDistanceToNow, format } from "date-fns";
 import { Loader2, Save } from "lucide-react";
 import {
@@ -3075,6 +3076,11 @@ export default function ProjectDetail() {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Project Access Manager */}
+          {dbProject?.id && (
+            <ProjectAccessManager projectId={dbProject.id} projectName={dbProject.name} />
+          )}
 
           {/* Time Entries */}
           <Card className="border-2 border-border shadow-sm">

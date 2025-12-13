@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, Permissions, Permission } from "@/integrations/supabase/types";
+import { clearCsrfToken } from "@/lib/csrf";
 
 type Organization = Tables<"organizations">;
 type Role = Tables<"roles">;
@@ -438,13 +439,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         setIsLoading(false);
 
-        if (error.message === "Invalid login credentials") {
-          return { error: "Invalid email or password. Please check your credentials and try again." };
+        // Generic error message to prevent account enumeration
+        // Don't reveal whether the email exists or not
+        if (error.message === "Invalid login credentials" ||
+            error.message.includes("Email not confirmed") ||
+            error.message.includes("User not found")) {
+          return { error: "Unable to sign in. Please check your email and password and try again." };
         }
-        if (error.message.includes("Email not confirmed")) {
-          return { error: "Please check your email and click the confirmation link before signing in." };
-        }
-        return { error: error.message };
+        // For other errors, return a generic message to avoid leaking information
+        console.error("Sign in error:", error.message);
+        return { error: "Unable to sign in. Please try again later." };
       }
 
       if (!data.user) {
@@ -495,7 +499,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (authError) {
-        return { error: authError.message };
+        // Generic error message to prevent account enumeration
+        // Don't reveal if the email is already registered
+        if (authError.message.includes("already registered") ||
+            authError.message.includes("already exists") ||
+            authError.message.includes("User already registered")) {
+          return { error: "Unable to create account. Please check your information and try again." };
+        }
+        console.error("Sign up error:", authError.message);
+        return { error: "Unable to create account. Please try again later." };
       }
 
       if (!authData.user) {
@@ -578,7 +590,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (authError) {
-        return { error: authError.message };
+        // Generic error message to prevent account enumeration
+        if (authError.message.includes("already registered") ||
+            authError.message.includes("already exists") ||
+            authError.message.includes("User already registered")) {
+          return { error: "Unable to accept invitation. An account may already exist with this email. Please try signing in instead." };
+        }
+        console.error("Invitation acceptance error:", authError.message);
+        return { error: "Unable to accept invitation. Please try again later." };
       }
 
       if (!authData.user) {
@@ -635,6 +654,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Continue with state cleanup even if signOut fails
     }
 
+    // Clear CSRF token on sign out
+    clearCsrfToken();
+
     // Always clear state
     setUser(null);
     setSession(null);
@@ -648,6 +670,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Reset password (send email)
+  // Always returns success to prevent account enumeration
   const resetPassword = async (email: string): Promise<{ error: string | null }> => {
     try {
       const { error } = await withTimeout(
@@ -657,16 +680,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         AUTH_TIMEOUT.RPC
       );
 
+      // Don't reveal whether the email exists or not
+      // Always return success to prevent account enumeration
       if (error) {
-        return { error: error.message };
+        console.error("Password reset error:", error.message);
       }
 
+      // Always return success - user will see "check your email" message
+      // regardless of whether the email exists
       return { error: null };
     } catch (error) {
       if (error instanceof Error && error.message === "Operation timed out") {
         return { error: "Request timed out. Please try again." };
       }
-      return { error: "An unexpected error occurred" };
+      // Still return success for non-timeout errors to prevent enumeration
+      console.error("Password reset error:", error);
+      return { error: null };
     }
   };
 

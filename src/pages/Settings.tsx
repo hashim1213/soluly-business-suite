@@ -341,6 +341,12 @@ export default function Settings() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     {
+                      value: "default" as ThemeStyle,
+                      label: "Vibrant",
+                      description: "Bold neobrutalist style",
+                      colors: ["#000000", "#404040", "#737373"],
+                    },
+                    {
                       value: "professional" as ThemeStyle,
                       label: "Professional",
                       description: "Clean corporate look with blue accents",
@@ -375,12 +381,6 @@ export default function Settings() {
                       label: "Minimal",
                       description: "Clean grayscale palette",
                       colors: ["#374151", "#6b7280", "#9ca3af"],
-                    },
-                    {
-                      value: "default" as ThemeStyle,
-                      label: "Vibrant",
-                      description: "Bold neobrutalist style",
-                      colors: ["#000000", "#404040", "#737373"],
                     },
                   ].map(({ value, label, description, colors }) => (
                     <button

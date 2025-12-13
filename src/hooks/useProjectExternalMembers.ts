@@ -113,15 +113,21 @@ export function useAddProjectExternalMember() {
  */
 export function useUpdateProjectExternalMember() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (input: UpdateProjectExternalMemberInput) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { id, ...updates } = input;
 
       const { data, error } = await supabase
         .from("project_external_members")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -143,13 +149,19 @@ export function useUpdateProjectExternalMember() {
  */
 export function useRemoveProjectExternalMember() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("project_external_members")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

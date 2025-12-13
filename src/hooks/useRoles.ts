@@ -31,23 +31,26 @@ export function useRoles() {
   });
 }
 
-// Fetch a single role by ID
+// Fetch a single role by ID (with organization verification)
 export function useRole(roleId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["roles", roleId],
+    queryKey: ["roles", organization?.id, roleId],
     queryFn: async () => {
-      if (!roleId) return null;
+      if (!roleId || !organization?.id) return null;
 
       const { data, error } = await supabase
         .from("roles")
         .select("*")
         .eq("id", roleId)
+        .eq("organization_id", organization.id)
         .single();
 
       if (error) throw error;
       return data as Role;
     },
-    enabled: !!roleId,
+    enabled: !!roleId && !!organization?.id,
   });
 }
 
@@ -85,13 +88,19 @@ export function useCreateRole() {
 // Update a role
 export function useUpdateRole() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: RoleUpdate & { id: string }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { data, error } = await supabase
         .from("roles")
         .update(updates)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -100,7 +109,7 @@ export function useUpdateRole() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
-      queryClient.invalidateQueries({ queryKey: ["roles", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["roles", organization?.id, data.id] });
       toast.success("Role updated successfully");
     },
     onError: (error) => {
@@ -112,25 +121,36 @@ export function useUpdateRole() {
 // Delete a role
 export function useDeleteRole() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (roleId: string) => {
-      // Check if role is a system role
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
+      // Check if role is a system role (with org filter)
       const { data: role } = await supabase
         .from("roles")
         .select("is_system")
         .eq("id", roleId)
+        .eq("organization_id", organization.id)
         .single();
 
-      if (role?.is_system) {
+      if (!role) {
+        throw new Error("Role not found");
+      }
+
+      if (role.is_system) {
         throw new Error("Cannot delete system roles");
       }
 
-      // Check if any team members are using this role
+      // Check if any team members are using this role (with org filter)
       const { count } = await supabase
         .from("team_members")
         .select("*", { count: "exact", head: true })
-        .eq("role_id", roleId);
+        .eq("role_id", roleId)
+        .eq("organization_id", organization.id);
 
       if (count && count > 0) {
         throw new Error("Cannot delete role that is assigned to team members");
@@ -139,7 +159,8 @@ export function useDeleteRole() {
       const { error } = await supabase
         .from("roles")
         .delete()
-        .eq("id", roleId);
+        .eq("id", roleId)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { getCsrfToken, CSRF_HEADER } from "@/lib/csrf";
 
 export type Invitation = Tables<"invitations">;
 export type InvitationInsert = TablesInsert<"invitations">;
@@ -127,14 +128,29 @@ export function useCreateInvitation() {
         .single();
 
       if (error) throw error;
+
+      // Send invitation email via Edge Function
+      try {
+        await supabase.functions.invoke("send-invite-email", {
+          body: { invitationId: data.id },
+          headers: {
+            [CSRF_HEADER]: getCsrfToken(),
+          },
+        });
+      } catch (emailError) {
+        console.warn("Failed to send invite email:", emailError);
+        // Don't fail the invitation creation if email fails
+      }
+
       return data as InvitationWithRole;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
       // Generate the invite link
-      const inviteLink = `${window.location.origin}/invite/${data.token}`;
+      const baseUrl = import.meta.env.PROD ? "https://app.soluly.com" : window.location.origin;
+      const inviteLink = `${baseUrl}/invite/${data.token}`;
       toast.success(
-        `Invitation sent to ${data.email}. Share this link: ${inviteLink}`,
+        `Invitation sent to ${data.email}. Link: ${inviteLink}`,
         { duration: 10000 }
       );
     },
@@ -147,9 +163,14 @@ export function useCreateInvitation() {
 // Resend invitation (generate new token and extend expiry)
 export function useResendInvitation() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (invitationId: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -160,15 +181,30 @@ export function useResendInvitation() {
           expires_at: expiresAt.toISOString(),
         })
         .eq("id", invitationId)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Resend invitation email via Edge Function
+      try {
+        await supabase.functions.invoke("send-invite-email", {
+          body: { invitationId: data.id },
+          headers: {
+            [CSRF_HEADER]: getCsrfToken(),
+          },
+        });
+      } catch (emailError) {
+        console.warn("Failed to send invite email:", emailError);
+      }
+
       return data as Invitation;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
-      const inviteLink = `${window.location.origin}/invite/${data.token}`;
+      const baseUrl = import.meta.env.PROD ? "https://app.soluly.com" : window.location.origin;
+      const inviteLink = `${baseUrl}/invite/${data.token}`;
       toast.success(`Invitation resent. New link: ${inviteLink}`, { duration: 10000 });
     },
     onError: (error) => {
@@ -180,13 +216,19 @@ export function useResendInvitation() {
 // Cancel/delete an invitation
 export function useDeleteInvitation() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (invitationId: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("invitations")
         .delete()
-        .eq("id", invitationId);
+        .eq("id", invitationId)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

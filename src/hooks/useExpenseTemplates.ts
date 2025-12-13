@@ -115,9 +115,14 @@ export function useCreateExpenseTemplate() {
  */
 export function useUpdateExpenseTemplate() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (input: UpdateExpenseTemplateInput) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { id, ...updates } = input;
 
       const { data, error } = await supabase
@@ -127,6 +132,7 @@ export function useUpdateExpenseTemplate() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -148,13 +154,19 @@ export function useUpdateExpenseTemplate() {
  */
 export function useDeleteExpenseTemplate() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("expense_templates")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },
@@ -173,14 +185,20 @@ export function useDeleteExpenseTemplate() {
  */
 export function useIncrementTemplateUse() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // First get current use_count
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
+      // First get current use_count with org filter
       const { data: current, error: fetchError } = await supabase
         .from("expense_templates")
         .select("use_count")
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (fetchError) throw fetchError;
@@ -191,7 +209,8 @@ export function useIncrementTemplateUse() {
           use_count: (current?.use_count || 0) + 1,
           last_used_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

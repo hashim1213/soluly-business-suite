@@ -130,9 +130,14 @@ export function useCreateProjectContract() {
  */
 export function useUpdateProjectContract() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (input: UpdateProjectContractInput) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { id, ...updates } = input;
 
       const { data, error } = await supabase
@@ -142,6 +147,7 @@ export function useUpdateProjectContract() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -163,13 +169,19 @@ export function useUpdateProjectContract() {
  */
 export function useDeleteProjectContract() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("project_contracts")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

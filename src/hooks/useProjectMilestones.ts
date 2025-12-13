@@ -101,9 +101,14 @@ export function useCreateProjectMilestone() {
  */
 export function useUpdateProjectMilestone() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (input: UpdateProjectMilestoneInput) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { id, completed, ...updates } = input;
 
       const updateData: Record<string, unknown> = {
@@ -121,6 +126,7 @@ export function useUpdateProjectMilestone() {
         .from("project_milestones")
         .update(updateData)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -142,9 +148,14 @@ export function useUpdateProjectMilestone() {
  */
 export function useToggleProjectMilestone() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { data, error } = await supabase
         .from("project_milestones")
         .update({
@@ -153,6 +164,7 @@ export function useToggleProjectMilestone() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -173,13 +185,19 @@ export function useToggleProjectMilestone() {
  */
 export function useDeleteProjectMilestone() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("project_milestones")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

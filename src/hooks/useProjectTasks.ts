@@ -117,11 +117,17 @@ export function useCreateProjectTask() {
  */
 export function useUpdateProjectTask() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (input: UpdateProjectTaskInput) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { id, ...updates } = input;
 
+      // Update with org filter for security
       const { data, error } = await supabase
         .from("project_tasks")
         .update({
@@ -129,6 +135,7 @@ export function useUpdateProjectTask() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -149,9 +156,14 @@ export function useUpdateProjectTask() {
  */
 export function useToggleProjectTask() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { data, error } = await supabase
         .from("project_tasks")
         .update({
@@ -159,6 +171,7 @@ export function useToggleProjectTask() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -179,13 +192,19 @@ export function useToggleProjectTask() {
  */
 export function useDeleteProjectTask() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("project_tasks")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },

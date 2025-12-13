@@ -3,8 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-csrf-token',
 };
+
+const CSRF_HEADER = 'x-csrf-token';
+
+// Validate CSRF token format (64-character hex string)
+function validateCsrfTokenFormat(token: string | null): boolean {
+  if (!token || token.length !== 64) return false;
+  return /^[0-9a-f]+$/i.test(token);
+}
 
 interface CreateFromEmailRequest {
   emailId: string;
@@ -18,6 +26,15 @@ interface CreateFromEmailRequest {
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Validate CSRF token for state-changing requests
+  const csrfToken = req.headers.get(CSRF_HEADER);
+  if (!validateCsrfTokenFormat(csrfToken)) {
+    return new Response(JSON.stringify({ error: "Invalid or missing CSRF token" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

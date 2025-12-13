@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Tables, TablesInsert, TablesUpdate, Database } from "@/integrations/supabase/types";
+import { getCsrfToken, CSRF_HEADER } from "@/lib/csrf";
 
 type Email = Tables<"emails">;
 type EmailInsert = TablesInsert<"emails">;
@@ -72,9 +73,13 @@ export function useEmails(filters: EmailFilters = {}) {
         query = query.eq("linked_project_id", filters.linkedProjectId);
       }
 
-      // Apply search
+      // Apply search - sanitize input to prevent SQL injection
       if (filters.search) {
-        query = query.or(`subject.ilike.%${filters.search}%,sender_email.ilike.%${filters.search}%,sender_name.ilike.%${filters.search}%`);
+        // Escape special characters that could be used for injection
+        const sanitizedSearch = filters.search
+          .replace(/[%_\\]/g, (match) => `\\${match}`)
+          .replace(/'/g, "''");
+        query = query.or(`subject.ilike.%${sanitizedSearch}%,sender_email.ilike.%${sanitizedSearch}%,sender_name.ilike.%${sanitizedSearch}%`);
       }
 
       const { data, error } = await query;
@@ -87,10 +92,12 @@ export function useEmails(filters: EmailFilters = {}) {
 }
 
 export function useEmail(id: string | null) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["email", id],
+    queryKey: ["email", organization?.id, id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !organization?.id) return null;
 
       const { data, error } = await supabase
         .from("emails")
@@ -104,24 +111,31 @@ export function useEmail(id: string | null) {
           linked_feedback:feedback(id, title, display_id)
         `)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && !!organization?.id,
   });
 }
 
 export function useUpdateEmail() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...update }: EmailUpdate & { id: string }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { data, error } = await supabase
         .from("emails")
         .update(update)
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -140,13 +154,19 @@ export function useUpdateEmail() {
 
 export function useUpdateEmailCategory() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, category }: { id: string; category: EmailCategory }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { data, error } = await supabase
         .from("emails")
         .update({ category })
         .eq("id", id)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -166,13 +186,33 @@ export function useUpdateEmailCategory() {
 
 export function useLinkEmailToProject() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ emailId, projectId }: { emailId: string; projectId: string | null }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
+      // Verify project belongs to organization if projectId provided
+      if (projectId) {
+        const { data: project, error: projectError } = await supabase
+          .from("projects")
+          .select("id")
+          .eq("id", projectId)
+          .eq("organization_id", organization.id)
+          .single();
+
+        if (projectError || !project) {
+          throw new Error("Project not found");
+        }
+      }
+
       const { data, error } = await supabase
         .from("emails")
         .update({ linked_project_id: projectId })
         .eq("id", emailId)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -192,10 +232,14 @@ export function useLinkEmailToProject() {
 
 export function useDismissEmail() {
   const queryClient = useQueryClient();
-  const { teamMember } = useAuth();
+  const { teamMember, organization } = useAuth();
 
   return useMutation({
     mutationFn: async (emailId: string) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { data, error } = await supabase
         .from("emails")
         .update({
@@ -204,6 +248,7 @@ export function useDismissEmail() {
           reviewed_at: new Date().toISOString(),
         })
         .eq("id", emailId)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -247,6 +292,9 @@ export function useCreateRecordFromEmail() {
           priority,
           projectId,
           reviewedBy: teamMember?.id,
+        },
+        headers: {
+          [CSRF_HEADER]: getCsrfToken(),
         },
       });
 

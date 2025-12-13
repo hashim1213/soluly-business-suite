@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export interface ClientContact {
@@ -20,10 +21,12 @@ export interface ClientContact {
 
 // Fetch contacts for a specific client
 export function useClientContacts(clientId: string | undefined) {
+  const { organization } = useAuth();
+
   return useQuery({
-    queryKey: ["client_contacts", clientId],
+    queryKey: ["client_contacts", organization?.id, clientId],
     queryFn: async () => {
-      if (!clientId) return [];
+      if (!clientId || !organization?.id) return [];
 
       const { data, error } = await supabase
         .from("client_contacts")
@@ -32,18 +35,20 @@ export function useClientContacts(clientId: string | undefined) {
           contact:contacts(id, name, email, phone, job_title, display_id)
         `)
         .eq("client_id", clientId)
+        .eq("organization_id", organization.id)
         .order("is_primary", { ascending: false });
 
       if (error) throw error;
       return data as ClientContact[];
     },
-    enabled: !!clientId,
+    enabled: !!clientId && !!organization?.id,
   });
 }
 
 // Add contact to client
 export function useAddClientContact() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -55,12 +60,17 @@ export function useAddClientContact() {
       contactId: string;
       isPrimary?: boolean;
     }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       // If setting as primary, first unset any existing primary
       if (isPrimary) {
         await supabase
           .from("client_contacts")
           .update({ is_primary: false })
           .eq("client_id", clientId)
+          .eq("organization_id", organization.id)
           .eq("is_primary", true);
       }
 
@@ -69,6 +79,7 @@ export function useAddClientContact() {
         .insert({
           client_id: clientId,
           contact_id: contactId,
+          organization_id: organization.id,
           is_primary: isPrimary,
         })
         .select()
@@ -78,7 +89,7 @@ export function useAddClientContact() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["client_contacts", variables.clientId] });
+      queryClient.invalidateQueries({ queryKey: ["client_contacts", organization?.id, variables.clientId] });
       queryClient.invalidateQueries({ queryKey: ["crm_clients"] });
       toast.success("Contact added to client");
     },
@@ -95,19 +106,25 @@ export function useAddClientContact() {
 // Remove contact from client
 export function useRemoveClientContact() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ clientId, contactId }: { clientId: string; contactId: string }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       const { error } = await supabase
         .from("client_contacts")
         .delete()
         .eq("client_id", clientId)
-        .eq("contact_id", contactId);
+        .eq("contact_id", contactId)
+        .eq("organization_id", organization.id);
 
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["client_contacts", variables.clientId] });
+      queryClient.invalidateQueries({ queryKey: ["client_contacts", organization?.id, variables.clientId] });
       queryClient.invalidateQueries({ queryKey: ["crm_clients"] });
       toast.success("Contact removed from client");
     },
@@ -120,14 +137,20 @@ export function useRemoveClientContact() {
 // Set a contact as primary
 export function useSetPrimaryContact() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({ clientId, contactId }: { clientId: string; contactId: string }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       // First, unset all primary contacts for this client
       await supabase
         .from("client_contacts")
         .update({ is_primary: false })
-        .eq("client_id", clientId);
+        .eq("client_id", clientId)
+        .eq("organization_id", organization.id);
 
       // Then set the new primary
       const { data, error } = await supabase
@@ -135,6 +158,7 @@ export function useSetPrimaryContact() {
         .update({ is_primary: true })
         .eq("client_id", clientId)
         .eq("contact_id", contactId)
+        .eq("organization_id", organization.id)
         .select()
         .single();
 
@@ -142,7 +166,7 @@ export function useSetPrimaryContact() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["client_contacts", variables.clientId] });
+      queryClient.invalidateQueries({ queryKey: ["client_contacts", organization?.id, variables.clientId] });
       queryClient.invalidateQueries({ queryKey: ["crm_clients"] });
       toast.success("Primary contact updated");
     },
@@ -155,6 +179,7 @@ export function useSetPrimaryContact() {
 // Bulk add contacts to client (for use during client creation)
 export function useBulkAddClientContacts() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -166,11 +191,16 @@ export function useBulkAddClientContacts() {
       contactIds: string[];
       primaryContactId?: string;
     }) => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
       if (contactIds.length === 0) return [];
 
       const records = contactIds.map((contactId) => ({
         client_id: clientId,
         contact_id: contactId,
+        organization_id: organization.id,
         is_primary: contactId === primaryContactId,
       }));
 
@@ -183,7 +213,7 @@ export function useBulkAddClientContacts() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["client_contacts", variables.clientId] });
+      queryClient.invalidateQueries({ queryKey: ["client_contacts", organization?.id, variables.clientId] });
       queryClient.invalidateQueries({ queryKey: ["crm_clients"] });
     },
     onError: (error) => {
