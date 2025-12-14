@@ -242,12 +242,55 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
 
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+  // Verify authentication
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  let userOrgId: string | null = null;
+  const isServiceRoleCall = token === serviceRoleKey;
+
+  // If not a service role call, validate user authentication
+  if (!isServiceRoleCall) {
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Invalid authentication token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Get user's organization
+    const { data: teamMember, error: memberError } = await supabaseClient
+      .from("team_members")
+      .select("organization_id")
+      .eq("auth_user_id", user.id)
+      .single();
+
+    if (memberError || !teamMember) {
+      return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    userOrgId = teamMember.organization_id;
+  }
+
+  try {
     const {
       organizationId,
       recipientIds,
@@ -267,6 +310,17 @@ serve(async (req) => {
         JSON.stringify({ error: "organizationId, type, title, and message are required" }),
         {
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // If user call, verify they can only create notifications for their own org
+    if (!isServiceRoleCall && userOrgId !== organizationId) {
+      return new Response(
+        JSON.stringify({ error: "Access denied: cannot create notifications for other organizations" }),
+        {
+          status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );

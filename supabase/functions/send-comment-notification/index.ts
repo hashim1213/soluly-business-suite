@@ -12,18 +12,69 @@ interface CommentNotificationRequest {
   entityId: string;
 }
 
+// Helper to check if a team member has access to a project
+function hasProjectAccess(
+  memberAllowedProjectIds: string[] | null,
+  projectId: string | null
+): boolean {
+  // If no project is associated, everyone has access
+  if (!projectId) return true;
+
+  // If member has null allowed_project_ids, they have access to all projects
+  if (memberAllowedProjectIds === null) return true;
+
+  // If member has empty array, they have no project access
+  if (memberAllowedProjectIds.length === 0) return false;
+
+  // Check if member has access to this project
+  return memberAllowedProjectIds.includes(projectId);
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
 
+  // Verify user authentication
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Invalid authentication token" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Get user's organization
+  const { data: teamMember, error: memberError } = await supabaseClient
+    .from("team_members")
+    .select("organization_id")
+    .eq("auth_user_id", user.id)
+    .single();
+
+  if (memberError || !teamMember) {
+    return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  try {
     const { commentId, entityType, entityId } = (await req.json()) as CommentNotificationRequest;
 
     if (!commentId || !entityType || !entityId) {
@@ -33,7 +84,7 @@ serve(async (req) => {
       });
     }
 
-    // Fetch comment details with author
+    // Fetch comment details with author (with org validation)
     const { data: comment, error: commentError } = await supabaseClient
       .from("comments")
       .select(`
@@ -43,6 +94,7 @@ serve(async (req) => {
         author:team_members!comments_author_id_fkey(id, name, auth_user_id)
       `)
       .eq("id", commentId)
+      .eq("organization_id", teamMember.organization_id)
       .single();
 
     if (commentError || !comment) {
@@ -55,42 +107,46 @@ serve(async (req) => {
 
     const author = comment.author as { id: string; name: string; auth_user_id: string } | null;
 
-    // Fetch entity details based on type
+    // Fetch entity details based on type (including project_id for access filtering)
     let entityTitle = "";
     let entityDisplayId = "";
     let entityUrl = "";
+    let entityProjectId: string | null = null;
 
     if (entityType === "feedback") {
       const { data: feedback } = await supabaseClient
         .from("feedback")
-        .select("title, display_id")
+        .select("title, display_id, project_id")
         .eq("id", entityId)
         .single();
       if (feedback) {
         entityTitle = feedback.title;
         entityDisplayId = feedback.display_id;
+        entityProjectId = feedback.project_id;
         entityUrl = `/feedback/${feedback.display_id}`;
       }
     } else if (entityType === "feature_request") {
       const { data: feature } = await supabaseClient
         .from("feature_requests")
-        .select("title, display_id")
+        .select("title, display_id, project_id")
         .eq("id", entityId)
         .single();
       if (feature) {
         entityTitle = feature.title;
         entityDisplayId = feature.display_id;
+        entityProjectId = feature.project_id;
         entityUrl = `/features/${feature.display_id}`;
       }
     } else if (entityType === "ticket") {
       const { data: ticket } = await supabaseClient
         .from("tickets")
-        .select("title, display_id")
+        .select("title, display_id, project_id")
         .eq("id", entityId)
         .single();
       if (ticket) {
         entityTitle = ticket.title;
         entityDisplayId = ticket.display_id;
+        entityProjectId = ticket.project_id;
         entityUrl = `/tickets/${ticket.display_id}`;
       }
     }
@@ -110,14 +166,14 @@ serve(async (req) => {
       ? comment.content.substring(0, 200) + "..."
       : comment.content;
 
-    // Get all team members in the org to notify (excluding the comment author)
-    const { data: teamMembers, error: membersError } = await supabaseClient
+    // Get all team members in the org (excluding the comment author)
+    const { data: allTeamMembers, error: membersError } = await supabaseClient
       .from("team_members")
-      .select("id, name, auth_user_id, email_notifications_enabled, notification_preferences")
+      .select("id, name, auth_user_id, email_notifications_enabled, notification_preferences, allowed_project_ids")
       .eq("organization_id", comment.organization_id)
       .neq("id", author?.id || "");
 
-    if (membersError || !teamMembers || teamMembers.length === 0) {
+    if (membersError || !allTeamMembers || allTeamMembers.length === 0) {
       console.log("No team members to notify");
       return new Response(
         JSON.stringify({ success: true, message: "No team members to notify" }),
@@ -128,7 +184,23 @@ serve(async (req) => {
       );
     }
 
-    // Create in-app notifications for all team members
+    // Filter team members by project access
+    const teamMembers = allTeamMembers.filter(member =>
+      hasProjectAccess(member.allowed_project_ids, entityProjectId)
+    );
+
+    if (teamMembers.length === 0) {
+      console.log("No team members with project access to notify");
+      return new Response(
+        JSON.stringify({ success: true, message: "No team members with project access to notify" }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Create in-app notifications for eligible team members
     const notificationInserts = teamMembers.map(member => ({
       organization_id: comment.organization_id,
       recipient_id: member.id,

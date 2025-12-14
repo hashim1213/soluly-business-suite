@@ -47,11 +47,23 @@ serve(async (req) => {
       throw new Error("Feature ID is required");
     }
 
-    // Fetch the feature request
+    // Get user's organization
+    const { data: teamMember, error: memberError } = await supabase
+      .from("team_members")
+      .select("organization_id")
+      .eq("auth_user_id", userId)
+      .single();
+
+    if (memberError || !teamMember) {
+      throw new Error("User is not a member of any organization");
+    }
+
+    // Fetch the feature request (with org validation)
     const { data: feature, error: fetchError } = await supabase
       .from("feature_requests")
       .select("*")
       .eq("id", featureId)
+      .eq("organization_id", teamMember.organization_id)
       .single();
 
     if (fetchError || !feature) {

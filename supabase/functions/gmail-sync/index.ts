@@ -34,22 +34,56 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
+  // Verify user authentication
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Invalid authentication token" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Get user's organization
+  const { data: teamMember, error: memberError } = await supabase
+    .from("team_members")
+    .select("organization_id")
+    .eq("auth_user_id", user.id)
+    .single();
+
+  if (memberError || !teamMember) {
+    return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  try {
     const { accountId, maxResults = 50, fromDate }: SyncRequest = await req.json();
 
     if (!accountId) {
       throw new Error("accountId is required");
     }
 
-    // Get the email account with OAuth tokens
+    // Get the email account with OAuth tokens (with org validation)
     const { data: account, error: accountError } = await supabase
       .from("email_accounts")
       .select("*")
       .eq("id", accountId)
+      .eq("organization_id", teamMember.organization_id)
       .single();
 
     if (accountError || !account) {

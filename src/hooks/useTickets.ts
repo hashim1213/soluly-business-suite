@@ -75,14 +75,15 @@ export function useTicketsByProject(projectId: string | undefined) {
   });
 }
 
-// Fetch single ticket (filtered by organization)
+// Fetch single ticket (filtered by organization and project access)
 export function useTicket(id: string | undefined) {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["tickets", id, organization?.id],
+    queryKey: ["tickets", id, organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!id || !organization?.id) return null;
+
       const { data, error } = await supabase
         .from("tickets")
         .select(`
@@ -95,20 +96,30 @@ export function useTicket(id: string | undefined) {
         .single();
 
       if (error) throw error;
+
+      // Check project access - if user has restricted access, verify they can access this ticket's project
+      if (!hasFullProjectAccess() && allowedProjectIds !== null && data?.project_id) {
+        if (!allowedProjectIds.includes(data.project_id)) {
+          // User doesn't have access to this ticket's project
+          return null;
+        }
+      }
+
       return data as TicketWithProject;
     },
     enabled: !!id && !!organization?.id,
   });
 }
 
-// Fetch ticket by display_id (filtered by organization)
+// Fetch ticket by display_id (filtered by organization and project access)
 export function useTicketByDisplayId(displayId: string | undefined) {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["tickets", "display", displayId, organization?.id],
+    queryKey: ["tickets", "display", displayId, organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!displayId || !organization?.id) return null;
+
       const { data, error } = await supabase
         .from("tickets")
         .select(`
@@ -121,6 +132,15 @@ export function useTicketByDisplayId(displayId: string | undefined) {
         .single();
 
       if (error) throw error;
+
+      // Check project access - if user has restricted access, verify they can access this ticket's project
+      if (!hasFullProjectAccess() && allowedProjectIds !== null && data?.project_id) {
+        if (!allowedProjectIds.includes(data.project_id)) {
+          // User doesn't have access to this ticket's project
+          return null;
+        }
+      }
+
       return data as TicketWithProject;
     },
     enabled: !!displayId && !!organization?.id,

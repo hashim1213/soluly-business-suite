@@ -14,7 +14,16 @@
       "Bash(npx tsc:*)",
       "WebFetch(domain:supabase.com)",
       "Bash(timeout 5 npm run dev:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:run:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(npx playwright:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(TEST_USER_EMAIL=hashim@bytesavy.com TEST_USER_PASSWORD=hashim123 npm run test:e2e:*)",
+      "Bash(TEST_USER_EMAIL=hashim@bytesavy.com TEST_USER_PASSWORD=hashim123 npx playwright test:*)",
+      "Bash(git add:*)"
     ]
   }
 }

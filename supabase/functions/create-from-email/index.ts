@@ -41,6 +41,39 @@ serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  // Verify user authentication
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Invalid authentication token" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Get user's organization
+  const { data: teamMember, error: memberError } = await supabase
+    .from("team_members")
+    .select("organization_id")
+    .eq("auth_user_id", user.id)
+    .single();
+
+  if (memberError || !teamMember) {
+    return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const {
       emailId,
@@ -53,11 +86,12 @@ serve(async (req) => {
 
     console.log("Creating record from email:", { emailId, category, title });
 
-    // Get email details
+    // Get email details (with org validation)
     const { data: email, error: emailError } = await supabase
       .from("emails")
       .select("*")
       .eq("id", emailId)
+      .eq("organization_id", teamMember.organization_id)
       .single();
 
     if (emailError || !email) {

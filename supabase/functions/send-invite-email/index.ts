@@ -33,12 +33,45 @@ serve(async (req) => {
     });
   }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
 
+  // Verify user authentication
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Invalid authentication token" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Get user's organization
+  const { data: teamMember, error: memberError } = await supabaseClient
+    .from("team_members")
+    .select("organization_id")
+    .eq("auth_user_id", user.id)
+    .single();
+
+  if (memberError || !teamMember) {
+    return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  try {
     const { invitationId } = (await req.json()) as InviteEmailRequest;
 
     if (!invitationId) {
@@ -48,7 +81,7 @@ serve(async (req) => {
       });
     }
 
-    // Fetch invitation details
+    // Fetch invitation details (with org validation)
     const { data: invitation, error: invError } = await supabaseClient
       .from("invitations")
       .select(`
@@ -61,6 +94,7 @@ serve(async (req) => {
         inviter:team_members!invitations_invited_by_fkey(name)
       `)
       .eq("id", invitationId)
+      .eq("organization_id", teamMember.organization_id)
       .is("accepted_at", null)
       .single();
 

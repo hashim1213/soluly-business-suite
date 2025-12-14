@@ -77,12 +77,12 @@ export function useFeatureRequests() {
   });
 }
 
-// Fetch single feature request (filtered by organization)
+// Fetch single feature request (filtered by organization and project access)
 export function useFeatureRequest(id: string | undefined) {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["feature_requests", id, organization?.id],
+    queryKey: ["feature_requests", id, organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!id || !organization?.id) return null;
 
@@ -105,6 +105,16 @@ export function useFeatureRequest(id: string | undefined) {
 
       if (projectsError) throw projectsError;
 
+      // Check project access - if user has restricted access, verify they can access at least one project
+      if (!hasFullProjectAccess() && allowedProjectIds !== null) {
+        const featureProjectIds = featureProjects?.map(fp => fp.project_id) || [];
+        const hasAccess = featureProjectIds.some(pid => allowedProjectIds.includes(pid));
+        if (!hasAccess && featureProjectIds.length > 0) {
+          // User doesn't have access to any of this feature's projects
+          return null;
+        }
+      }
+
       return {
         ...feature,
         projects: featureProjects || [],
@@ -114,12 +124,12 @@ export function useFeatureRequest(id: string | undefined) {
   });
 }
 
-// Fetch by display_id (filtered by organization)
+// Fetch by display_id (filtered by organization and project access)
 export function useFeatureRequestByDisplayId(displayId: string | undefined) {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["feature_requests", "display", displayId, organization?.id],
+    queryKey: ["feature_requests", "display", displayId, organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!displayId || !organization?.id) return null;
 
@@ -139,6 +149,16 @@ export function useFeatureRequestByDisplayId(displayId: string | undefined) {
           project:projects(id, name, display_id)
         `)
         .eq("feature_request_id", feature.id);
+
+      // Check project access - if user has restricted access, verify they can access at least one project
+      if (!hasFullProjectAccess() && allowedProjectIds !== null) {
+        const featureProjectIds = featureProjects?.map(fp => fp.project_id) || [];
+        const hasAccess = featureProjectIds.some(pid => allowedProjectIds.includes(pid));
+        if (!hasAccess && featureProjectIds.length > 0) {
+          // User doesn't have access to any of this feature's projects
+          return null;
+        }
+      }
 
       return {
         ...feature,

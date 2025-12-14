@@ -15,15 +15,56 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Verify authentication
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  let userOrgId: string | null = null;
+  const isServiceRoleCall = token === supabaseKey;
+
+  // If not a service role call, validate user authentication
+  if (!isServiceRoleCall) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Invalid authentication token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Get user's organization
+    const { data: teamMember, error: memberError } = await supabase
+      .from("team_members")
+      .select("organization_id")
+      .eq("auth_user_id", user.id)
+      .single();
+
+    if (memberError || !teamMember) {
+      return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    userOrgId = teamMember.organization_id;
+  }
+
   try {
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { emailId }: EmailProcessRequest = await req.json();
 
@@ -32,11 +73,14 @@ serve(async (req) => {
     }
 
     // Fetch the email from database
-    const { data: email, error: fetchError } = await supabase
-      .from("emails")
-      .select("*")
-      .eq("id", emailId)
-      .single();
+    let query = supabase.from("emails").select("*").eq("id", emailId);
+
+    // If user call, validate org access
+    if (!isServiceRoleCall && userOrgId) {
+      query = query.eq("organization_id", userOrgId);
+    }
+
+    const { data: email, error: fetchError } = await query.single();
 
     if (fetchError || !email) {
       throw new Error("Email not found");

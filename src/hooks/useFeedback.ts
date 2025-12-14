@@ -8,23 +8,32 @@ export type Feedback = Tables<"feedback">;
 export type FeedbackInsert = TablesInsert<"feedback">;
 export type FeedbackUpdate = TablesUpdate<"feedback">;
 
-// Fetch all feedback for the current organization
+// Fetch all feedback for the current organization (filtered by project access)
 export function useFeedback() {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["feedback", organization?.id],
+    queryKey: ["feedback", organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!organization?.id) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("feedback")
         .select(`
           *,
           project:projects(name, display_id)
         `)
-        .eq("organization_id", organization.id)
-        .order("created_at", { ascending: false });
+        .eq("organization_id", organization.id);
+
+      // If user has project restrictions, filter feedback by allowed projects
+      if (!hasFullProjectAccess() && allowedProjectIds !== null) {
+        if (allowedProjectIds.length === 0) {
+          return []; // No projects allowed = no feedback
+        }
+        query = query.in("project_id", allowedProjectIds);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as (Feedback & { project?: { name: string; display_id: string } | null })[];
@@ -33,12 +42,12 @@ export function useFeedback() {
   });
 }
 
-// Fetch single feedback (filtered by organization)
+// Fetch single feedback (filtered by organization and project access)
 export function useFeedbackItem(id: string | undefined) {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["feedback", id, organization?.id],
+    queryKey: ["feedback", id, organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!id || !organization?.id) return null;
       const { data, error } = await supabase
@@ -52,18 +61,27 @@ export function useFeedbackItem(id: string | undefined) {
         .single();
 
       if (error) throw error;
+
+      // Check project access - if user has restricted access, verify they can access this feedback's project
+      if (!hasFullProjectAccess() && allowedProjectIds !== null && data?.project_id) {
+        if (!allowedProjectIds.includes(data.project_id)) {
+          // User doesn't have access to this feedback's project
+          return null;
+        }
+      }
+
       return data as Feedback & { project?: { name: string; display_id: string } | null };
     },
     enabled: !!id && !!organization?.id,
   });
 }
 
-// Fetch feedback by display_id (filtered by organization)
+// Fetch feedback by display_id (filtered by organization and project access)
 export function useFeedbackByDisplayId(displayId: string | undefined) {
-  const { organization } = useAuth();
+  const { organization, allowedProjectIds, hasFullProjectAccess } = useAuth();
 
   return useQuery({
-    queryKey: ["feedback", "display", displayId, organization?.id],
+    queryKey: ["feedback", "display", displayId, organization?.id, allowedProjectIds],
     queryFn: async () => {
       if (!displayId || !organization?.id) return null;
       const { data, error } = await supabase
@@ -77,6 +95,15 @@ export function useFeedbackByDisplayId(displayId: string | undefined) {
         .single();
 
       if (error) throw error;
+
+      // Check project access - if user has restricted access, verify they can access this feedback's project
+      if (!hasFullProjectAccess() && allowedProjectIds !== null && data?.project_id) {
+        if (!allowedProjectIds.includes(data.project_id)) {
+          // User doesn't have access to this feedback's project
+          return null;
+        }
+      }
+
       return data as Feedback & { project?: { name: string; display_id: string } | null };
     },
     enabled: !!displayId && !!organization?.id,
