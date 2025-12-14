@@ -13,6 +13,7 @@ import {
   Contact,
   DollarSign,
   Receipt,
+  ClipboardList,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,6 +45,7 @@ const mainNavItems: NavItem[] = [
   { title: "Dashboard", path: "", icon: LayoutDashboard, permission: "dashboard" },
   { title: "Projects", path: "projects", icon: FolderKanban, permission: "projects" },
   { title: "Tickets", path: "tickets", icon: Ticket, permission: "tickets" },
+  { title: "Forms", path: "forms", icon: ClipboardList, permission: "forms" },
   { title: "Team Members", path: "team", icon: Users, permission: "team" },
   { title: "CRM", path: "crm", icon: Contact, permission: "crm" },
   { title: "Financials", path: "financials", icon: DollarSign, permission: "financials" },

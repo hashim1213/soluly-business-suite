@@ -124,6 +124,14 @@ export const invoiceStatusStyles = {
   overdue: "bg-red-600 text-white",
 } as const;
 
+// Form status styles
+export const formStatusStyles = {
+  draft: "bg-slate-400 text-black",
+  published: "bg-emerald-600 text-white",
+  closed: "bg-slate-600 text-white",
+  archived: "bg-slate-800 text-white",
+} as const;
+
 // Cost category styles
 export const costCategoryStyles = {
   labor: "bg-blue-600 text-white",

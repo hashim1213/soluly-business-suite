@@ -38,6 +38,10 @@ import Settings from "./pages/Settings";
 import GmailCallback from "./pages/GmailCallback";
 import Financials from "./pages/Financials";
 import BusinessCosts from "./pages/BusinessCosts";
+import Forms from "./pages/Forms";
+import FormBuilder from "./pages/FormBuilder";
+import FormResponses from "./pages/FormResponses";
+import FormSubmit from "./pages/public/FormSubmit";
 import NotFound from "./pages/NotFound";
 
 // Configure QueryClient with better defaults for stability
@@ -82,6 +86,9 @@ const App = () => (
 
             {/* OAuth callback routes */}
             <Route path="/auth/gmail/callback" element={<GmailCallback />} />
+
+            {/* Public form submission */}
+            <Route path="/f/:token" element={<FormSubmit />} />
 
             {/* Root redirect to organization workspace */}
             <Route path="/" element={<OrgRedirect />} />
@@ -222,6 +229,30 @@ const App = () => (
                   element={
                     <AppLayout>
                       <BusinessCosts />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="forms"
+                  element={
+                    <AppLayout>
+                      <Forms />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="forms/:displayId"
+                  element={
+                    <AppLayout>
+                      <FormBuilder />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="forms/:displayId/responses"
+                  element={
+                    <AppLayout>
+                      <FormResponses />
                     </AppLayout>
                   }
                 />

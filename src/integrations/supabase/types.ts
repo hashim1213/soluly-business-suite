@@ -29,6 +29,7 @@ export type Permissions = {
   quotes: ResourcePermissions;
   features: ResourcePermissions;
   feedback: ResourcePermissions;
+  forms: ResourcePermissions;
   emails: ResourcePermissions;
   financials: ResourcePermissions;
   expenses: ResourcePermissions;
@@ -45,6 +46,7 @@ export const PERMISSION_LABELS: Record<keyof Permissions, string> = {
   quotes: "Customer Quotes",
   features: "Feature Requests",
   feedback: "Feedback",
+  forms: "Forms",
   emails: "Emails",
   financials: "Financials",
   expenses: "Expenses",

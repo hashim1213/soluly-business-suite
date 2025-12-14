@@ -18,6 +18,7 @@ const defaultPermissions: Permissions = {
   quotes: { view: false, create: false, edit: false, delete: false },
   features: { view: false, create: false, edit: false, delete: false },
   feedback: { view: false, create: false, edit: false, delete: false },
+  forms: { view: false, create: false, edit: false, delete: false },
   emails: { view: false, create: false, edit: false, delete: false },
   financials: { view: false, create: false, edit: false, delete: false },
   expenses: { view: false, create: false, edit: false, delete: false },
