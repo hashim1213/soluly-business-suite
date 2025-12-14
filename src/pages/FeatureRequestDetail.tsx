@@ -124,16 +124,16 @@ export default function FeatureRequestDetail() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigateOrg("/tickets/features")} className="gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-2 sm:gap-4">
+          <Button variant="ghost" onClick={() => navigateOrg("/tickets/features")} className="gap-2 shrink-0">
             <ArrowLeft className="h-4 w-4" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-sm text-muted-foreground">{feature.display_id}</span>
               <Badge className={featureStatusStyles[feature.status as keyof typeof featureStatusStyles] || "bg-slate-400 text-black"}>
                 {statusLabels[feature.status] || feature.status}
@@ -144,14 +144,14 @@ export default function FeatureRequestDetail() {
               {feature.added_to_roadmap && (
                 <Badge variant="outline" className="border-2 gap-1">
                   <MapPin className="h-3 w-3" />
-                  Roadmap
+                  <span className="hidden sm:inline">Roadmap</span>
                 </Badge>
               )}
             </div>
-            <h1 className="text-2xl font-bold tracking-tight mt-1">{feature.title}</h1>
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight mt-1">{feature.title}</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button
             variant={feature.added_to_roadmap ? "default" : "outline"}
             size="sm"
@@ -159,7 +159,7 @@ export default function FeatureRequestDetail() {
             onClick={handleRoadmapToggle}
           >
             <MapPin className="h-4 w-4" />
-            {feature.added_to_roadmap ? "On Roadmap" : "Add to Roadmap"}
+            <span className="hidden sm:inline">{feature.added_to_roadmap ? "On Roadmap" : "Add to Roadmap"}</span>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>

@@ -175,12 +175,12 @@ export default function Forms() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Forms</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Forms</h1>
+          <p className="text-sm text-muted-foreground">
             Create and manage custom forms for collecting feedback
           </p>
         </div>
@@ -273,7 +273,7 @@ export default function Forms() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-2 sm:gap-4 grid-cols-2 md:grid-cols-4">
         <Card className="border-2 border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Draft</CardTitle>
@@ -317,8 +317,8 @@ export default function Forms() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+        <div className="relative flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search forms..."
@@ -328,7 +328,7 @@ export default function Forms() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px] border-2 border-border">
+          <SelectTrigger className="w-full sm:w-[150px] border-2 border-border">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -349,7 +349,7 @@ export default function Forms() {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : filteredForms.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold">No forms yet</h3>
               <p className="text-muted-foreground mb-4">
@@ -361,77 +361,82 @@ export default function Forms() {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b-2 border-border">
-                  <TableHead className="font-bold">Form</TableHead>
-                  <TableHead className="font-bold">Status</TableHead>
-                  <TableHead className="font-bold">Responses</TableHead>
-                  <TableHead className="font-bold">Projects</TableHead>
-                  <TableHead className="font-bold">Created</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredForms.map((form) => (
-                  <TableRow
-                    key={form.id}
-                    className="border-b border-border cursor-pointer hover:bg-accent/50"
-                    onClick={() => navigateOrg(`forms/${form.display_id}`)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-muted rounded-lg">
-                          <ClipboardList className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <div className="font-semibold">{form.title}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {form.display_id}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b-2 border-border">
+                    <TableHead className="font-bold">Form</TableHead>
+                    <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="font-bold hidden sm:table-cell">Responses</TableHead>
+                    <TableHead className="font-bold hidden md:table-cell">Projects</TableHead>
+                    <TableHead className="font-bold hidden lg:table-cell">Created</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredForms.map((form) => (
+                    <TableRow
+                      key={form.id}
+                      className="border-b border-border cursor-pointer hover:bg-accent/50"
+                      onClick={() => navigateOrg(`forms/${form.display_id}`)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-muted rounded-lg hidden sm:block">
+                            <ClipboardList className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{form.title}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {form.display_id}
+                            </div>
+                            <div className="flex items-center gap-2 sm:hidden mt-1">
+                              <Users className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs">{form.response_count} responses</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={formStatusStyles[form.status]}>
-                        {statusLabels[form.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{form.response_count}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {form.projects && form.projects.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {form.projects.slice(0, 2).map((project) => (
-                            <Badge
-                              key={project.id}
-                              variant="outline"
-                              className="text-xs border-2"
-                            >
-                              {project.name}
-                            </Badge>
-                          ))}
-                          {form.projects.length > 2 && (
-                            <Badge variant="outline" className="text-xs border-2">
-                              +{form.projects.length - 2}
-                            </Badge>
-                          )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={formStatusStyles[form.status]}>
+                          {statusLabels[form.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{form.response_count}</span>
                         </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Global</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        {format(new Date(form.created_at), "MMM d, yyyy")}
-                      </div>
-                    </TableCell>
-                    <TableCell>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {form.projects && form.projects.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {form.projects.slice(0, 2).map((project) => (
+                              <Badge
+                                key={project.id}
+                                variant="outline"
+                                className="text-xs border-2"
+                              >
+                                {project.name}
+                              </Badge>
+                            ))}
+                            {form.projects.length > 2 && (
+                              <Badge variant="outline" className="text-xs border-2">
+                                +{form.projects.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Global</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          {format(new Date(form.created_at), "MMM d, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -489,11 +494,12 @@ export default function Forms() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

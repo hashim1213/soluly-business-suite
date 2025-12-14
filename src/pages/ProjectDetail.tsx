@@ -1120,29 +1120,29 @@ export default function ProjectDetail() {
   const todoProgress = totalTodos > 0 ? Math.round((completedTodos / totalTodos) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border-2 border-transparent hover:border-border">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          <ArrowLeft className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Back</span>
         </Button>
       </div>
 
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="font-mono text-sm text-muted-foreground">{project.id}</span>
             <Badge className={projectStatusStyles[project.status as keyof typeof projectStatusStyles] || "bg-slate-400 text-black"}>
               {project.status}
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">{project.description}</p>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">{project.name}</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">{project.description}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" className="border-2" onClick={handleStartEditProject} disabled={!dbProject}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Project
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Edit Project</span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1159,7 +1159,7 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-2 sm:gap-4 grid-cols-2 md:grid-cols-4">
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">

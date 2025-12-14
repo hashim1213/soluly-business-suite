@@ -251,17 +251,18 @@ export default function Feedback() {
   const ticketCount = feedbackTickets.length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Customer Feedback</h1>
-          <p className="text-muted-foreground">Track and manage customer feedback</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Customer Feedback</h1>
+          <p className="text-sm text-muted-foreground">Track and manage customer feedback</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="border-2">
-              <Plus className="h-4 w-4 mr-2" />
-              Log Feedback
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Log Feedback</span>
+              <span className="sm:hidden">Log</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="border-2 sm:max-w-[500px]">
@@ -289,7 +290,7 @@ export default function Feedback() {
                   className="border-2"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Project</Label>
                   <Select value={newFeedback.project_id} onValueChange={(value) => setNewFeedback({ ...newFeedback, project_id: value })}>
@@ -317,7 +318,7 @@ export default function Feedback() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Category</Label>
                   <Select value={newFeedback.category} onValueChange={(value: FeedbackCategory) => setNewFeedback({ ...newFeedback, category: value })}>
@@ -384,19 +385,21 @@ export default function Feedback() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="border-2 border-border p-1">
-          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            All ({unifiedFeedback.length})
-          </TabsTrigger>
-          <TabsTrigger value="feedback" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <MessageSquare className="h-4 w-4 mr-1" />
-            Feedback ({feedbackCount})
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Ticket className="h-4 w-4 mr-1" />
-            From Tickets ({ticketCount})
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+          <TabsList className="border-2 border-border p-1 inline-flex w-auto min-w-full sm:min-w-0">
+            <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+              All ({unifiedFeedback.length})
+            </TabsTrigger>
+            <TabsTrigger value="feedback" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <span className="hidden sm:inline">Feedback</span> ({feedbackCount})
+            </TabsTrigger>
+            <TabsTrigger value="tickets" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+              <Ticket className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <span className="hidden sm:inline">From Tickets</span> ({ticketCount})
+            </TabsTrigger>
+          </TabsList>
+        </div>
       </Tabs>
 
       {filteredFeedback.length === 0 ? (
@@ -471,13 +474,13 @@ export default function Feedback() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                       {feedback.source === "feedback" && (
                         <Select
                           value={feedback.status}
                           onValueChange={(value: FeedbackStatus) => handleUpdateStatus(feedback, value)}
                         >
-                          <SelectTrigger className="w-[140px] border-2">
+                          <SelectTrigger className="w-[100px] sm:w-[140px] border-2">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="border-2">
@@ -492,7 +495,7 @@ export default function Feedback() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
                         onClick={() => handleDelete(feedback)}
                       >
                         <Trash2 className="h-4 w-4" />

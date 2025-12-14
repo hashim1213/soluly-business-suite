@@ -212,31 +212,31 @@ export default function FeedbackDetail() {
   const SourceIcon = sourceIcons[feedback.source as keyof typeof sourceIcons] || Mail;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Button variant="ghost" onClick={() => navigateOrg("/tickets/feedback")} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-sm text-muted-foreground">{feedback.display_id}</span>
               <Badge className={statusColors[feedback.status] || statusColors.acknowledged}>
                 {feedback.status.replace("-", " ")}
               </Badge>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight mt-1">{feedback.title}</h1>
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight mt-1 truncate">{feedback.title}</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button variant="outline" className="border-2" onClick={handleStartEdit}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Edit</span>
           </Button>
           <Select value={feedback.status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[160px] border-2">
+            <SelectTrigger className="w-[130px] sm:w-[160px] border-2">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="border-2">
@@ -418,7 +418,7 @@ export default function FeedbackDetail() {
                   rows={3}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Status</Label>
                   <Select value={editData.status} onValueChange={(v) => setEditData({ ...editData, status: v as FeedbackStatus })}>
@@ -448,7 +448,7 @@ export default function FeedbackDetail() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Category</Label>
                   <Select value={editData.category} onValueChange={(v) => setEditData({ ...editData, category: v as FeedbackCategory })}>
@@ -479,7 +479,7 @@ export default function FeedbackDetail() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-from">From Contact</Label>
                   <Input

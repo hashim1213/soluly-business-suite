@@ -124,11 +124,11 @@ export default function Projects() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground">Manage your consulting projects</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Projects</h1>
+          <p className="text-sm text-muted-foreground">Manage your consulting projects</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -162,7 +162,7 @@ export default function Projects() {
                   className="border-2"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="client">Client Name *</Label>
                   <Input
@@ -185,7 +185,7 @@ export default function Projects() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="value">Project Value ($)</Label>
                   <Input
@@ -243,7 +243,7 @@ export default function Projects() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
           {projects?.map((project) => (
             <Card key={project.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="border-b-2 border-border pb-3">

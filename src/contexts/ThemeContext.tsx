@@ -31,7 +31,7 @@ function safeLocalStorage(key: string, defaultValue: string): string {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>(() => {
-    return safeLocalStorage(THEME_MODE_KEY, "system") as ThemeMode;
+    return safeLocalStorage(THEME_MODE_KEY, "light") as ThemeMode;
   });
 
   const [style, setStyleState] = useState<ThemeStyle>(() => {
@@ -39,7 +39,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   const [resolvedMode, setResolvedMode] = useState<"light" | "dark">(() => {
-    const savedMode = safeLocalStorage(THEME_MODE_KEY, "system") as ThemeMode;
+    const savedMode = safeLocalStorage(THEME_MODE_KEY, "light") as ThemeMode;
     return savedMode === "system" ? getSystemTheme() : savedMode;
   });
 

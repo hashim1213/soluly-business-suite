@@ -271,10 +271,10 @@ export default function Tickets() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
-          <p className="text-muted-foreground">Manage incoming tickets from email and other sources</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Tickets</h1>
+          <p className="text-sm text-muted-foreground">Manage incoming tickets from email and other sources</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -308,7 +308,7 @@ export default function Tickets() {
                   className="border-2"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="category">Category</Label>
                   <Select
@@ -344,7 +344,7 @@ export default function Tickets() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="priority">Priority</Label>
                   <Select
@@ -401,7 +401,7 @@ export default function Tickets() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4">
         {Object.entries(categoryConfig).map(([key, config]) => {
           const Icon = config.icon;
           const count = categoryCounts[key as keyof typeof categoryCounts];
@@ -430,38 +430,41 @@ export default function Tickets() {
 
       {/* Main Content */}
       <Card className="border-2 border-border shadow-sm">
-        <CardHeader className="border-b-2 border-border">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-              <TabsList className="border-2 border-border p-1">
-                <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  All
-                </TabsTrigger>
-                <TabsTrigger value="uncategorized" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FolderOpen className="h-4 w-4 mr-1" />
-                  Uncategorized
-                </TabsTrigger>
-                <TabsTrigger value="feature" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Lightbulb className="h-4 w-4 mr-1" />
-                  Features
-                </TabsTrigger>
-                <TabsTrigger value="quote" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FileText className="h-4 w-4 mr-1" />
-                  Quotes
-                </TabsTrigger>
-                <TabsTrigger value="feedback" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <MessageSquare className="h-4 w-4 mr-1" />
-                  Feedback
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="relative">
+        <CardHeader className="border-b-2 border-border p-3 sm:p-6">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-max sm:w-auto">
+                <TabsList className="border-2 border-border p-1">
+                  <TabsTrigger value="all" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="uncategorized" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    <FolderOpen className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">Uncategorized</span>
+                    <span className="sm:hidden">Other</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="feature" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    <Lightbulb className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">Features</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="quote" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">Quotes</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="feedback" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">Feedback</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search tickets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-64 pl-10 border-2"
+                className="w-full pl-10 border-2"
               />
             </div>
           </div>
@@ -478,67 +481,76 @@ export default function Tickets() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b-2 hover:bg-transparent">
-                  <TableHead className="font-bold uppercase text-xs w-[100px]">ID</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Title</TableHead>
-                  <TableHead className="font-bold uppercase text-xs w-[120px]">Category</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Project</TableHead>
-                  <TableHead className="font-bold uppercase text-xs w-[80px]">Priority</TableHead>
-                  <TableHead className="font-bold uppercase text-xs w-[100px]">Status</TableHead>
-                  <TableHead className="font-bold uppercase text-xs w-[120px]">Created</TableHead>
-                  <TableHead className="font-bold uppercase text-xs w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTickets.map((ticket) => {
-                  const CategoryIcon = categoryIcons[ticket.category];
-                  return (
-                    <TableRow
-                      key={ticket.id}
-                      className="border-b-2 cursor-pointer hover:bg-accent/50"
-                      onClick={() => navigateOrg(`/tickets/${ticket.display_id}`)}
-                    >
-                      <TableCell className="font-mono text-sm">{ticket.display_id}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{ticket.title}</span>
-                          {ticket.assignee?.name && (
-                            <span className="text-xs text-muted-foreground">Assigned to: {ticket.assignee.name}</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <CategoryIcon className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{categoryLabels[ticket.category]}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {ticket.project?.name ? (
-                          <div className="flex items-center gap-1.5">
-                            <Building className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>{ticket.project.name}</span>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b-2 hover:bg-transparent">
+                    <TableHead className="font-bold uppercase text-xs w-[80px] sm:w-[100px]">ID</TableHead>
+                    <TableHead className="font-bold uppercase text-xs min-w-[200px]">Title</TableHead>
+                    <TableHead className="font-bold uppercase text-xs w-[120px] hidden md:table-cell">Category</TableHead>
+                    <TableHead className="font-bold uppercase text-xs hidden lg:table-cell">Project</TableHead>
+                    <TableHead className="font-bold uppercase text-xs w-[80px]">Priority</TableHead>
+                    <TableHead className="font-bold uppercase text-xs w-[100px]">Status</TableHead>
+                    <TableHead className="font-bold uppercase text-xs w-[100px] hidden sm:table-cell">Created</TableHead>
+                    <TableHead className="font-bold uppercase text-xs w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTickets.map((ticket) => {
+                    const CategoryIcon = categoryIcons[ticket.category];
+                    return (
+                      <TableRow
+                        key={ticket.id}
+                        className="border-b-2 cursor-pointer hover:bg-accent/50"
+                        onClick={() => navigateOrg(`/tickets/${ticket.display_id}`)}
+                      >
+                        <TableCell className="font-mono text-xs sm:text-sm">{ticket.display_id}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm line-clamp-1">{ticket.title}</span>
+                            <div className="flex flex-wrap items-center gap-1 mt-1 md:hidden">
+                              <Badge className={`${ticketPriorityStyles[ticket.priority]} text-xs`}>
+                                {ticket.priority}
+                              </Badge>
+                              {ticket.project?.name && (
+                                <span className="text-xs text-muted-foreground">{ticket.project.name}</span>
+                              )}
+                            </div>
+                            {ticket.assignee?.name && (
+                              <span className="text-xs text-muted-foreground hidden sm:block">Assigned to: {ticket.assignee.name}</span>
+                            )}
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground italic">Unassigned</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={ticketPriorityStyles[ticket.priority]}>
-                          {ticket.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={ticketStatusStyles[ticket.status as keyof typeof ticketStatusStyles] || "bg-slate-400 text-black"}>
-                          {ticket.status.replace("-", " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {formatDate(ticket.created_at)}
-                      </TableCell>
-                      <TableCell>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="flex items-center gap-1.5">
+                            <CategoryIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{categoryLabels[ticket.category]}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {ticket.project?.name ? (
+                            <div className="flex items-center gap-1.5">
+                              <Building className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span>{ticket.project.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground italic">Unassigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge className={ticketPriorityStyles[ticket.priority]}>
+                            {ticket.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${ticketStatusStyles[ticket.status as keyof typeof ticketStatusStyles] || "bg-slate-400 text-black"} text-xs`}>
+                            {ticket.status.replace("-", " ")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm hidden sm:table-cell">
+                          {formatDate(ticket.created_at)}
+                        </TableCell>
+                        <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -594,8 +606,9 @@ export default function Tickets() {
                     </TableRow>
                   );
                 })}
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

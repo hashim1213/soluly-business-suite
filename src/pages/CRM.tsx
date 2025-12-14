@@ -618,17 +618,15 @@ export default function CRM() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">CRM</h1>
-          <p className="text-muted-foreground">Manage your sales pipeline, leads, clients, and tasks</p>
-        </div>
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">CRM</h1>
+        <p className="text-sm text-muted-foreground">Manage your sales pipeline, leads, clients, and tasks</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -684,7 +682,7 @@ export default function CRM() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
+      <div className="relative w-full sm:max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search deals, leads, clients..."
@@ -696,23 +694,27 @@ export default function CRM() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="border-2 border-border bg-secondary p-1">
-          <TabsTrigger value="pipeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Pipeline ({activeDeals})
-          </TabsTrigger>
-          <TabsTrigger value="leads" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Leads ({leads?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="clients" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Clients ({clients?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Tasks ({pendingTasks.length})
-          </TabsTrigger>
-          <TabsTrigger value="contacts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Contacts ({contacts?.length || 0})
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+          <TabsList className="border-2 border-border bg-secondary p-1 w-max sm:w-auto">
+            <TabsTrigger value="pipeline" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <span className="hidden sm:inline">Pipeline</span>
+              <span className="sm:hidden">Pipe</span> ({activeDeals})
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Leads ({leads?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="clients" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Clients ({clients?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Tasks ({pendingTasks.length})
+            </TabsTrigger>
+            <TabsTrigger value="contacts" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <span className="hidden sm:inline">Contacts</span>
+              <span className="sm:hidden">Cont</span> ({contacts?.length || 0})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Pipeline Tab */}
         <TabsContent value="pipeline" className="space-y-4">

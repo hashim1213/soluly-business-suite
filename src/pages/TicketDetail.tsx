@@ -184,21 +184,21 @@ export default function TicketDetail() {
   const CategoryIcon = categoryIcons[ticket.category as keyof typeof categoryIcons] || Tag;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Button variant="ghost" onClick={() => navigateOrg("/tickets")} className="border-2 border-transparent hover:border-border">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          <ArrowLeft className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Back</span>
         </Button>
       </div>
 
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="font-mono text-sm text-muted-foreground">{ticket.display_id}</span>
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <CategoryIcon className="h-4 w-4" />
-              <span className="text-sm">{categoryLabels[ticket.category] || "Ticket"}</span>
+              <span className="text-sm hidden sm:inline">{categoryLabels[ticket.category] || "Ticket"}</span>
             </div>
             <Badge className={ticketStatusStyles[ticket.status as keyof typeof ticketStatusStyles] || "bg-slate-400 text-black"}>
               {ticket.status}
@@ -207,8 +207,8 @@ export default function TicketDetail() {
               {ticket.priority}
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">{ticket.title}</h1>
-          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">{ticket.title}</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2 text-sm text-muted-foreground">
             {ticket.project && (
               <span
                 className="hover:text-foreground cursor-pointer"
@@ -222,10 +222,10 @@ export default function TicketDetail() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" className="border-2" onClick={handleStartEdit}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Edit</span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -381,7 +381,7 @@ export default function TicketDetail() {
                   rows={4}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Status</Label>
                   <Select value={editData.status} onValueChange={(v) => setEditData({ ...editData, status: v })}>
@@ -410,7 +410,7 @@ export default function TicketDetail() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Category</Label>
                   <Select value={editData.category} onValueChange={(v) => setEditData({ ...editData, category: v })}>

@@ -244,17 +244,18 @@ export default function FeatureRequests() {
   const ticketCount = featureTickets.length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Feature Requests</h1>
-          <p className="text-muted-foreground">Track and prioritize customer feature requests</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Feature Requests</h1>
+          <p className="text-sm text-muted-foreground">Track and prioritize customer feature requests</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="border-2">
-              <Plus className="h-4 w-4 mr-2" />
-              New Request
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Request</span>
+              <span className="sm:hidden">New</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="border-2 sm:max-w-[500px]">
@@ -282,7 +283,7 @@ export default function FeatureRequests() {
                   className="border-2"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Priority</Label>
                   <Select value={newFeature.priority} onValueChange={(value: FeaturePriority) => setNewFeature({ ...newFeature, priority: value })}>
@@ -364,19 +365,21 @@ export default function FeatureRequests() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="border-2 border-border p-1">
-          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            All ({unifiedFeatures.length})
-          </TabsTrigger>
-          <TabsTrigger value="feature_requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Lightbulb className="h-4 w-4 mr-1" />
-            Feature Requests ({featureRequestCount})
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Ticket className="h-4 w-4 mr-1" />
-            From Tickets ({ticketCount})
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+          <TabsList className="border-2 border-border p-1 inline-flex w-auto min-w-full sm:min-w-0">
+            <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+              All ({unifiedFeatures.length})
+            </TabsTrigger>
+            <TabsTrigger value="feature_requests" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+              <Lightbulb className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <span className="hidden sm:inline">Features</span> ({featureRequestCount})
+            </TabsTrigger>
+            <TabsTrigger value="tickets" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
+              <Ticket className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <span className="hidden sm:inline">Tickets</span> ({ticketCount})
+            </TabsTrigger>
+          </TabsList>
+        </div>
       </Tabs>
 
       {filteredFeatures.length === 0 ? (
@@ -466,7 +469,7 @@ export default function FeatureRequests() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1 sm:gap-2 shrink-0 flex-wrap justify-end" onClick={(e) => e.stopPropagation()}>
                     {feature.source === "feature_request" && (
                       <>
                         <Button
@@ -475,14 +478,14 @@ export default function FeatureRequests() {
                           className="border-2"
                           onClick={() => handleToggleRoadmap(feature)}
                         >
-                          <MapPin className="h-4 w-4 mr-1" />
-                          {feature.added_to_roadmap ? "On Roadmap" : "Add to Roadmap"}
+                          <MapPin className="h-4 w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">{feature.added_to_roadmap ? "On Roadmap" : "Add"}</span>
                         </Button>
                         <Select
                           value={feature.status}
                           onValueChange={(value: FeatureStatus) => handleUpdateStatus(feature, value)}
                         >
-                          <SelectTrigger className="w-[130px] border-2">
+                          <SelectTrigger className="w-[90px] sm:w-[130px] border-2">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="border-2">
@@ -498,7 +501,7 @@ export default function FeatureRequests() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
                       onClick={() => handleDelete(feature)}
                     >
                       <Trash2 className="h-4 w-4" />

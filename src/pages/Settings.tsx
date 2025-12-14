@@ -242,22 +242,24 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and organization</p>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your account and organization</p>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="border-2">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          {canManageOrg && <TabsTrigger value="organization">Organization</TabsTrigger>}
-          {canManageUsers && <TabsTrigger value="team">Team</TabsTrigger>}
-          {canManageRoles && <TabsTrigger value="roles">Roles</TabsTrigger>}
-          {hasPermission("emails", "edit") && <TabsTrigger value="email-accounts">Email Accounts</TabsTrigger>}
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="profile" className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+          <TabsList className="border-2 inline-flex w-auto min-w-full sm:min-w-0">
+            <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
+            <TabsTrigger value="appearance" className="text-xs sm:text-sm">Appearance</TabsTrigger>
+            {canManageOrg && <TabsTrigger value="organization" className="text-xs sm:text-sm">Org</TabsTrigger>}
+            {canManageUsers && <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>}
+            {canManageRoles && <TabsTrigger value="roles" className="text-xs sm:text-sm">Roles</TabsTrigger>}
+            {hasPermission("emails", "edit") && <TabsTrigger value="email-accounts" className="text-xs sm:text-sm">Email</TabsTrigger>}
+            <TabsTrigger value="notifications" className="text-xs sm:text-sm">Notifs</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
@@ -787,119 +789,131 @@ export default function Settings() {
                 {/* Active Members */}
                 <div className="space-y-4">
                   <h4 className="font-medium">Active Members ({teamMembers?.length || 0})</h4>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-b-2">
-                        <TableHead>Member</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[70px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {teamMembers?.map((tm) => (
-                        <TableRow key={tm.id} className="border-b-2">
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback>
-                                  {tm.name?.slice(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{tm.name}</div>
-                                <div className="text-sm text-muted-foreground">{tm.email}</div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={tm.role_id || ""}
-                              onValueChange={(value) => handleUpdateMemberRole(tm.id, value)}
-                              disabled={tm.is_owner}
-                            >
-                              <SelectTrigger className="w-[140px] border-2">
-                                <SelectValue placeholder={tm.role} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {roles?.map((r) => (
-                                  <SelectItem key={r.id} value={r.id}>
-                                    {r.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={tm.status === "active" ? "default" : "secondary"}>
-                              {tm.status}
-                            </Badge>
-                            {tm.is_owner && (
-                              <Badge variant="outline" className="ml-2">
-                                Owner
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {!tm.is_owner && tm.id !== member?.id && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRemoveMember(tm.id)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </TableCell>
+                  <div className="overflow-x-auto -mx-6 px-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b-2">
+                          <TableHead>Member</TableHead>
+                          <TableHead className="hidden sm:table-cell">Role</TableHead>
+                          <TableHead className="hidden md:table-cell">Status</TableHead>
+                          <TableHead className="w-[70px]"></TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {teamMembers?.map((tm) => (
+                          <TableRow key={tm.id} className="border-b-2">
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8 shrink-0">
+                                  <AvatarFallback>
+                                    {tm.name?.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <div className="font-medium truncate">{tm.name}</div>
+                                  <div className="text-sm text-muted-foreground truncate">{tm.email}</div>
+                                  <div className="sm:hidden mt-1">
+                                    <Badge variant={tm.status === "active" ? "default" : "secondary"} className="text-xs">
+                                      {tm.role || "Member"}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <Select
+                                value={tm.role_id || ""}
+                                onValueChange={(value) => handleUpdateMemberRole(tm.id, value)}
+                                disabled={tm.is_owner}
+                              >
+                                <SelectTrigger className="w-[120px] sm:w-[140px] border-2">
+                                  <SelectValue placeholder={tm.role} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {roles?.map((r) => (
+                                    <SelectItem key={r.id} value={r.id}>
+                                      {r.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <Badge variant={tm.status === "active" ? "default" : "secondary"}>
+                                {tm.status}
+                              </Badge>
+                              {tm.is_owner && (
+                                <Badge variant="outline" className="ml-2">
+                                  Owner
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {!tm.is_owner && tm.id !== member?.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleRemoveMember(tm.id)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
 
                 {/* Pending Invitations */}
                 {invitations && invitations.length > 0 && (
                   <div className="space-y-4 mt-8">
                     <h4 className="font-medium">Pending Invitations ({invitations.length})</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-b-2">
-                          <TableHead>Email</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Invited By</TableHead>
-                          <TableHead className="w-[100px]"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {invitations.map((inv) => (
-                          <TableRow key={inv.id} className="border-b-2">
-                            <TableCell>{inv.email}</TableCell>
-                            <TableCell>{inv.role?.name || "Member"}</TableCell>
-                            <TableCell>{inv.inviter?.name || "Unknown"}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => copyInviteLink(inv.token)}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteInvitation.mutate(inv.id)}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
+                    <div className="overflow-x-auto -mx-6 px-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-b-2">
+                            <TableHead>Email</TableHead>
+                            <TableHead className="hidden sm:table-cell">Role</TableHead>
+                            <TableHead className="hidden md:table-cell">Invited By</TableHead>
+                            <TableHead className="w-[100px]"></TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {invitations.map((inv) => (
+                            <TableRow key={inv.id} className="border-b-2">
+                              <TableCell>
+                                <span className="truncate block max-w-[150px] sm:max-w-none">{inv.email}</span>
+                                <span className="sm:hidden text-xs text-muted-foreground">{inv.role?.name || "Member"}</span>
+                              </TableCell>
+                              <TableCell className="hidden sm:table-cell">{inv.role?.name || "Member"}</TableCell>
+                              <TableCell className="hidden md:table-cell">{inv.inviter?.name || "Unknown"}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => copyInviteLink(inv.token)}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => deleteInvitation.mutate(inv.id)}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 )}
               </CardContent>

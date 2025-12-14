@@ -86,19 +86,19 @@ export function AppHeader() {
     .slice(0, 2) || "??";
 
   return (
-    <header className="h-14 border-b-2 border-border bg-background flex items-center justify-between px-4">
-      <div className="flex items-center gap-4">
-        <SidebarTrigger className="border-2 border-transparent hover:border-border" />
-        <div className="relative">
+    <header className="h-14 border-b-2 border-border bg-background flex items-center justify-between px-2 sm:px-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+        <SidebarTrigger className="border-2 border-transparent hover:border-border shrink-0" />
+        <div className="relative hidden sm:block flex-1 max-w-xs lg:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search tickets, projects..."
-            className="w-80 pl-10 border-2 focus:ring-0 focus:border-primary"
+            className="w-full pl-10 border-2 focus:ring-0 focus:border-primary"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
