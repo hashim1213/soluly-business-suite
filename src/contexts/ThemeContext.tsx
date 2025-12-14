@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 export type ThemeMode = "light" | "dark" | "system";
-export type ThemeStyle = "default" | "professional" | "modern" | "minimal" | "green" | "pink" | "pastel";
+export type ThemeStyle = "default" | "professional" | "modern" | "minimal" | "green" | "pink" | "pastel" | "enterprise";
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -70,7 +70,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     // Remove all theme classes
     root.classList.remove("light", "dark");
-    root.classList.remove("theme-default", "theme-professional", "theme-modern", "theme-minimal", "theme-green", "theme-pink", "theme-pastel");
+    root.classList.remove("theme-default", "theme-professional", "theme-modern", "theme-minimal", "theme-green", "theme-pink", "theme-pastel", "theme-enterprise");
 
     // Add current theme classes
     root.classList.add(resolvedMode);

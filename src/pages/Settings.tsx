@@ -428,6 +428,12 @@ export default function Settings() {
                       description: "Clean grayscale palette",
                       colors: ["#374151", "#6b7280", "#9ca3af"],
                     },
+                    {
+                      value: "enterprise" as ThemeStyle,
+                      label: "Enterprise",
+                      description: "Premium corporate design",
+                      colors: ["#1e3a5f", "#2563eb", "#64748b"],
+                    },
                   ].map(({ value, label, description, colors }) => (
                     <button
                       key={value}
