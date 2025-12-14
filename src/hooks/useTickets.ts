@@ -151,7 +151,7 @@ async function generateUniqueTicketDisplayId(organizationId: string): Promise<st
 // Create ticket
 export function useCreateTicket() {
   const queryClient = useQueryClient();
-  const { organization } = useAuth();
+  const { organization, member } = useAuth();
 
   return useMutation({
     mutationFn: async (ticket: Omit<TicketInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
@@ -168,11 +168,56 @@ export function useCreateTicket() {
         .single();
 
       if (error) throw error;
-      return data as Ticket;
+
+      return { ticket: data as Ticket };
     },
-    onSuccess: () => {
+    onSuccess: async ({ ticket }) => {
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
       toast.success("Ticket created successfully");
+
+      // Send notification for new ticket (filtered by project access in edge function)
+      if (ticket.project_id) {
+        try {
+          await supabase.functions.invoke("create-notification", {
+            body: {
+              organizationId: ticket.organization_id,
+              projectIds: [ticket.project_id], // Only notify users with access to this project
+              type: "ticket",
+              title: "New Ticket Created",
+              message: `${member?.name || "Someone"} created ticket ${ticket.display_id}: "${ticket.title}"`,
+              entityType: "ticket",
+              entityId: ticket.id,
+              entityDisplayId: ticket.display_id,
+              actorId: member?.id,
+              excludeActorFromNotification: true,
+            },
+          });
+        } catch (error) {
+          console.error("Failed to send ticket notification:", error);
+        }
+      }
+
+      // If ticket is assigned, send assignment notification (specific recipient)
+      if (ticket.assignee_id && ticket.assignee_id !== member?.id) {
+        try {
+          await supabase.functions.invoke("create-notification", {
+            body: {
+              organizationId: ticket.organization_id,
+              recipientIds: [ticket.assignee_id], // Specific recipient for assignment
+              type: "assignment",
+              title: "Ticket Assigned to You",
+              message: `${member?.name || "Someone"} assigned you to ticket ${ticket.display_id}: "${ticket.title}"`,
+              entityType: "ticket",
+              entityId: ticket.id,
+              entityDisplayId: ticket.display_id,
+              actorId: member?.id,
+              excludeActorFromNotification: false,
+            },
+          });
+        } catch (error) {
+          console.error("Failed to send assignment notification:", error);
+        }
+      }
     },
     onError: (error) => {
       toast.error("Failed to create ticket: " + error.message);
@@ -183,11 +228,18 @@ export function useCreateTicket() {
 // Update ticket (filtered by organization)
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
-  const { organization } = useAuth();
+  const { organization, member } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: TicketUpdate & { id: string }) => {
       if (!organization?.id) throw new Error("No organization found");
+
+      // Get the current ticket to check for assignee changes
+      const { data: currentTicket } = await supabase
+        .from("tickets")
+        .select("assignee_id, title, display_id")
+        .eq("id", id)
+        .single();
 
       const { data, error } = await supabase
         .from("tickets")
@@ -198,11 +250,35 @@ export function useUpdateTicket() {
         .single();
 
       if (error) throw error;
-      return data as Ticket;
+
+      const previousAssigneeId = currentTicket?.assignee_id;
+      return { ticket: data as Ticket, previousAssigneeId };
     },
-    onSuccess: (data) => {
+    onSuccess: async ({ ticket, previousAssigneeId }) => {
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["tickets", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["tickets", ticket.id] });
+
+      // Send assignment notification if assignee changed
+      if (ticket.assignee_id && ticket.assignee_id !== previousAssigneeId && ticket.assignee_id !== member?.id) {
+        try {
+          await supabase.functions.invoke("create-notification", {
+            body: {
+              organizationId: ticket.organization_id,
+              recipientIds: [ticket.assignee_id],
+              type: "assignment",
+              title: "Ticket Assigned to You",
+              message: `${member?.name || "Someone"} assigned you to ticket ${ticket.display_id}: "${ticket.title}"`,
+              entityType: "ticket",
+              entityId: ticket.id,
+              entityDisplayId: ticket.display_id,
+              actorId: member?.id,
+              excludeActorFromNotification: false,
+            },
+          });
+        } catch (error) {
+          console.error("Failed to send assignment notification:", error);
+        }
+      }
     },
     onError: (error) => {
       toast.error("Failed to update ticket: " + error.message);

@@ -86,7 +86,7 @@ export function useFeedbackByDisplayId(displayId: string | undefined) {
 // Create feedback
 export function useCreateFeedback() {
   const queryClient = useQueryClient();
-  const { organization } = useAuth();
+  const { organization, member } = useAuth();
 
   return useMutation({
     mutationFn: async (feedback: Omit<FeedbackInsert, "display_id" | "organization_id"> & { display_id?: string }) => {
@@ -106,11 +106,34 @@ export function useCreateFeedback() {
         .single();
 
       if (error) throw error;
-      return data as Feedback;
+
+      return {
+        feedback: data as Feedback,
+      };
     },
-    onSuccess: () => {
+    onSuccess: async ({ feedback }) => {
       queryClient.invalidateQueries({ queryKey: ["feedback"] });
       toast.success("Feedback logged successfully");
+
+      // Send notification for new feedback (filtered by project access if project_id exists)
+      try {
+        await supabase.functions.invoke("create-notification", {
+          body: {
+            organizationId: feedback.organization_id,
+            projectIds: feedback.project_id ? [feedback.project_id] : undefined, // Only notify users with access to this project
+            type: "feedback",
+            title: "New Feedback Received",
+            message: `${member?.name || "Someone"} logged feedback ${feedback.display_id}: "${feedback.title}"`,
+            entityType: "feedback",
+            entityId: feedback.id,
+            entityDisplayId: feedback.display_id,
+            actorId: member?.id,
+            excludeActorFromNotification: true,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to send feedback notification:", error);
+      }
     },
     onError: (error) => {
       toast.error("Failed to log feedback: " + error.message);

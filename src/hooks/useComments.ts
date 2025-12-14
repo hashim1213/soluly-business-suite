@@ -97,11 +97,106 @@ export function useCreateComment() {
         .single();
 
       if (error) throw error;
-      return { data, entityType, entityId };
+
+      // Fetch entity details for the notification including project IDs
+      let entityTitle = "";
+      let entityDisplayId = "";
+      let projectIds: string[] = [];
+
+      if (entityType === "feedback") {
+        const { data: entity } = await supabase
+          .from("feedback")
+          .select("title, display_id, project_id")
+          .eq("id", entityId)
+          .single();
+        if (entity) {
+          entityTitle = entity.title;
+          entityDisplayId = entity.display_id;
+          if (entity.project_id) {
+            projectIds = [entity.project_id];
+          }
+        }
+      } else if (entityType === "feature_request") {
+        const { data: entity } = await supabase
+          .from("feature_requests")
+          .select("title, display_id")
+          .eq("id", entityId)
+          .single();
+        if (entity) {
+          entityTitle = entity.title;
+          entityDisplayId = entity.display_id;
+        }
+        // Feature requests can have multiple projects
+        const { data: featureProjects } = await supabase
+          .from("feature_request_projects")
+          .select("project_id")
+          .eq("feature_request_id", entityId);
+        if (featureProjects) {
+          projectIds = featureProjects.map(fp => fp.project_id);
+        }
+      } else if (entityType === "ticket") {
+        const { data: entity } = await supabase
+          .from("tickets")
+          .select("title, display_id, project_id")
+          .eq("id", entityId)
+          .single();
+        if (entity) {
+          entityTitle = entity.title;
+          entityDisplayId = entity.display_id;
+          if (entity.project_id) {
+            projectIds = [entity.project_id];
+          }
+        }
+      }
+
+      return {
+        data,
+        entityType,
+        entityId,
+        entityTitle,
+        entityDisplayId,
+        projectIds,
+        authorName: member.name,
+      };
     },
-    onSuccess: ({ entityType, entityId }) => {
+    onSuccess: async ({
+      data,
+      entityType,
+      entityId,
+      entityTitle,
+      entityDisplayId,
+      projectIds,
+      authorName,
+    }) => {
       queryClient.invalidateQueries({ queryKey: ["comments", entityType, entityId] });
       toast.success("Comment added");
+
+      // Send notification (fire and forget - filtered by project access)
+      const entityTypeLabel = entityType === "feature_request" ? "Feature Request" :
+                              entityType.charAt(0).toUpperCase() + entityType.slice(1);
+      const truncatedContent = data.content.length > 200
+        ? data.content.substring(0, 200) + "..."
+        : data.content;
+
+      try {
+        await supabase.functions.invoke("create-notification", {
+          body: {
+            organizationId: data.organization_id,
+            projectIds: projectIds.length > 0 ? projectIds : undefined, // Only notify users with project access
+            type: "comment",
+            title: `New comment on ${entityTypeLabel}`,
+            message: `${authorName || "Someone"} commented on ${entityDisplayId}: "${truncatedContent}"`,
+            entityType: entityType === "feature_request" ? "feature_request" : entityType,
+            entityId,
+            entityDisplayId,
+            actorId: data.author_id,
+            excludeActorFromNotification: true,
+          },
+        });
+      } catch (error) {
+        // Don't show error to user - notification is not critical
+        console.error("Failed to send comment notification:", error);
+      }
     },
     onError: (error) => {
       toast.error("Failed to add comment: " + error.message);

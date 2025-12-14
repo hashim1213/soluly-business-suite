@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Search, User, LogOut, Settings, Building2, ChevronDown } from "lucide-react";
+import { Search, User, LogOut, Settings, Building2, ChevronDown, Bell, Check, MessageSquare, Ticket, Lightbulb, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -14,15 +14,68 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNotifications, useUnreadNotificationCount, useMarkNotificationRead, useMarkAllNotificationsRead, type Notification } from "@/hooks/useNotifications";
+import { formatDistanceToNow } from "date-fns";
+
+function getNotificationIcon(type: Notification["type"]) {
+  switch (type) {
+    case "comment":
+      return MessageSquare;
+    case "ticket":
+      return Ticket;
+    case "feature_request":
+      return Lightbulb;
+    case "feedback":
+      return MessageCircle;
+    default:
+      return Bell;
+  }
+}
+
+function getNotificationUrl(notification: Notification): string {
+  if (!notification.entity_display_id) return "";
+
+  switch (notification.entity_type) {
+    case "ticket":
+      return `/tickets/${notification.entity_display_id}`;
+    case "feature_request":
+      return `/features/${notification.entity_display_id}`;
+    case "feedback":
+      return `/feedback/${notification.entity_display_id}`;
+    default:
+      return "";
+  }
+}
 
 export function AppHeader() {
   const navigate = useNavigate();
   const { navigateOrg } = useOrgNavigation();
   const { member, organization, role, signOut } = useAuth();
 
+  const { data: notifications = [] } = useNotifications();
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const markAsRead = useMarkNotificationRead();
+  const markAllAsRead = useMarkAllNotificationsRead();
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.read) {
+      markAsRead.mutate(notification.id);
+    }
+    const url = getNotificationUrl(notification);
+    if (url) {
+      navigateOrg(url);
+    }
   };
 
   const initials = member?.name
@@ -46,6 +99,91 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Notifications */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative border-2 border-transparent hover:border-border">
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-medium">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80 p-0 border-2">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h4 className="font-semibold">Notifications</h4>
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => markAllAsRead.mutate()}
+                  className="text-xs h-7"
+                >
+                  <Check className="h-3 w-3 mr-1" />
+                  Mark all read
+                </Button>
+              )}
+            </div>
+            <ScrollArea className="h-[400px]">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No notifications yet</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {notifications.map((notification) => {
+                    const Icon = getNotificationIcon(notification.type);
+                    return (
+                      <button
+                        key={notification.id}
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`w-full p-4 text-left hover:bg-accent transition-colors ${
+                          !notification.read ? "bg-primary/5" : ""
+                        }`}
+                      >
+                        <div className="flex gap-3">
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
+                            !notification.read ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          }`}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm truncate ${!notification.read ? "font-medium" : ""}`}>
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                          {!notification.read && (
+                            <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+            <div className="p-2 border-t">
+              <Button
+                variant="ghost"
+                className="w-full justify-center text-sm"
+                onClick={() => navigateOrg("/settings?tab=notifications")}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Notification settings
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="border-2 border-transparent hover:border-border gap-2 px-2">

@@ -173,7 +173,7 @@ async function generateUniqueFeatureDisplayId(organizationId: string): Promise<s
 // Create feature request
 export function useCreateFeatureRequest() {
   const queryClient = useQueryClient();
-  const { organization } = useAuth();
+  const { organization, member } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -211,11 +211,36 @@ export function useCreateFeatureRequest() {
         if (projectsError) throw projectsError;
       }
 
-      return newFeature as FeatureRequest;
+      return {
+        feature: newFeature as FeatureRequest,
+        projectIds, // Pass the project IDs for notification filtering
+      };
     },
-    onSuccess: () => {
+    onSuccess: async ({ feature, projectIds }) => {
       queryClient.invalidateQueries({ queryKey: ["feature_requests"] });
       toast.success("Feature request created successfully");
+
+      // Send notification for new feature request (filtered by project access)
+      if (projectIds.length > 0) {
+        try {
+          await supabase.functions.invoke("create-notification", {
+            body: {
+              organizationId: feature.organization_id,
+              projectIds, // Only notify users with access to these projects
+              type: "feature_request",
+              title: "New Feature Request",
+              message: `${member?.name || "Someone"} created feature request ${feature.display_id}: "${feature.title}"`,
+              entityType: "feature_request",
+              entityId: feature.id,
+              entityDisplayId: feature.display_id,
+              actorId: member?.id,
+              excludeActorFromNotification: true,
+            },
+          });
+        } catch (error) {
+          console.error("Failed to send feature request notification:", error);
+        }
+      }
     },
     onError: (error) => {
       toast.error("Failed to create feature request: " + error.message);

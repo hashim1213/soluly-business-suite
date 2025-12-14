@@ -64,6 +64,7 @@ import { useUploadOrgLogo, useRemoveOrgLogo } from "@/hooks/useOrgLogo";
 import { useTeamMembers, useUpdateTeamMember, useDeleteTeamMember } from "@/hooks/useTeamMembers";
 import { toast } from "sonner";
 import { useTheme, ThemeMode, ThemeStyle } from "@/contexts/ThemeContext";
+import { useUpdateNotificationPreferences, NotificationPreferences } from "@/hooks/useNotifications";
 
 export default function Settings() {
   const { member, organization, role, hasPermission, refreshUserData } = useAuth();
@@ -80,9 +81,23 @@ export default function Settings() {
   const removeOrgLogo = useRemoveOrgLogo();
   const updateTeamMember = useUpdateTeamMember();
   const deleteTeamMember = useDeleteTeamMember();
+  const updateNotificationPreferences = useUpdateNotificationPreferences();
 
   // Logo upload ref
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Notification preferences state
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(
+    (member as { email_notifications_enabled?: boolean })?.email_notifications_enabled !== false
+  );
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>(
+    ((member as { notification_preferences?: NotificationPreferences })?.notification_preferences) || {
+      comments: true,
+      tickets: true,
+      features: true,
+      feedback: true,
+    }
+  );
 
   // Profile state
   const [profileName, setProfileName] = useState(member?.name || "");
@@ -194,6 +209,35 @@ export default function Settings() {
       });
     } catch (error) {
       // Error handled by hook
+    }
+  };
+
+  // Handle email notifications toggle
+  const handleEmailNotificationsToggle = async (enabled: boolean) => {
+    setEmailNotificationsEnabled(enabled);
+    try {
+      await updateNotificationPreferences.mutateAsync({
+        emailNotificationsEnabled: enabled,
+      });
+      toast.success(enabled ? "Email notifications enabled" : "Email notifications disabled");
+    } catch (error) {
+      setEmailNotificationsEnabled(!enabled);
+      toast.error("Failed to update notification settings");
+    }
+  };
+
+  // Handle specific notification preference toggle
+  const handleNotificationPrefToggle = async (key: keyof NotificationPreferences, enabled: boolean) => {
+    const newPrefs = { ...notificationPrefs, [key]: enabled };
+    setNotificationPrefs(newPrefs);
+    try {
+      await updateNotificationPreferences.mutateAsync({
+        notificationPreferences: newPrefs,
+      });
+      toast.success("Notification preferences updated");
+    } catch (error) {
+      setNotificationPrefs(notificationPrefs);
+      toast.error("Failed to update notification preferences");
     }
   };
 
@@ -908,26 +952,71 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">Email Notifications</div>
-                  <div className="text-sm text-muted-foreground">Receive email updates for new tickets</div>
+                  <div className="text-sm text-muted-foreground">Receive email updates when activity happens</div>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  checked={emailNotificationsEnabled}
+                  onCheckedChange={handleEmailNotificationsToggle}
+                  disabled={updateNotificationPreferences.isPending}
+                />
               </div>
-              <Separator className="border-border" />
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">High Priority Alerts</div>
-                  <div className="text-sm text-muted-foreground">Get notified immediately for high priority items</div>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <Separator className="border-border" />
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Weekly Digest</div>
-                  <div className="text-sm text-muted-foreground">Receive a weekly summary of all activity</div>
-                </div>
-                <Switch />
-              </div>
+
+              {emailNotificationsEnabled && (
+                <>
+                  <Separator className="border-border" />
+                  <div className="pl-4 space-y-4">
+                    <p className="text-sm text-muted-foreground">Choose which notifications you want to receive via email:</p>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Comments</div>
+                        <div className="text-sm text-muted-foreground">New comments on tickets, features, and feedback</div>
+                      </div>
+                      <Switch
+                        checked={notificationPrefs.comments}
+                        onCheckedChange={(checked) => handleNotificationPrefToggle("comments", checked)}
+                        disabled={updateNotificationPreferences.isPending}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Tickets</div>
+                        <div className="text-sm text-muted-foreground">New tickets created or assigned to you</div>
+                      </div>
+                      <Switch
+                        checked={notificationPrefs.tickets}
+                        onCheckedChange={(checked) => handleNotificationPrefToggle("tickets", checked)}
+                        disabled={updateNotificationPreferences.isPending}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Feature Requests</div>
+                        <div className="text-sm text-muted-foreground">New feature requests and updates</div>
+                      </div>
+                      <Switch
+                        checked={notificationPrefs.features}
+                        onCheckedChange={(checked) => handleNotificationPrefToggle("features", checked)}
+                        disabled={updateNotificationPreferences.isPending}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Feedback</div>
+                        <div className="text-sm text-muted-foreground">New feedback submissions</div>
+                      </div>
+                      <Switch
+                        checked={notificationPrefs.feedback}
+                        onCheckedChange={(checked) => handleNotificationPrefToggle("feedback", checked)}
+                        disabled={updateNotificationPreferences.isPending}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
