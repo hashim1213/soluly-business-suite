@@ -195,7 +195,7 @@ export default function Signup() {
             <div className="space-y-2">
               <Label htmlFor="orgSlug">Organization URL</Label>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">app/</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">app.soluly.com/org/</span>
                 <Input
                   id="orgSlug"
                   type="text"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, MoreVertical, Users, Ticket, Loader2 } from "lucide-react";
+import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,11 +27,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import { toast } from "sonner";
 import { useProjects, useCreateProject, useDeleteProject } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
+import { useContacts, useCreateContact, Contact } from "@/hooks/useContacts";
 import { Database } from "@/integrations/supabase/types";
 import { projectStatusStyles } from "@/lib/styles";
+import { cn } from "@/lib/utils";
 
 type ProjectStatus = Database["public"]["Enums"]["project_status"];
 
@@ -39,10 +55,16 @@ export default function Projects() {
   const { navigateOrg } = useOrgNavigation();
   const { data: projects, isLoading, error } = useProjects();
   const { data: tickets } = useTickets();
+  const { data: contacts } = useContacts();
   const createProject = useCreateProject();
   const deleteProject = useDeleteProject();
+  const createContact = useCreateContact();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [contactPopoverOpen, setContactPopoverOpen] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [isAddingNewContact, setIsAddingNewContact] = useState(false);
+  const [newContactName, setNewContactName] = useState("");
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -55,6 +77,63 @@ export default function Projects() {
   // Count open tickets per project
   const getOpenTicketCount = (projectId: string) => {
     return tickets?.filter(t => t.project_id === projectId && t.status !== "closed").length || 0;
+  };
+
+  // Handle contact selection
+  const handleSelectContact = (contact: Contact) => {
+    setSelectedContactId(contact.id);
+    setNewProject({
+      ...newProject,
+      client: contact.name,
+      clientEmail: contact.email || "",
+    });
+    setContactPopoverOpen(false);
+    setIsAddingNewContact(false);
+  };
+
+  // Handle adding a new contact inline
+  const handleAddNewContact = async () => {
+    if (!newContactName.trim()) {
+      toast.error("Please enter a contact name");
+      return;
+    }
+
+    try {
+      const newContact = await createContact.mutateAsync({
+        name: newContactName.trim(),
+        email: newProject.clientEmail || undefined,
+      });
+
+      setSelectedContactId(newContact.id);
+      setNewProject({
+        ...newProject,
+        client: newContact.name,
+      });
+      setIsAddingNewContact(false);
+      setNewContactName("");
+      setContactPopoverOpen(false);
+      toast.success("Contact created and selected");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  // Reset form when dialog closes
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedContactId(null);
+      setIsAddingNewContact(false);
+      setNewContactName("");
+      setNewProject({
+        name: "",
+        description: "",
+        client: "",
+        clientEmail: "",
+        value: "",
+        status: "pending",
+      });
+    }
   };
 
   const handleCreateProject = async () => {
@@ -130,7 +209,7 @@ export default function Projects() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Projects</h1>
           <p className="text-sm text-muted-foreground">Manage your consulting projects</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
               <Plus className="h-4 w-4 mr-2" />
@@ -162,17 +241,127 @@ export default function Projects() {
                   className="border-2"
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="client">Client Name *</Label>
-                  <Input
-                    id="client"
-                    placeholder="Client name"
-                    value={newProject.client}
-                    onChange={(e) => setNewProject({ ...newProject, client: e.target.value })}
-                    className="border-2"
-                  />
-                </div>
+
+              {/* Contact Selection */}
+              <div className="grid gap-2">
+                <Label>Client Contact *</Label>
+                <Popover open={contactPopoverOpen} onOpenChange={setContactPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={contactPopoverOpen}
+                      className="justify-between border-2 w-full"
+                    >
+                      {selectedContactId
+                        ? contacts?.find((c) => c.id === selectedContactId)?.name || newProject.client
+                        : newProject.client || "Select or add a contact..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 border-2" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search contacts..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          {isAddingNewContact ? (
+                            <div className="p-2 space-y-2">
+                              <Input
+                                placeholder="Enter contact name"
+                                value={newContactName}
+                                onChange={(e) => setNewContactName(e.target.value)}
+                                className="border-2"
+                                autoFocus
+                              />
+                              <Input
+                                placeholder="Email (optional)"
+                                type="email"
+                                value={newProject.clientEmail}
+                                onChange={(e) => setNewProject({ ...newProject, clientEmail: e.target.value })}
+                                className="border-2"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={handleAddNewContact}
+                                  disabled={createContact.isPending}
+                                  className="flex-1"
+                                >
+                                  {createContact.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    "Add Contact"
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setIsAddingNewContact(false);
+                                    setNewContactName("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-2 text-center">
+                              <p className="text-sm text-muted-foreground mb-2">No contacts found</p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setIsAddingNewContact(true)}
+                                className="w-full"
+                              >
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Add New Contact
+                              </Button>
+                            </div>
+                          )}
+                        </CommandEmpty>
+                        {contacts && contacts.length > 0 && (
+                          <CommandGroup heading="Existing Contacts">
+                            {contacts.map((contact) => (
+                              <CommandItem
+                                key={contact.id}
+                                value={contact.name}
+                                onSelect={() => handleSelectContact(contact)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedContactId === contact.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span>{contact.name}</span>
+                                  {contact.email && (
+                                    <span className="text-xs text-muted-foreground">{contact.email}</span>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
+                        <CommandSeparator />
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => setIsAddingNewContact(true)}
+                            className="cursor-pointer"
+                          >
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Add New Contact
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Show email field if contact is selected or manually entered */}
+              {(selectedContactId || newProject.client) && (
                 <div className="grid gap-2">
                   <Label htmlFor="clientEmail">Client Email</Label>
                   <Input
@@ -184,7 +373,8 @@ export default function Projects() {
                     className="border-2"
                   />
                 </div>
-              </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="value">Project Value ($)</Label>
@@ -214,7 +404,7 @@ export default function Projects() {
               </div>
             </div>
             <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-2">
+              <Button variant="outline" onClick={() => handleDialogOpenChange(false)} className="border-2">
                 Cancel
               </Button>
               <Button onClick={handleCreateProject} className="border-2" disabled={createProject.isPending}>

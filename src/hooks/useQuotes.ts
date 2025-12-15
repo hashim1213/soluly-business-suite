@@ -15,11 +15,43 @@ export type CrmTask = Tables<"crm_tasks">;
 export type CrmTaskInsert = TablesInsert<"crm_tasks">;
 export type CrmTaskUpdate = TablesUpdate<"crm_tasks">;
 
+// Extended quote type with billing fields (from migration)
+export type QuoteWithBilling = Quote & {
+  billing_address?: string | null;
+  invoice_number?: string | null;
+  invoice_date?: string | null;
+  due_date?: string | null;
+  po_number?: string | null;
+  tax_rate?: number | null;
+  tax_amount?: number | null;
+  total_amount?: number | null;
+  terms?: string | null;
+  invoice_notes?: string | null;
+  amount_paid?: number | null;
+  payment_status?: string | null;
+};
+
 // Quote with activities and tasks
-export type QuoteWithRelations = Quote & {
+export type QuoteWithRelations = QuoteWithBilling & {
   activities: CrmActivity[];
   tasks: CrmTask[];
   client?: Tables<"crm_clients"> | null;
+  project?: {
+    id: string;
+    name: string;
+    display_id: string;
+    client_name: string;
+  } | null;
+};
+
+// Quote with project info for list views
+export type QuoteWithProject = Quote & {
+  project?: {
+    id: string;
+    name: string;
+    display_id: string;
+    client_name: string;
+  } | null;
 };
 
 // Fetch all quotes for the current organization
@@ -33,12 +65,15 @@ export function useQuotes() {
 
       const { data, error } = await supabase
         .from("quotes")
-        .select("*")
+        .select(`
+          *,
+          project:projects!project_id(id, name, display_id, client_name)
+        `)
         .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Quote[];
+      return data as QuoteWithProject[];
     },
     enabled: !!organization?.id,
   });
@@ -57,7 +92,8 @@ export function useQuote(id: string | undefined) {
         .from("quotes")
         .select(`
           *,
-          client:crm_clients(*)
+          client:crm_clients(*),
+          project:projects!project_id(id, name, display_id, client_name)
         `)
         .eq("id", id)
         .eq("organization_id", organization.id)
@@ -106,7 +142,8 @@ export function useQuoteByDisplayId(displayId: string | undefined) {
         .from("quotes")
         .select(`
           *,
-          client:crm_clients(*)
+          client:crm_clients(*),
+          project:projects!project_id(id, name, display_id, client_name)
         `)
         .eq("display_id", displayId)
         .eq("organization_id", organization.id)

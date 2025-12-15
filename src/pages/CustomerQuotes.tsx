@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
-import { Plus, FileText, ArrowUpRight, DollarSign, Check, X, FolderPlus, Archive, Loader2, Ticket, Building } from "lucide-react";
+import { Plus, FileText, ArrowUpRight, DollarSign, Check, X, FolderPlus, Archive, Loader2, Ticket, Building, Briefcase, ChevronsUpDown, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +16,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import { toast } from "sonner";
-import { useQuotes, useCreateQuote, useUpdateQuote, useDeleteQuote, Quote } from "@/hooks/useQuotes";
+import { useQuotes, useCreateQuote, useUpdateQuote, useDeleteQuote, QuoteWithProject } from "@/hooks/useQuotes";
 import { useTickets, useDeleteTicket } from "@/hooks/useTickets";
-import { useContacts } from "@/hooks/useContacts";
+import { useContacts, useCreateContact, Contact } from "@/hooks/useContacts";
+import { useProjects } from "@/hooks/useProjects";
 import { Database } from "@/integrations/supabase/types";
 import {
   Select,
@@ -28,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 
@@ -73,6 +89,13 @@ type UnifiedQuote = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  project_id?: string | null;
+  project?: {
+    id: string;
+    name: string;
+    display_id: string;
+    client_name: string;
+  } | null;
 };
 
 export default function CustomerQuotes() {
@@ -80,15 +103,24 @@ export default function CustomerQuotes() {
   const { data: quotes, isLoading: quotesLoading, error } = useQuotes();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: contacts } = useContacts();
+  const { data: projects } = useProjects();
   const createQuote = useCreateQuote();
   const updateQuote = useUpdateQuote();
   const deleteTicket = useDeleteTicket();
+  const createContact = useCreateContact();
 
   const [activeTab, setActiveTab] = useState("active");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [quoteToReject, setQuoteToReject] = useState<UnifiedQuote | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+
+  // Contact selector state
+  const [contactPopoverOpen, setContactPopoverOpen] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [isAddingNewContact, setIsAddingNewContact] = useState(false);
+  const [newContactName, setNewContactName] = useState("");
+
   const [newQuote, setNewQuote] = useState({
     title: "",
     description: "",
@@ -98,6 +130,7 @@ export default function CustomerQuotes() {
     contact_name: "",
     contact_id: "",
     valid_until: "",
+    project_id: "",
   });
 
   const isLoading = quotesLoading || ticketsLoading;
@@ -122,12 +155,14 @@ export default function CustomerQuotes() {
         status: quote.status,
         stage: quote.stage,
         value: quote.value,
-        company_name: quote.company_name,
+        company_name: quote.project?.client_name || quote.company_name,
         contact_email: quote.contact_email,
         valid_until: quote.valid_until,
         notes: quote.notes,
         created_at: quote.created_at,
         updated_at: quote.updated_at,
+        project_id: quote.project_id,
+        project: quote.project,
       });
     });
 
@@ -178,6 +213,69 @@ export default function CustomerQuotes() {
       currency: "USD",
       minimumFractionDigits: 0,
     }).format(value);
+  };
+
+  // Handle contact selection
+  const handleSelectContact = (contact: Contact) => {
+    setSelectedContactId(contact.id);
+    setNewQuote({
+      ...newQuote,
+      contact_id: contact.id,
+      contact_name: contact.name,
+      contact_email: contact.email || "",
+      company_name: contact.company?.name || newQuote.company_name,
+    });
+    setContactPopoverOpen(false);
+    setIsAddingNewContact(false);
+  };
+
+  // Handle adding a new contact inline
+  const handleAddNewContact = async () => {
+    if (!newContactName.trim()) {
+      toast.error("Please enter a contact name");
+      return;
+    }
+
+    try {
+      const newContact = await createContact.mutateAsync({
+        name: newContactName.trim(),
+        email: newQuote.contact_email || undefined,
+      });
+
+      setSelectedContactId(newContact.id);
+      setNewQuote({
+        ...newQuote,
+        contact_id: newContact.id,
+        contact_name: newContact.name,
+      });
+      setIsAddingNewContact(false);
+      setNewContactName("");
+      setContactPopoverOpen(false);
+      toast.success("Contact created and selected");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  // Reset form when dialog closes
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedContactId(null);
+      setIsAddingNewContact(false);
+      setNewContactName("");
+      setNewQuote({
+        title: "",
+        description: "",
+        company_name: "",
+        value: "",
+        contact_email: "",
+        contact_name: "",
+        contact_id: "",
+        valid_until: "",
+        project_id: "",
+      });
+    }
   };
 
   const formatDate = (dateString: string | null) => {
@@ -239,8 +337,17 @@ export default function CustomerQuotes() {
   };
 
   const handleCreateQuote = async () => {
-    if (!newQuote.title || !newQuote.company_name || !newQuote.value) {
-      toast.error("Please fill in all required fields");
+    if (!newQuote.title || !newQuote.value) {
+      toast.error("Please fill in title and value");
+      return;
+    }
+
+    // If project is selected, use project's client name as company name
+    const selectedProject = projects?.find(p => p.id === newQuote.project_id);
+    const companyName = selectedProject?.client_name || newQuote.company_name;
+
+    if (!companyName) {
+      toast.error("Please select a project or enter a company name");
       return;
     }
 
@@ -248,10 +355,11 @@ export default function CustomerQuotes() {
       await createQuote.mutateAsync({
         title: newQuote.title,
         description: newQuote.description || null,
-        company_name: newQuote.company_name,
+        company_name: companyName,
         contact_email: newQuote.contact_email || null,
         value: parseFloat(newQuote.value.replace(/[$,]/g, "")) || 0,
         valid_until: newQuote.valid_until || null,
+        project_id: newQuote.project_id || null,
         status: "draft",
         stage: 10,
       });
@@ -262,7 +370,10 @@ export default function CustomerQuotes() {
         company_name: "",
         value: "",
         contact_email: "",
+        contact_name: "",
+        contact_id: "",
         valid_until: "",
+        project_id: "",
       });
       setIsDialogOpen(false);
     } catch (error) {
@@ -304,7 +415,7 @@ export default function CustomerQuotes() {
           <h1 className="text-2xl font-bold tracking-tight">Customer Quotes</h1>
           <p className="text-muted-foreground">Manage quotes from initial contact to contract signing</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
               <Plus className="h-4 w-4 mr-2" />
@@ -316,6 +427,50 @@ export default function CustomerQuotes() {
               <DialogTitle>Create New Quote</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+              {/* Project Selection - for invoices */}
+              <div className="grid gap-2">
+                <Label>Link to Project (for invoices)</Label>
+                <Select
+                  value={newQuote.project_id}
+                  onValueChange={(projectId) => {
+                    if (projectId === "none") {
+                      setNewQuote({
+                        ...newQuote,
+                        project_id: "",
+                      });
+                    } else {
+                      const selectedProject = projects?.find((p) => p.id === projectId);
+                      if (selectedProject) {
+                        setNewQuote({
+                          ...newQuote,
+                          project_id: projectId,
+                          company_name: selectedProject.client_name,
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="border-2">
+                    <SelectValue placeholder="Select project (optional)" />
+                  </SelectTrigger>
+                  <SelectContent className="border-2">
+                    <SelectItem value="none">No project - standalone quote</SelectItem>
+                    {projects?.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="h-3 w-3" />
+                          {project.name}
+                          <span className="text-muted-foreground">({project.client_name})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Link this quote/invoice to an existing project
+                </p>
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="title">Quote Title *</Label>
                 <Input
@@ -336,49 +491,127 @@ export default function CustomerQuotes() {
                   className="border-2"
                 />
               </div>
+
+              {/* Contact Selection */}
               <div className="grid gap-2">
-                <Label>Select Contact</Label>
-                <Select
-                  value={newQuote.contact_id}
-                  onValueChange={(contactId) => {
-                    if (contactId === "manual") {
-                      setNewQuote({
-                        ...newQuote,
-                        contact_id: "",
-                        contact_name: "",
-                        contact_email: "",
-                        company_name: "",
-                      });
-                    } else {
-                      const selectedContact = contacts?.find((c) => c.id === contactId);
-                      if (selectedContact) {
-                        setNewQuote({
-                          ...newQuote,
-                          contact_id: contactId,
-                          contact_name: selectedContact.name,
-                          contact_email: selectedContact.email || "",
-                          company_name: selectedContact.company?.name || "",
-                        });
-                      }
-                    }
-                  }}
-                >
-                  <SelectTrigger className="border-2">
-                    <SelectValue placeholder="Select from contacts or enter manually" />
-                  </SelectTrigger>
-                  <SelectContent className="border-2">
-                    <SelectItem value="manual">Enter manually</SelectItem>
-                    {contacts?.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        {contact.name}
-                        {contact.company?.name && (
-                          <span className="text-muted-foreground"> - {contact.company.name}</span>
+                <Label>Client Contact</Label>
+                <Popover open={contactPopoverOpen} onOpenChange={setContactPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={contactPopoverOpen}
+                      className="justify-between border-2 w-full"
+                    >
+                      {selectedContactId
+                        ? contacts?.find((c) => c.id === selectedContactId)?.name || newQuote.contact_name
+                        : newQuote.contact_name || "Select or add a contact..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 border-2" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search contacts..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          {isAddingNewContact ? (
+                            <div className="p-2 space-y-2">
+                              <Input
+                                placeholder="Enter contact name"
+                                value={newContactName}
+                                onChange={(e) => setNewContactName(e.target.value)}
+                                className="border-2"
+                                autoFocus
+                              />
+                              <Input
+                                placeholder="Email (optional)"
+                                type="email"
+                                value={newQuote.contact_email}
+                                onChange={(e) => setNewQuote({ ...newQuote, contact_email: e.target.value })}
+                                className="border-2"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={handleAddNewContact}
+                                  disabled={createContact.isPending}
+                                  className="flex-1"
+                                >
+                                  {createContact.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    "Add Contact"
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setIsAddingNewContact(false);
+                                    setNewContactName("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-2 text-center">
+                              <p className="text-sm text-muted-foreground mb-2">No contacts found</p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setIsAddingNewContact(true)}
+                                className="w-full"
+                              >
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Add New Contact
+                              </Button>
+                            </div>
+                          )}
+                        </CommandEmpty>
+                        {contacts && contacts.length > 0 && (
+                          <CommandGroup heading="Existing Contacts">
+                            {contacts.map((contact) => (
+                              <CommandItem
+                                key={contact.id}
+                                value={contact.name}
+                                onSelect={() => handleSelectContact(contact)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedContactId === contact.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span>{contact.name}</span>
+                                  {(contact.email || contact.company?.name) && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {contact.email}{contact.email && contact.company?.name ? " - " : ""}{contact.company?.name}
+                                    </span>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
                         )}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                        <CommandSeparator />
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => setIsAddingNewContact(true)}
+                            className="cursor-pointer"
+                          >
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Add New Contact
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="company_name">Company Name *</Label>
@@ -402,28 +635,16 @@ export default function CustomerQuotes() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="contact_name">Contact Name</Label>
-                  <Input
-                    id="contact_name"
-                    placeholder="Contact name"
-                    value={newQuote.contact_name}
-                    onChange={(e) => setNewQuote({ ...newQuote, contact_name: e.target.value })}
-                    className="border-2"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="contact_email">Contact Email</Label>
-                  <Input
-                    id="contact_email"
-                    type="email"
-                    placeholder="client@example.com"
-                    value={newQuote.contact_email}
-                    onChange={(e) => setNewQuote({ ...newQuote, contact_email: e.target.value })}
-                    className="border-2"
-                  />
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="contact_email">Contact Email</Label>
+                <Input
+                  id="contact_email"
+                  type="email"
+                  placeholder="client@example.com"
+                  value={newQuote.contact_email}
+                  onChange={(e) => setNewQuote({ ...newQuote, contact_email: e.target.value })}
+                  className="border-2"
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="valid_until">Valid Until</Label>
@@ -437,7 +658,7 @@ export default function CustomerQuotes() {
               </div>
             </div>
             <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-2">
+              <Button variant="outline" onClick={() => handleDialogOpenChange(false)} className="border-2">
                 Cancel
               </Button>
               <Button onClick={handleCreateQuote} className="border-2" disabled={createQuote.isPending}>
@@ -631,6 +852,12 @@ export default function CustomerQuotes() {
                             <Building className="h-3 w-3" />
                             {quote.company_name}
                           </span>
+                          {quote.project && (
+                            <span className="flex items-center gap-1">
+                              <Briefcase className="h-3 w-3" />
+                              Project: {quote.project.name}
+                            </span>
+                          )}
                           {quote.contact_email && <span>Contact: {quote.contact_email}</span>}
                           {quote.valid_until && <span>Valid until: {formatDate(quote.valid_until)}</span>}
                         </div>

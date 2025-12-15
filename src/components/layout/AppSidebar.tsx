@@ -87,15 +87,15 @@ export function AppSidebar() {
   const visibleSystemItems = filterByPermission(systemItems);
 
   return (
-    <Sidebar className="border-r-2 border-border">
-      <SidebarHeader className="h-14 border-b-2 border-border px-2 flex items-center">
+    <Sidebar className="border-r-2 border-sidebar-border">
+      <SidebarHeader className="h-14 border-b-2 border-sidebar-border px-2 flex items-center">
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
       <SidebarContent className="p-2">
         {visibleMainItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2 mb-2">
+            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2">
               {!collapsed && "Main"}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -106,8 +106,8 @@ export function AppSidebar() {
                       <NavLink
                         to={getFullUrl(item.path)}
                         end={item.path === ""}
-                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-border hover:bg-accent transition-all"
-                        activeClassName="bg-primary text-primary-foreground border-border"
+                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+                        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
                         {!collapsed && <span className="font-medium">{item.title}</span>}
@@ -122,7 +122,7 @@ export function AppSidebar() {
 
         {visibleTicketCategories.length > 0 && (
           <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2 mb-2">
+            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2">
               {!collapsed && "Ticket Categories"}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -132,8 +132,8 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink
                         to={getFullUrl(item.path)}
-                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-border hover:bg-accent transition-all"
-                        activeClassName="bg-primary text-primary-foreground border-border"
+                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+                        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
                         {!collapsed && <span className="font-medium">{item.title}</span>}
@@ -148,7 +148,7 @@ export function AppSidebar() {
 
         {visibleSystemItems.length > 0 && (
           <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2 mb-2">
+            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2">
               {!collapsed && "System"}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -158,8 +158,8 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink
                         to={getFullUrl(item.path)}
-                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-border hover:bg-accent transition-all"
-                        activeClassName="bg-primary text-primary-foreground border-border"
+                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+                        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
                         {!collapsed && <span className="font-medium">{item.title}</span>}
@@ -173,12 +173,12 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t-2 border-border p-2">
+      <SidebarFooter className="border-t-2 border-sidebar-border p-2">
         <Button
           variant="ghost"
           size="sm"
           onClick={toggleSidebar}
-          className="w-full justify-center border-2 border-transparent hover:border-border"
+          className="w-full justify-center border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>

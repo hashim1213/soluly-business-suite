@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   User,
   Bell,
@@ -17,6 +17,7 @@ import {
   Moon,
   Monitor,
   Upload,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +60,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleManagement } from "@/components/settings/RoleManagement";
 import { useInvitations, useCreateInvitation, useDeleteInvitation } from "@/hooks/useInvitations";
-import { useUpdateOrganization, useOrganizationStats } from "@/hooks/useOrganization";
+import { useUpdateOrganization, useOrganizationStats, useCurrentOrganization } from "@/hooks/useOrganization";
+import { Textarea } from "@/components/ui/textarea";
 import { useUploadOrgLogo, useRemoveOrgLogo } from "@/hooks/useOrgLogo";
 import { useTeamMembers, useUpdateTeamMember, useDeleteTeamMember } from "@/hooks/useTeamMembers";
 import { toast } from "sonner";
@@ -73,6 +75,7 @@ export default function Settings() {
   const { data: invitations } = useInvitations();
   const { data: teamMembers } = useTeamMembers();
   const { data: orgStats } = useOrganizationStats();
+  const { data: orgDetails } = useCurrentOrganization();
 
   const createInvitation = useCreateInvitation();
   const deleteInvitation = useDeleteInvitation();
@@ -109,6 +112,37 @@ export default function Settings() {
   const [orgSlug, setOrgSlug] = useState(organization?.slug || "");
   const [orgIcon, setOrgIcon] = useState(organization?.icon || "");
   const [isSavingOrg, setIsSavingOrg] = useState(false);
+
+  // Billing state
+  const [billingName, setBillingName] = useState("");
+  const [billingAddress, setBillingAddress] = useState("");
+  const [billingCity, setBillingCity] = useState("");
+  const [billingState, setBillingState] = useState("");
+  const [billingPostalCode, setBillingPostalCode] = useState("");
+  const [billingCountry, setBillingCountry] = useState("Canada");
+  const [billingPhone, setBillingPhone] = useState("");
+  const [billingEmail, setBillingEmail] = useState("");
+  const [taxNumber, setTaxNumber] = useState("");
+  const [defaultInvoiceTerms, setDefaultInvoiceTerms] = useState("");
+  const [defaultInvoiceNotes, setDefaultInvoiceNotes] = useState("");
+  const [isSavingBilling, setIsSavingBilling] = useState(false);
+
+  // Initialize billing state from organization details
+  useEffect(() => {
+    if (orgDetails) {
+      setBillingName((orgDetails as any).billing_name || "");
+      setBillingAddress((orgDetails as any).billing_address || "");
+      setBillingCity((orgDetails as any).billing_city || "");
+      setBillingState((orgDetails as any).billing_state || "");
+      setBillingPostalCode((orgDetails as any).billing_postal_code || "");
+      setBillingCountry((orgDetails as any).billing_country || "Canada");
+      setBillingPhone((orgDetails as any).billing_phone || "");
+      setBillingEmail((orgDetails as any).billing_email || "");
+      setTaxNumber((orgDetails as any).tax_number || "");
+      setDefaultInvoiceTerms((orgDetails as any).default_invoice_terms || "Payment is due within 30 days of receipt of this invoice. Please make payment via bank transfer or cheque to the details provided.");
+      setDefaultInvoiceNotes((orgDetails as any).default_invoice_notes || "");
+    }
+  }, [orgDetails]);
 
   // Invite state
   const [inviteEmail, setInviteEmail] = useState("");
@@ -149,6 +183,30 @@ export default function Settings() {
       // Error handled by hook
     }
     setIsSavingOrg(false);
+  };
+
+  // Save billing settings
+  const handleSaveBilling = async () => {
+    setIsSavingBilling(true);
+    try {
+      await updateOrganization.mutateAsync({
+        billing_name: billingName || null,
+        billing_address: billingAddress || null,
+        billing_city: billingCity || null,
+        billing_state: billingState || null,
+        billing_postal_code: billingPostalCode || null,
+        billing_country: billingCountry || null,
+        billing_phone: billingPhone || null,
+        billing_email: billingEmail || null,
+        tax_number: taxNumber || null,
+        default_invoice_terms: defaultInvoiceTerms || null,
+        default_invoice_notes: defaultInvoiceNotes || null,
+      } as any);
+      toast.success("Billing settings saved successfully");
+    } catch (error) {
+      // Error handled by hook
+    }
+    setIsSavingBilling(false);
   };
 
   // Handle logo upload
@@ -254,6 +312,7 @@ export default function Settings() {
             <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
             <TabsTrigger value="appearance" className="text-xs sm:text-sm">Appearance</TabsTrigger>
             {canManageOrg && <TabsTrigger value="organization" className="text-xs sm:text-sm">Org</TabsTrigger>}
+            {canManageOrg && <TabsTrigger value="billing" className="text-xs sm:text-sm">Billing</TabsTrigger>}
             {canManageUsers && <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>}
             {canManageRoles && <TabsTrigger value="roles" className="text-xs sm:text-sm">Roles</TabsTrigger>}
             {hasPermission("emails", "edit") && <TabsTrigger value="email-accounts" className="text-xs sm:text-sm">Email</TabsTrigger>}
@@ -673,7 +732,7 @@ export default function Settings() {
                   <div className="space-y-2">
                     <Label htmlFor="orgSlug">Organization URL</Label>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">app/</span>
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">app.soluly.com/org/</span>
                       <Input
                         id="orgSlug"
                         value={orgSlug}
@@ -709,6 +768,187 @@ export default function Settings() {
                     </>
                   ) : (
                     "Save Changes"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Billing Tab */}
+        {canManageOrg && (
+          <TabsContent value="billing" className="space-y-6">
+            <Card className="border-2 border-border shadow-sm">
+              <CardHeader className="border-b-2 border-border">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle>Billing & Invoice Settings</CardTitle>
+                    <CardDescription>Configure your company billing information for invoices</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                {/* Company Information */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">Company Information</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="billingName">Business Name</Label>
+                      <Input
+                        id="billingName"
+                        value={billingName}
+                        onChange={(e) => setBillingName(e.target.value)}
+                        placeholder={organization?.name || "Your Company Name"}
+                        className="border-2"
+                      />
+                      <p className="text-xs text-muted-foreground">Defaults to organization name if not set</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="taxNumber">Tax ID / GST Number</Label>
+                      <Input
+                        id="taxNumber"
+                        value={taxNumber}
+                        onChange={(e) => setTaxNumber(e.target.value)}
+                        placeholder="e.g., 123456789RT0001"
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Billing Address */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">Billing Address</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="billingAddress">Street Address</Label>
+                      <Input
+                        id="billingAddress"
+                        value={billingAddress}
+                        onChange={(e) => setBillingAddress(e.target.value)}
+                        placeholder="123 Business Street"
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="billingCity">City</Label>
+                        <Input
+                          id="billingCity"
+                          value={billingCity}
+                          onChange={(e) => setBillingCity(e.target.value)}
+                          placeholder="City"
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="billingState">Province/State</Label>
+                        <Input
+                          id="billingState"
+                          value={billingState}
+                          onChange={(e) => setBillingState(e.target.value)}
+                          placeholder="Province"
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="billingPostalCode">Postal Code</Label>
+                        <Input
+                          id="billingPostalCode"
+                          value={billingPostalCode}
+                          onChange={(e) => setBillingPostalCode(e.target.value)}
+                          placeholder="A1A 1A1"
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="billingCountry">Country</Label>
+                        <Input
+                          id="billingCountry"
+                          value={billingCountry}
+                          onChange={(e) => setBillingCountry(e.target.value)}
+                          placeholder="Canada"
+                          className="border-2"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">Contact Information</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="billingPhone">Phone Number</Label>
+                      <Input
+                        id="billingPhone"
+                        value={billingPhone}
+                        onChange={(e) => setBillingPhone(e.target.value)}
+                        placeholder="(555) 123-4567"
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="billingEmail">Billing Email</Label>
+                      <Input
+                        id="billingEmail"
+                        type="email"
+                        value={billingEmail}
+                        onChange={(e) => setBillingEmail(e.target.value)}
+                        placeholder="billing@yourcompany.com"
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Default Invoice Terms */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground">Default Invoice Settings</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="defaultInvoiceTerms">Default Payment Terms</Label>
+                      <Textarea
+                        id="defaultInvoiceTerms"
+                        value={defaultInvoiceTerms}
+                        onChange={(e) => setDefaultInvoiceTerms(e.target.value)}
+                        placeholder="Payment is due within 30 days..."
+                        className="border-2 min-h-[100px]"
+                      />
+                      <p className="text-xs text-muted-foreground">These terms will appear on all invoices by default</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="defaultInvoiceNotes">Default Invoice Notes</Label>
+                      <Textarea
+                        id="defaultInvoiceNotes"
+                        value={defaultInvoiceNotes}
+                        onChange={(e) => setDefaultInvoiceNotes(e.target.value)}
+                        placeholder="Thank you for your business!"
+                        className="border-2 min-h-[80px]"
+                      />
+                      <p className="text-xs text-muted-foreground">Optional notes to include on all invoices</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button onClick={handleSaveBilling} disabled={isSavingBilling} className="border-2">
+                  {isSavingBilling ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Billing Settings"
                   )}
                 </Button>
               </CardContent>

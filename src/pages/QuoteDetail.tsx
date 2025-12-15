@@ -1,7 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Edit, FileText, Send, MoreVertical, Clock, DollarSign, Mail, Calendar, Building, Plus, Trash2, Save, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Send, MoreVertical, Clock, DollarSign, Mail, Calendar, Building, Plus, Trash2, Save, X, Loader2, Download, Receipt } from "lucide-react";
+import { pdf } from "@react-pdf/renderer";
+import { InvoicePDF, InvoiceData } from "@/components/invoice/InvoicePDF";
+import { useCurrentOrganization } from "@/hooks/useOrganization";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,11 +87,15 @@ const stageValues: Record<string, number> = {
 export default function QuoteDetail() {
   const { quoteId } = useParams();
   const { navigateOrg } = useOrgNavigation();
+  const { organization } = useAuth();
+  const { data: orgDetails } = useCurrentOrganization();
   const { data: quote, isLoading, error } = useQuoteByDisplayId(quoteId);
   const { data: dbLineItems, isLoading: lineItemsLoading } = useQuoteLineItems(quote?.id);
   const updateQuote = useUpdateQuote();
   const deleteQuote = useDeleteQuote();
   const bulkUpdateLineItems = useBulkUpdateQuoteLineItems();
+
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<{
@@ -99,7 +107,10 @@ export default function QuoteDetail() {
     value: number;
     valid_until: string;
     notes: string;
+    billing_address: string;
     terms: string;
+    tax_rate: number;
+    po_number: string;
   } | null>(null);
 
   const [editLineItems, setEditLineItems] = useState<EditableLineItem[]>([]);
@@ -161,7 +172,10 @@ export default function QuoteDetail() {
       value: quote.value,
       valid_until: quote.valid_until ? quote.valid_until.split("T")[0] : "",
       notes: quote.notes || "",
-      terms: "", // Terms could be stored separately if needed
+      billing_address: (quote as any).billing_address || "",
+      terms: (quote as any).terms || (orgDetails as any)?.default_invoice_terms || "",
+      tax_rate: (quote as any).tax_rate || 0,
+      po_number: (quote as any).po_number || "",
     });
     setIsEditing(true);
   };
@@ -180,7 +194,11 @@ export default function QuoteDetail() {
         value: editData.value,
         valid_until: editData.valid_until || null,
         notes: editData.notes || null,
-      });
+        billing_address: editData.billing_address || null,
+        terms: editData.terms || null,
+        tax_rate: editData.tax_rate || null,
+        po_number: editData.po_number || null,
+      } as any);
       toast.success("Quote updated successfully");
       setIsEditing(false);
       setEditData(null);
@@ -199,6 +217,123 @@ export default function QuoteDetail() {
       navigateOrg("/tickets/quotes");
     } catch (error) {
       // Error handled by hook
+    }
+  };
+
+  // Generate invoice number if not exists
+  const generateInvoiceNumber = () => {
+    const year = new Date().getFullYear();
+    const month = String(new Date().getMonth() + 1).padStart(2, "0");
+    const quoteNum = quote?.display_id?.replace("QTE-", "") || "001";
+    return `INV-${year}${month}-${quoteNum}`;
+  };
+
+  // Create invoice from quote
+  const handleCreateInvoice = async () => {
+    if (!quote) return;
+
+    const invoiceNumber = (quote as any).invoice_number || generateInvoiceNumber();
+    const invoiceDate = new Date().toISOString().split("T")[0];
+    const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+    try {
+      await updateQuote.mutateAsync({
+        id: quote.id,
+        invoice_number: invoiceNumber,
+        invoice_date: invoiceDate,
+        due_date: dueDate,
+        terms: (quote as any).terms || (orgDetails as any)?.default_invoice_terms || "Payment is due within 30 days.",
+        invoice_notes: (quote as any).invoice_notes || (orgDetails as any)?.default_invoice_notes || null,
+      } as any);
+      toast.success(`Invoice ${invoiceNumber} created successfully`);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  // Download PDF invoice
+  const handleDownloadPdf = async () => {
+    if (!quote || !dbLineItems) return;
+
+    setIsGeneratingPdf(true);
+
+    try {
+      const org = orgDetails as any;
+      const q = quote as any;
+
+      // Calculate totals
+      const subtotal = dbLineItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+      const taxRate = q.tax_rate || 0;
+      const taxAmount = subtotal * (taxRate / 100);
+      const total = subtotal + taxAmount;
+      const amountPaid = q.amount_paid || 0;
+      const balanceDue = total - amountPaid;
+
+      // Build invoice data
+      const invoiceData: InvoiceData = {
+        // Invoice details
+        invoiceNumber: q.invoice_number || quote.display_id,
+        invoiceDate: q.invoice_date || new Date().toISOString(),
+        dueDate: q.due_date || undefined,
+        poNumber: q.po_number || undefined,
+
+        // Company info from organization
+        companyName: org?.billing_name || organization?.name || "Your Company",
+        companyAddress: org?.billing_address || undefined,
+        companyCity: org?.billing_city || undefined,
+        companyState: org?.billing_state || undefined,
+        companyPostalCode: org?.billing_postal_code || undefined,
+        companyCountry: org?.billing_country || undefined,
+        companyPhone: org?.billing_phone || undefined,
+        companyEmail: org?.billing_email || undefined,
+        companyLogo: organization?.logo_url || undefined,
+        taxNumber: org?.tax_number || undefined,
+
+        // Client info
+        clientName: quote.company_name,
+        clientAddress: q.billing_address || undefined,
+        contactName: quote.contact_name || undefined,
+        contactEmail: quote.contact_email || undefined,
+
+        // Line items
+        lineItems: dbLineItems.map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        })),
+
+        // Totals
+        subtotal,
+        taxRate: taxRate > 0 ? taxRate : undefined,
+        taxAmount: taxAmount > 0 ? taxAmount : undefined,
+        total,
+        amountPaid: amountPaid > 0 ? amountPaid : undefined,
+        balanceDue,
+
+        // Footer
+        notes: q.invoice_notes || org?.default_invoice_notes || undefined,
+        terms: q.terms || org?.default_invoice_terms || undefined,
+      };
+
+      // Generate PDF
+      const blob = await pdf(<InvoicePDF data={invoiceData} />).toBlob();
+
+      // Download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${invoiceData.invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Invoice PDF downloaded");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -329,10 +464,25 @@ export default function QuoteDetail() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="border-2">
-              <DropdownMenuItem>Duplicate Quote</DropdownMenuItem>
-              <DropdownMenuItem>Download PDF</DropdownMenuItem>
-              <DropdownMenuItem>Create Invoice</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
+                {isGeneratingPdf ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleCreateInvoice}>
+                <Receipt className="h-4 w-4 mr-2" />
+                {(quote as any)?.invoice_number ? "Update Invoice" : "Create Invoice"}
+              </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+                <Trash2 className="h-4 w-4 mr-2" />
                 Delete Quote
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -696,14 +846,49 @@ export default function QuoteDetail() {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-valid-until">Valid Until</Label>
+                  <Input
+                    id="edit-valid-until"
+                    type="date"
+                    value={editData.valid_until}
+                    onChange={(e) => setEditData({ ...editData, valid_until: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-po-number">PO Number</Label>
+                  <Input
+                    id="edit-po-number"
+                    value={editData.po_number}
+                    onChange={(e) => setEditData({ ...editData, po_number: e.target.value })}
+                    placeholder="Client PO number"
+                    className="border-2"
+                  />
+                </div>
+              </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-valid-until">Valid Until</Label>
-                <Input
-                  id="edit-valid-until"
-                  type="date"
-                  value={editData.valid_until}
-                  onChange={(e) => setEditData({ ...editData, valid_until: e.target.value })}
+                <Label htmlFor="edit-billing-address">Client Billing Address</Label>
+                <Textarea
+                  id="edit-billing-address"
+                  value={editData.billing_address}
+                  onChange={(e) => setEditData({ ...editData, billing_address: e.target.value })}
+                  placeholder="Full billing address for the invoice"
                   className="border-2"
+                  rows={2}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-tax-rate">Tax Rate (%)</Label>
+                <Input
+                  id="edit-tax-rate"
+                  type="number"
+                  step="0.01"
+                  value={editData.tax_rate}
+                  onChange={(e) => setEditData({ ...editData, tax_rate: parseFloat(e.target.value) || 0 })}
+                  placeholder="0"
+                  className="border-2 w-32"
                 />
               </div>
               <div className="grid gap-2">
@@ -712,6 +897,17 @@ export default function QuoteDetail() {
                   id="edit-notes"
                   value={editData.notes}
                   onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                  className="border-2"
+                  rows={2}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-terms">Invoice Terms</Label>
+                <Textarea
+                  id="edit-terms"
+                  value={editData.terms}
+                  onChange={(e) => setEditData({ ...editData, terms: e.target.value })}
+                  placeholder="Payment terms for this invoice"
                   className="border-2"
                   rows={3}
                 />

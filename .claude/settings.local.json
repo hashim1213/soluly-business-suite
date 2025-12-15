@@ -23,7 +23,8 @@
       "Bash(npm run test:e2e:*)",
       "Bash(TEST_USER_EMAIL=hashim@bytesavy.com TEST_USER_PASSWORD=hashim123 npm run test:e2e:*)",
       "Bash(TEST_USER_EMAIL=hashim@bytesavy.com TEST_USER_PASSWORD=hashim123 npx playwright test:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm run build:check:*)"
     ]
   }
 }

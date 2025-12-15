@@ -162,6 +162,7 @@ export default function CRM() {
     phone: "",
     job_title: "",
     company_id: "",
+    address: "",
     notes: "",
   });
   const [editingClient, setEditingClient] = useState<CrmClient | null>(null);
@@ -496,6 +497,7 @@ export default function CRM() {
         phone: newContact.phone || undefined,
         job_title: newContact.job_title || undefined,
         company_id: newContact.company_id || undefined,
+        address: newContact.address || undefined,
         notes: newContact.notes || undefined,
       });
 
@@ -505,6 +507,7 @@ export default function CRM() {
         phone: "",
         job_title: "",
         company_id: "",
+        address: "",
         notes: "",
       });
       setIsNewContactOpen(false);
@@ -1622,6 +1625,16 @@ export default function CRM() {
                     </Button>
                   )}
                   <div className="grid gap-2">
+                    <Label>Address</Label>
+                    <Textarea
+                      placeholder="Mailing/billing address..."
+                      value={newContact.address}
+                      onChange={(e) => setNewContact({ ...newContact, address: e.target.value })}
+                      className="border-2"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="grid gap-2">
                     <Label>Notes</Label>
                     <Textarea
                       placeholder="Additional notes..."
@@ -1826,6 +1839,16 @@ export default function CRM() {
                   Add New Company
                 </Button>
               )}
+              <div className="grid gap-2">
+                <Label>Address</Label>
+                <Textarea
+                  placeholder="Mailing/billing address..."
+                  value={editingContact.address || ""}
+                  onChange={(e) => setEditingContact({ ...editingContact, address: e.target.value })}
+                  className="border-2"
+                  rows={2}
+                />
+              </div>
               <div className="grid gap-2">
                 <Label>Notes</Label>
                 <Textarea

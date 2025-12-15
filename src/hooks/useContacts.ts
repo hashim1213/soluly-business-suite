@@ -12,6 +12,7 @@ export interface Contact {
   phone: string | null;
   job_title: string | null;
   company_id: string | null;
+  address: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -28,6 +29,7 @@ export interface CreateContactInput {
   phone?: string;
   job_title?: string;
   company_id?: string;
+  address?: string;
   notes?: string;
 }
 
@@ -170,6 +172,7 @@ export function useCreateContact() {
           phone: input.phone || null,
           job_title: input.job_title || null,
           company_id: input.company_id || null,
+          address: input.address || null,
           notes: input.notes || null,
         })
         .select()
