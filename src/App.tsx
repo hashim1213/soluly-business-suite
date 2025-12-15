@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { PostHogProvider } from "@/contexts/PostHogContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { OrgGuard } from "@/components/auth/OrgGuard";
 import { OrgRedirect } from "@/components/auth/OrgRedirect";
@@ -81,6 +82,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
+              <PostHogProvider>
               <Routes>
             {/* Public landing page */}
             <Route path="/welcome" element={<Landing />} />
@@ -319,6 +321,7 @@ const App = () => (
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+              </PostHogProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

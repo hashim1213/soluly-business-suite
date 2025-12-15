@@ -1,0 +1,265 @@
+-- =============================================
+-- Fix Function Search Paths Security Issue
+-- Sets search_path to public for all functions to prevent search_path injection
+-- =============================================
+
+-- Fix update_tags_updated_at
+CREATE OR REPLACE FUNCTION public.update_tags_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+-- Fix update_custom_fields_updated_at
+CREATE OR REPLACE FUNCTION public.update_custom_fields_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+-- Fix update_contact_activities_updated_at
+CREATE OR REPLACE FUNCTION public.update_contact_activities_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+-- Fix generate_contact_activity_display_id
+CREATE OR REPLACE FUNCTION public.generate_contact_activity_display_id()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+DECLARE
+  next_num INTEGER;
+  prefix TEXT;
+BEGIN
+  -- Get the next number for this organization
+  SELECT COALESCE(MAX(
+    CASE
+      WHEN display_id ~ '^ACT-[0-9]+$'
+      THEN CAST(SUBSTRING(display_id FROM 5) AS INTEGER)
+      ELSE 0
+    END
+  ), 0) + 1
+  INTO next_num
+  FROM public.contact_activities
+  WHERE organization_id = NEW.organization_id;
+
+  -- Generate display_id
+  NEW.display_id := 'ACT-' || LPAD(next_num::TEXT, 4, '0');
+
+  RETURN NEW;
+END;
+$$;
+
+-- Fix create_default_roles_for_org (add SET search_path)
+CREATE OR REPLACE FUNCTION public.create_default_roles_for_org(org_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Admin role - full access
+  INSERT INTO public.roles (organization_id, name, description, is_system, permissions, project_scope) VALUES
+  (org_id, 'Admin', 'Full access to all features and settings', TRUE, '{
+    "dashboard": {"view": true},
+    "projects": {"view": true, "create": true, "edit": true, "delete": true},
+    "tickets": {"view": true, "create": true, "edit": true, "delete": true},
+    "team": {"view": true, "create": true, "edit": true, "delete": true},
+    "crm": {"view": true, "create": true, "edit": true, "delete": true},
+    "quotes": {"view": true, "create": true, "edit": true, "delete": true},
+    "features": {"view": true, "create": true, "edit": true, "delete": true},
+    "feedback": {"view": true, "create": true, "edit": true, "delete": true},
+    "emails": {"view": true, "create": true, "edit": true, "delete": true},
+    "financials": {"view": true, "create": true, "edit": true, "delete": true},
+    "expenses": {"view": true, "create": true, "edit": true, "delete": true},
+    "forms": {"view": true, "create": true, "edit": true, "delete": true},
+    "issues": {"view": true, "create": true, "edit": true, "delete": true},
+    "settings": {"view": true, "manage_org": true, "manage_users": true, "manage_roles": true}
+  }'::jsonb, NULL)
+  ON CONFLICT (organization_id, name) DO UPDATE SET
+    permissions = EXCLUDED.permissions,
+    description = EXCLUDED.description;
+
+  -- Manager role
+  INSERT INTO public.roles (organization_id, name, description, is_system, permissions, project_scope) VALUES
+  (org_id, 'Manager', 'Can manage projects, team, and view financials', TRUE, '{
+    "dashboard": {"view": true},
+    "projects": {"view": true, "create": true, "edit": true, "delete": false},
+    "tickets": {"view": true, "create": true, "edit": true, "delete": false},
+    "team": {"view": true, "create": false, "edit": true, "delete": false},
+    "crm": {"view": true, "create": true, "edit": true, "delete": false},
+    "quotes": {"view": true, "create": true, "edit": true, "delete": false},
+    "features": {"view": true, "create": true, "edit": true, "delete": false},
+    "feedback": {"view": true, "create": true, "edit": true, "delete": false},
+    "emails": {"view": true, "create": true, "edit": true, "delete": false},
+    "financials": {"view": true, "create": false, "edit": false, "delete": false},
+    "expenses": {"view": true, "create": true, "edit": true, "delete": false},
+    "forms": {"view": true, "create": true, "edit": true, "delete": false},
+    "issues": {"view": true, "create": true, "edit": true, "delete": false},
+    "settings": {"view": true, "manage_org": false, "manage_users": false, "manage_roles": false}
+  }'::jsonb, NULL)
+  ON CONFLICT (organization_id, name) DO UPDATE SET
+    permissions = EXCLUDED.permissions,
+    description = EXCLUDED.description;
+
+  -- Sales role - CRM focused
+  INSERT INTO public.roles (organization_id, name, description, is_system, permissions, project_scope) VALUES
+  (org_id, 'Sales', 'Access to CRM, quotes, and client management', TRUE, '{
+    "dashboard": {"view": true},
+    "projects": {"view": true, "create": false, "edit": false, "delete": false},
+    "tickets": {"view": true, "create": true, "edit": "own", "delete": false},
+    "team": {"view": true, "create": false, "edit": false, "delete": false},
+    "crm": {"view": true, "create": true, "edit": "own", "delete": false},
+    "quotes": {"view": true, "create": true, "edit": "own", "delete": false},
+    "features": {"view": true, "create": true, "edit": false, "delete": false},
+    "feedback": {"view": true, "create": true, "edit": false, "delete": false},
+    "emails": {"view": "own", "create": true, "edit": false, "delete": false},
+    "financials": {"view": false, "create": false, "edit": false, "delete": false},
+    "expenses": {"view": false, "create": false, "edit": false, "delete": false},
+    "forms": {"view": true, "create": false, "edit": false, "delete": false},
+    "issues": {"view": true, "create": true, "edit": "own", "delete": false},
+    "settings": {"view": true, "manage_org": false, "manage_users": false, "manage_roles": false}
+  }'::jsonb, NULL)
+  ON CONFLICT (organization_id, name) DO UPDATE SET
+    permissions = EXCLUDED.permissions,
+    description = EXCLUDED.description;
+
+  -- Customer Success role
+  INSERT INTO public.roles (organization_id, name, description, is_system, permissions, project_scope) VALUES
+  (org_id, 'Customer Success', 'Access to feedback, tickets, and client management', TRUE, '{
+    "dashboard": {"view": true},
+    "projects": {"view": true, "create": false, "edit": false, "delete": false},
+    "tickets": {"view": true, "create": true, "edit": true, "delete": false},
+    "team": {"view": true, "create": false, "edit": false, "delete": false},
+    "crm": {"view": true, "create": true, "edit": true, "delete": false},
+    "quotes": {"view": true, "create": false, "edit": false, "delete": false},
+    "features": {"view": true, "create": true, "edit": true, "delete": false},
+    "feedback": {"view": true, "create": true, "edit": true, "delete": true},
+    "emails": {"view": true, "create": false, "edit": false, "delete": false},
+    "financials": {"view": false, "create": false, "edit": false, "delete": false},
+    "expenses": {"view": false, "create": false, "edit": false, "delete": false},
+    "forms": {"view": true, "create": true, "edit": true, "delete": false},
+    "issues": {"view": true, "create": true, "edit": true, "delete": false},
+    "settings": {"view": true, "manage_org": false, "manage_users": false, "manage_roles": false}
+  }'::jsonb, NULL)
+  ON CONFLICT (organization_id, name) DO UPDATE SET
+    permissions = EXCLUDED.permissions,
+    description = EXCLUDED.description;
+
+  -- Developer role
+  INSERT INTO public.roles (organization_id, name, description, is_system, permissions, project_scope) VALUES
+  (org_id, 'Developer', 'Access to projects, tickets, and feature requests', TRUE, '{
+    "dashboard": {"view": true},
+    "projects": {"view": true, "create": true, "edit": true, "delete": false},
+    "tickets": {"view": true, "create": true, "edit": true, "delete": false},
+    "team": {"view": true, "create": false, "edit": false, "delete": false},
+    "crm": {"view": false, "create": false, "edit": false, "delete": false},
+    "quotes": {"view": false, "create": false, "edit": false, "delete": false},
+    "features": {"view": true, "create": true, "edit": true, "delete": false},
+    "feedback": {"view": true, "create": false, "edit": false, "delete": false},
+    "emails": {"view": false, "create": false, "edit": false, "delete": false},
+    "financials": {"view": false, "create": false, "edit": false, "delete": false},
+    "expenses": {"view": false, "create": false, "edit": false, "delete": false},
+    "forms": {"view": true, "create": true, "edit": true, "delete": false},
+    "issues": {"view": true, "create": true, "edit": true, "delete": false},
+    "settings": {"view": true, "manage_org": false, "manage_users": false, "manage_roles": false}
+  }'::jsonb, NULL)
+  ON CONFLICT (organization_id, name) DO UPDATE SET
+    permissions = EXCLUDED.permissions,
+    description = EXCLUDED.description;
+
+  -- Accountant role
+  INSERT INTO public.roles (organization_id, name, description, is_system, permissions, project_scope) VALUES
+  (org_id, 'Accountant', 'Access to financials and expenses only', TRUE, '{
+    "dashboard": {"view": true},
+    "projects": {"view": false, "create": false, "edit": false, "delete": false},
+    "tickets": {"view": false, "create": false, "edit": false, "delete": false},
+    "team": {"view": true, "create": false, "edit": false, "delete": false},
+    "crm": {"view": false, "create": false, "edit": false, "delete": false},
+    "quotes": {"view": true, "create": false, "edit": false, "delete": false},
+    "features": {"view": false, "create": false, "edit": false, "delete": false},
+    "feedback": {"view": false, "create": false, "edit": false, "delete": false},
+    "emails": {"view": false, "create": false, "edit": false, "delete": false},
+    "financials": {"view": true, "create": true, "edit": true, "delete": true},
+    "expenses": {"view": true, "create": true, "edit": true, "delete": true},
+    "forms": {"view": false, "create": false, "edit": false, "delete": false},
+    "issues": {"view": false, "create": false, "edit": false, "delete": false},
+    "settings": {"view": true, "manage_org": false, "manage_users": false, "manage_roles": false}
+  }'::jsonb, NULL)
+  ON CONFLICT (organization_id, name) DO UPDATE SET
+    permissions = EXCLUDED.permissions,
+    description = EXCLUDED.description;
+
+  -- Viewer role
+  INSERT INTO public.roles (organization_id, name, description, is_system, permissions, project_scope) VALUES
+  (org_id, 'Viewer', 'Read-only access to most areas', TRUE, '{
+    "dashboard": {"view": true},
+    "projects": {"view": true, "create": false, "edit": false, "delete": false},
+    "tickets": {"view": true, "create": false, "edit": false, "delete": false},
+    "team": {"view": true, "create": false, "edit": false, "delete": false},
+    "crm": {"view": true, "create": false, "edit": false, "delete": false},
+    "quotes": {"view": true, "create": false, "edit": false, "delete": false},
+    "features": {"view": true, "create": false, "edit": false, "delete": false},
+    "feedback": {"view": true, "create": false, "edit": false, "delete": false},
+    "emails": {"view": false, "create": false, "edit": false, "delete": false},
+    "financials": {"view": false, "create": false, "edit": false, "delete": false},
+    "expenses": {"view": false, "create": false, "edit": false, "delete": false},
+    "forms": {"view": true, "create": false, "edit": false, "delete": false},
+    "issues": {"view": true, "create": false, "edit": false, "delete": false},
+    "settings": {"view": false, "manage_org": false, "manage_users": false, "manage_roles": false}
+  }'::jsonb, NULL)
+  ON CONFLICT (organization_id, name) DO UPDATE SET
+    permissions = EXCLUDED.permissions,
+    description = EXCLUDED.description;
+
+  -- Contractor role - project-scoped
+  INSERT INTO public.roles (organization_id, name, description, is_system, permissions, project_scope) VALUES
+  (org_id, 'Contractor', 'External contractor with access only to assigned projects', TRUE, '{
+    "dashboard": {"view": true},
+    "projects": {"view": true, "create": false, "edit": true, "delete": false},
+    "tickets": {"view": true, "create": true, "edit": "own", "delete": false},
+    "team": {"view": true, "create": false, "edit": false, "delete": false},
+    "crm": {"view": false, "create": false, "edit": false, "delete": false},
+    "quotes": {"view": false, "create": false, "edit": false, "delete": false},
+    "features": {"view": true, "create": true, "edit": "own", "delete": false},
+    "feedback": {"view": true, "create": true, "edit": "own", "delete": false},
+    "emails": {"view": false, "create": false, "edit": false, "delete": false},
+    "financials": {"view": false, "create": false, "edit": false, "delete": false},
+    "expenses": {"view": false, "create": false, "edit": false, "delete": false},
+    "forms": {"view": true, "create": false, "edit": false, "delete": false},
+    "issues": {"view": true, "create": true, "edit": "own", "delete": false},
+    "settings": {"view": false, "manage_org": false, "manage_users": false, "manage_roles": false}
+  }'::jsonb, 'assigned')
+  ON CONFLICT (organization_id, name) DO UPDATE SET
+    permissions = EXCLUDED.permissions,
+    description = EXCLUDED.description,
+    project_scope = EXCLUDED.project_scope;
+
+END;
+$$;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.create_default_roles_for_org(UUID) TO anon;
+GRANT EXECUTE ON FUNCTION public.create_default_roles_for_org(UUID) TO authenticated;
