@@ -12,6 +12,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Auth pages
+import Landing from "./pages/Landing";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import AcceptInvite from "./pages/auth/AcceptInvite";
@@ -81,6 +82,9 @@ const App = () => (
           <BrowserRouter>
             <AuthProvider>
               <Routes>
+            {/* Public landing page */}
+            <Route path="/welcome" element={<Landing />} />
+
             {/* Public auth routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
@@ -94,7 +98,7 @@ const App = () => (
             {/* Public form submission */}
             <Route path="/f/:token" element={<FormSubmit />} />
 
-            {/* Root redirect to organization workspace */}
+            {/* Root - Landing for guests, workspace for authenticated */}
             <Route path="/" element={<OrgRedirect />} />
 
             {/* Organization-scoped protected routes */}

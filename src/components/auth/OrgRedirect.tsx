@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import Landing from "@/pages/Landing";
 
 /**
  * Component that redirects to the user's organization workspace
@@ -201,9 +202,9 @@ export function OrgRedirect() {
     );
   }
 
-  // Not logged in - redirect to login
+  // Not logged in - show landing page
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Landing />;
   }
 
   // Have user and org - redirect to workspace
