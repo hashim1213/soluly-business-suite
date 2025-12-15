@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { useCanViewAmounts } from "@/components/HiddenAmount";
 import {
   useBusinessCosts,
   useCreateBusinessCost,
@@ -110,6 +111,14 @@ const categoryColors: Record<string, string> = {
 
 export default function BusinessCosts() {
   const { navigateOrg } = useOrgNavigation();
+  const canViewAmounts = useCanViewAmounts();
+
+  // Helper to format currency with permission check
+  const safeFormatCurrency = (value: number) => {
+    if (!canViewAmounts) return "••••••";
+    return formatCurrency(value);
+  };
+
   const { data: costs, isLoading } = useBusinessCosts();
   const { data: summary } = useBusinessCostsSummary();
   const { data: templates } = useExpenseTemplates();
@@ -769,7 +778,7 @@ export default function BusinessCosts() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">
-              {formatCurrency(summary?.totalAmount || 0)}
+              {safeFormatCurrency(summary?.totalAmount || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {summary?.count || 0} expenses tracked
@@ -784,7 +793,7 @@ export default function BusinessCosts() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">
-              {formatCurrency(summary?.recurringMonthlyTotal || 0)}
+              {safeFormatCurrency(summary?.recurringMonthlyTotal || 0)}
               <span className="text-sm font-normal text-muted-foreground">/mo</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -800,7 +809,7 @@ export default function BusinessCosts() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono text-chart-2">
-              {formatCurrency(summary?.taxDeductibleTotal || 0)}
+              {safeFormatCurrency(summary?.taxDeductibleTotal || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Potential tax savings
@@ -841,7 +850,7 @@ export default function BusinessCosts() {
                       </Badge>
                     </div>
                     <span className="font-mono font-medium">
-                      {formatCurrency(amount)} ({percentage.toFixed(1)}%)
+                      {safeFormatCurrency(amount)} ({percentage.toFixed(1)}%)
                     </span>
                   </div>
                   <Progress value={percentage} className="h-2" />
@@ -941,7 +950,7 @@ export default function BusinessCosts() {
                     </TableCell>
                     <TableCell className="text-right font-mono font-medium">
                       <div>
-                        {formatCurrency(cost.amount)}
+                        {safeFormatCurrency(cost.amount)}
                         {cost.recurring && (
                           <span className="text-xs text-muted-foreground">
                             {getFrequencyLabel(cost.recurring_frequency)}
@@ -960,7 +969,7 @@ export default function BusinessCosts() {
                         const periods = cost.recurring ? calculateRecurringPeriods(cost.date, cost.recurring_frequency) : 1;
                         return (
                           <div>
-                            <div>{formatCurrency(total)}</div>
+                            <div>{safeFormatCurrency(total)}</div>
                             {cost.recurring && periods > 1 && (
                               <div className="text-xs text-muted-foreground">
                                 {periods} periods
@@ -1248,7 +1257,7 @@ export default function BusinessCosts() {
                           </Badge>
                         </span>
                         {template.default_amount && (
-                          <span className="font-mono">${template.default_amount}</span>
+                          <span className="font-mono">{canViewAmounts ? `$${template.default_amount}` : "••••••"}</span>
                         )}
                         <span>Used {template.use_count} times</span>
                       </div>

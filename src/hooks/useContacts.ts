@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { SocialProfiles, ContactTag, CustomFieldValue } from "@/types/crm";
 
 export interface Contact {
   id: string;
@@ -14,6 +15,7 @@ export interface Contact {
   company_id: string | null;
   address: string | null;
   notes: string | null;
+  social_profiles: SocialProfiles | null;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -21,6 +23,9 @@ export interface Contact {
     id: string;
     name: string;
   } | null;
+  tags?: ContactTag[];
+  custom_field_values?: CustomFieldValue[];
+  activity_count?: number;
 }
 
 export interface CreateContactInput {
@@ -31,6 +36,7 @@ export interface CreateContactInput {
   company_id?: string;
   address?: string;
   notes?: string;
+  social_profiles?: SocialProfiles;
 }
 
 export interface UpdateContactInput extends Partial<CreateContactInput> {
@@ -79,7 +85,8 @@ export function useContacts() {
         .from("contacts")
         .select(`
           *,
-          company:crm_clients!company_id(id, name)
+          company:crm_clients!company_id(id, name),
+          tags:contact_tags(*, tag:tags(*))
         `)
         .eq("organization_id", organization.id)
         .order("name", { ascending: true });
@@ -106,7 +113,8 @@ export function useContact(id: string | undefined) {
         .from("contacts")
         .select(`
           *,
-          company:crm_clients!company_id(id, name)
+          company:crm_clients!company_id(id, name),
+          tags:contact_tags(*, tag:tags(*))
         `)
         .eq("organization_id", organization.id)
         .eq("id", id)
@@ -116,6 +124,35 @@ export function useContact(id: string | undefined) {
       return data as Contact;
     },
     enabled: !!organization?.id && !!id,
+  });
+}
+
+/**
+ * Hook to fetch a single contact by display ID
+ */
+export function useContactByDisplayId(displayId: string | undefined) {
+  const { organization } = useAuth();
+
+  return useQuery({
+    queryKey: ["contacts", organization?.id, "display", displayId],
+    queryFn: async () => {
+      if (!organization?.id || !displayId) return null;
+
+      const { data, error } = await supabase
+        .from("contacts")
+        .select(`
+          *,
+          company:crm_clients!company_id(id, name),
+          tags:contact_tags(*, tag:tags(*))
+        `)
+        .eq("organization_id", organization.id)
+        .eq("display_id", displayId)
+        .single();
+
+      if (error) throw error;
+      return data as Contact;
+    },
+    enabled: !!organization?.id && !!displayId,
   });
 }
 
@@ -134,7 +171,8 @@ export function useContactsByCompany(companyId: string | undefined) {
         .from("contacts")
         .select(`
           *,
-          company:crm_clients!company_id(id, name)
+          company:crm_clients!company_id(id, name),
+          tags:contact_tags(*, tag:tags(*))
         `)
         .eq("organization_id", organization.id)
         .eq("company_id", companyId)
@@ -144,6 +182,47 @@ export function useContactsByCompany(companyId: string | undefined) {
       return data as Contact[];
     },
     enabled: !!organization?.id && !!companyId,
+  });
+}
+
+/**
+ * Hook to fetch contacts by tag
+ */
+export function useContactsByTag(tagId: string | undefined) {
+  const { organization } = useAuth();
+
+  return useQuery({
+    queryKey: ["contacts", organization?.id, "tag", tagId],
+    queryFn: async () => {
+      if (!organization?.id || !tagId) return [];
+
+      // First get contact IDs that have this tag
+      const { data: taggedContacts, error: tagError } = await supabase
+        .from("contact_tags")
+        .select("contact_id")
+        .eq("tag_id", tagId);
+
+      if (tagError) throw tagError;
+
+      if (!taggedContacts || taggedContacts.length === 0) return [];
+
+      const contactIds = taggedContacts.map((tc) => tc.contact_id);
+
+      const { data, error } = await supabase
+        .from("contacts")
+        .select(`
+          *,
+          company:crm_clients!company_id(id, name),
+          tags:contact_tags(*, tag:tags(*))
+        `)
+        .eq("organization_id", organization.id)
+        .in("id", contactIds)
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      return data as Contact[];
+    },
+    enabled: !!organization?.id && !!tagId,
   });
 }
 
@@ -174,6 +253,7 @@ export function useCreateContact() {
           company_id: input.company_id || null,
           address: input.address || null,
           notes: input.notes || null,
+          social_profiles: input.social_profiles || {},
         })
         .select()
         .single();

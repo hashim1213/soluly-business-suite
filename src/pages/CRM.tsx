@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { useCanViewAmounts } from "@/components/HiddenAmount";
 import {
   Building,
   Plus,
@@ -59,8 +60,10 @@ import { useQuotes, useCreateQuote, useUpdateQuote, useDeleteQuote, useCreateAct
 import { useCrmClients, useCrmLeads, useCreateCrmClient, useCreateCrmLead, useDeleteCrmClient, useDeleteCrmLead, useConvertLeadToClient, useUpdateCrmLead, useUpdateCrmClient, CrmClient } from "@/hooks/useCRM";
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, Contact } from "@/hooks/useContacts";
 import { useBulkAddClientContacts } from "@/hooks/useClientContacts";
+import { useTags } from "@/hooks/useTags";
+import { useExportContacts, useImportContacts, parseCSV, generateImportTemplate } from "@/hooks/useContactImportExport";
 import { Database } from "@/integrations/supabase/types";
-import { X, PlusCircle } from "lucide-react";
+import { X, PlusCircle, Upload, Download, Tags, Filter } from "lucide-react";
 
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 type ActivityType = Database["public"]["Enums"]["activity_type"];
@@ -85,6 +88,7 @@ const leadStatusStyles: Record<LeadStatus, string> = {
 
 export default function CRM() {
   const { navigateOrg } = useOrgNavigation();
+  const canViewAmounts = useCanViewAmounts();
   const { data: quotes, isLoading: quotesLoading, error: quotesError } = useQuotes();
   const { data: clients, isLoading: clientsLoading } = useCrmClients();
   const { data: leads, isLoading: leadsLoading } = useCrmLeads();
@@ -107,8 +111,15 @@ export default function CRM() {
   const deleteContact = useDeleteContact();
   const bulkAddClientContacts = useBulkAddClientContacts();
   const updateClient = useUpdateCrmClient();
+  const { data: tags } = useTags();
+  const exportContacts = useExportContacts();
+  const importContacts = useImportContacts();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [tagFilter, setTagFilter] = useState<string>("all");
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("pipeline");
   const [isNewDealOpen, setIsNewDealOpen] = useState(false);
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
@@ -241,6 +252,12 @@ export default function CRM() {
 
   // Filter contacts
   const filteredContacts = contacts?.filter((contact) => {
+    // Tag filter
+    if (tagFilter !== "all") {
+      const hasTag = contact.tags?.some((ct) => ct.tag_id === tagFilter);
+      if (!hasTag) return false;
+    }
+    // Search filter
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -585,6 +602,7 @@ export default function CRM() {
   };
 
   const formatValue = (value: number) => {
+    if (!canViewAmounts) return "••••••";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -1297,7 +1315,11 @@ export default function CRM() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredClients.map((client) => (
-                <Card key={client.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+                <Card
+                  key={client.id}
+                  className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigateOrg(`/clients/${client.display_id}`)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -1326,17 +1348,21 @@ export default function CRM() {
                         )}
                       </div>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="border-2">
-                          <DropdownMenuItem onClick={() => setEditingClient(client)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Client
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
+                            <ChevronRight className="h-4 w-4 mr-2" />
+                            View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => deleteClient.mutate(client.id)} className="text-destructive">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingClient(client); }}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Quick Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteClient.mutate(client.id); }} className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete Client
                           </DropdownMenuItem>
@@ -1515,14 +1541,73 @@ export default function CRM() {
 
         {/* Contacts Tab */}
         <TabsContent value="contacts" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
-              <DialogTrigger asChild>
-                <Button className="border-2">
-                  <User className="h-4 w-4 mr-2" />
-                  New Contact
-                </Button>
-              </DialogTrigger>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              {tags && tags.length > 0 && (
+                <Select value={tagFilter} onValueChange={setTagFilter}>
+                  <SelectTrigger className="border-2 w-40">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="All Tags" />
+                  </SelectTrigger>
+                  <SelectContent className="border-2">
+                    <SelectItem value="all">All Tags</SelectItem>
+                    {tags.map((tag) => (
+                      <SelectItem key={tag.id} value={tag.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: tag.color }}
+                          />
+                          {tag.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="border-2"
+                onClick={() => {
+                  const template = generateImportTemplate();
+                  const blob = new Blob([template], { type: "text/csv" });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "contacts-import-template.csv";
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Template
+              </Button>
+              <Button
+                variant="outline"
+                className="border-2"
+                onClick={() => setIsImportDialogOpen(true)}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
+              <Button
+                variant="outline"
+                className="border-2"
+                onClick={() => contacts && exportContacts.mutate(contacts)}
+                disabled={exportContacts.isPending || !contacts?.length}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
+                <DialogTrigger asChild>
+                  <Button className="border-2">
+                    <User className="h-4 w-4 mr-2" />
+                    New Contact
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="border-2 sm:max-w-[500px]">
                 <DialogHeader className="border-b-2 border-border pb-4">
                   <DialogTitle>Add New Contact</DialogTitle>
@@ -1655,6 +1740,7 @@ export default function CRM() {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           {filteredContacts.length === 0 ? (
@@ -1672,7 +1758,11 @@ export default function CRM() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredContacts.map((contact) => (
-                <Card key={contact.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+                <Card
+                  key={contact.id}
+                  className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -1704,20 +1794,47 @@ export default function CRM() {
                             <Phone className="h-3 w-3" /> {contact.phone}
                           </p>
                         )}
+                        {/* Tags */}
+                        {contact.tags && contact.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {contact.tags.slice(0, 3).map((ct) => {
+                              const tag = tags?.find((t) => t.id === ct.tag_id);
+                              return tag ? (
+                                <Badge
+                                  key={ct.tag_id}
+                                  variant="secondary"
+                                  className="text-xs px-1.5 py-0"
+                                  style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
+                                >
+                                  {tag.name}
+                                </Badge>
+                              ) : null;
+                            })}
+                            {contact.tags.length > 3 && (
+                              <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                +{contact.tags.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         <p className="text-xs font-mono text-muted-foreground mt-2">{contact.display_id}</p>
                       </div>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="border-2">
-                          <DropdownMenuItem onClick={() => setEditingContact(contact)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Contact
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
+                            <ChevronRight className="h-4 w-4 mr-2" />
+                            View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => deleteContact.mutate(contact.id)} className="text-destructive">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingContact(contact); }}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Quick Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteContact.mutate(contact.id); }} className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete Contact
                           </DropdownMenuItem>
@@ -2007,6 +2124,122 @@ export default function CRM() {
             <Button onClick={handleUpdateClient} className="border-2" disabled={updateClient.isPending}>
               {updateClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Contacts Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={(open) => {
+        setIsImportDialogOpen(open);
+        if (!open) {
+          setImportFile(null);
+          setImportPreview([]);
+        }
+      }}>
+        <DialogContent className="border-2 sm:max-w-[600px]">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle>Import Contacts</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Select CSV File</Label>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setImportFile(file);
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const content = event.target?.result as string;
+                      const parsed = parseCSV(content);
+                      setImportPreview(parsed.slice(0, 5));
+                    };
+                    reader.readAsText(file);
+                  }
+                }}
+                className="border-2"
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload a CSV file with columns: Name, Email, Phone, Job Title, Company, Address, Notes, Tags
+              </p>
+            </div>
+
+            {importPreview.length > 0 && (
+              <div className="grid gap-2">
+                <Label>Preview (first 5 rows)</Label>
+                <div className="border-2 border-border rounded-md overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium">Name</th>
+                        <th className="px-3 py-2 text-left font-medium">Email</th>
+                        <th className="px-3 py-2 text-left font-medium">Phone</th>
+                        <th className="px-3 py-2 text-left font-medium">Company</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {importPreview.map((row, idx) => (
+                        <tr key={idx}>
+                          <td className="px-3 py-2 truncate max-w-[150px]">{row.name || "-"}</td>
+                          <td className="px-3 py-2 truncate max-w-[150px]">{row.email || "-"}</td>
+                          <td className="px-3 py-2 truncate max-w-[100px]">{row.phone || "-"}</td>
+                          <td className="px-3 py-2 truncate max-w-[150px]">{row.company || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {importFile && `Total rows to import: ${importPreview.length > 0 ? "loading..." : 0}`}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsImportDialogOpen(false);
+                setImportFile(null);
+                setImportPreview([]);
+              }}
+              className="border-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!importFile) {
+                  toast.error("Please select a file to import");
+                  return;
+                }
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                  const content = event.target?.result as string;
+                  const parsed = parseCSV(content);
+                  if (parsed.length === 0) {
+                    toast.error("No valid data found in the CSV file");
+                    return;
+                  }
+                  try {
+                    await importContacts.mutateAsync(parsed);
+                    setIsImportDialogOpen(false);
+                    setImportFile(null);
+                    setImportPreview([]);
+                  } catch (error) {
+                    // Error handled by hook
+                  }
+                };
+                reader.readAsText(importFile);
+              }}
+              className="border-2"
+              disabled={importContacts.isPending || !importFile}
+            >
+              {importContacts.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              Import Contacts
             </Button>
           </div>
         </DialogContent>

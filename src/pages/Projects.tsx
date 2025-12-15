@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { useCanViewAmounts } from "@/components/HiddenAmount";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -53,6 +54,7 @@ type ProjectStatus = Database["public"]["Enums"]["project_status"];
 
 export default function Projects() {
   const { navigateOrg } = useOrgNavigation();
+  const canViewAmounts = useCanViewAmounts();
   const { data: projects, isLoading, error } = useProjects();
   const { data: tickets } = useTickets();
   const { data: contacts } = useContacts();
@@ -167,6 +169,7 @@ export default function Projects() {
   };
 
   const formatValue = (value: number) => {
+    if (!canViewAmounts) return "••••••";
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',

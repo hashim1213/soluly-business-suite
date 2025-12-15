@@ -1,6 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useState, useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { HiddenAmount } from "@/components/HiddenAmount";
 import { useProjectByDisplayId, useUpdateProject, useDeleteProject } from "@/hooks/useProjects";
 import { useTicketsByProject, TicketWithProject } from "@/hooks/useTickets";
 import { useProjectTeamMembers, useAddProjectTeamMember, useRemoveProjectTeamMember } from "@/hooks/useProjectTeamMembers";
@@ -273,6 +275,7 @@ const costCategoryLabels = {
 export default function ProjectDetail() {
   const { projectId } = useParams();
   const { navigateOrg, getOrgPath } = useOrgNavigation();
+  const { canViewAmounts } = useAuth();
 
   // Form state
   const [newTodo, setNewTodo] = useState("");
@@ -428,6 +431,7 @@ export default function ProjectDetail() {
     status: string;
     progress: number;
     value: number;
+    budget: number;
     client_name: string;
     client_email: string;
     start_date: string;
@@ -731,6 +735,7 @@ export default function ProjectDetail() {
       status: dbProject.status,
       progress: dbProject.progress,
       value: dbProject.value,
+      budget: dbProject.budget || 0,
       client_name: dbProject.client_name,
       client_email: dbProject.client_email || "",
       start_date: dbProject.start_date ? dbProject.start_date.split("T")[0] : "",
@@ -748,6 +753,7 @@ export default function ProjectDetail() {
         status: editProjectData.status as "active" | "pending" | "completed",
         progress: editProjectData.progress,
         value: editProjectData.value,
+        budget: editProjectData.budget,
         client_name: editProjectData.client_name,
         client_email: editProjectData.client_email || null,
         start_date: editProjectData.start_date || null,
@@ -1599,7 +1605,32 @@ export default function ProjectDetail() {
                   </div>
                   <div className="border-t-2 border-border pt-4">
                     <div className="text-sm text-muted-foreground mb-1">Contracted Value</div>
-                    <div className="font-mono font-bold text-lg">${Number(dbProject?.value || 0).toLocaleString()}</div>
+                    <div className="font-mono font-bold text-lg">
+                      <HiddenAmount value={Number(dbProject?.value || 0)} />
+                    </div>
+                  </div>
+                  <div className="border-t-2 border-border pt-4">
+                    <div className="text-sm text-muted-foreground mb-1">Project Budget</div>
+                    <div className="font-mono font-bold text-lg">
+                      <HiddenAmount value={Number(dbProject?.budget || 0)} />
+                    </div>
+                    {(dbProject?.budget || 0) > 0 && canViewAmounts() && (
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                          <span>Budget Used</span>
+                          <span className={laborCosts > (dbProject?.budget || 0) ? "text-destructive font-medium" : ""}>
+                            {((laborCosts / (dbProject?.budget || 1)) * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <Progress
+                          value={Math.min((laborCosts / (dbProject?.budget || 1)) * 100, 100)}
+                          className={`h-2 ${laborCosts > (dbProject?.budget || 0) ? "[&>div]:bg-destructive" : ""}`}
+                        />
+                        <div className="text-xs text-muted-foreground mt-1">
+                          <HiddenAmount value={laborCosts} /> of <HiddenAmount value={Number(dbProject?.budget || 0)} /> used
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="border-t-2 border-border pt-4">
                     <div className="text-sm text-muted-foreground mb-1">Timeline</div>
@@ -3289,15 +3320,25 @@ export default function ProjectDetail() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-project-start-date">Start Date</Label>
+                  <Label htmlFor="edit-project-budget">Project Budget ($)</Label>
                   <Input
-                    id="edit-project-start-date"
-                    type="date"
-                    value={editProjectData.start_date}
-                    onChange={(e) => setEditProjectData({ ...editProjectData, start_date: e.target.value })}
+                    id="edit-project-budget"
+                    type="number"
+                    value={editProjectData.budget}
+                    onChange={(e) => setEditProjectData({ ...editProjectData, budget: parseFloat(e.target.value) || 0 })}
                     className="border-2"
                   />
                 </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-project-start-date">Start Date</Label>
+                <Input
+                  id="edit-project-start-date"
+                  type="date"
+                  value={editProjectData.start_date}
+                  onChange={(e) => setEditProjectData({ ...editProjectData, start_date: e.target.value })}
+                  className="border-2"
+                />
               </div>
               <div className="border-t-2 border-border pt-4">
                 <h4 className="font-semibold mb-3">Client Information</h4>

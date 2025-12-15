@@ -7,9 +7,11 @@ import { useTickets } from "@/hooks/useTickets";
 import { useFeatureRequests } from "@/hooks/useFeatureRequests";
 import { useQuotes } from "@/hooks/useQuotes";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCanViewAmounts } from "@/components/HiddenAmount";
 
 export default function Dashboard() {
   const { hasPermission, member } = useAuth();
+  const canViewAmounts = useCanViewAmounts();
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: features, isLoading: featuresLoading } = useFeatureRequests();
@@ -43,6 +45,7 @@ export default function Dashboard() {
     .reduce((sum, q) => sum + (q.value || 0), 0) || 0;
 
   const formatPipelineValue = (value: number) => {
+    if (!canViewAmounts) return "••••••";
     if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
     return `$${value}`;

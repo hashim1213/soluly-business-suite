@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { useCanViewAmounts } from "@/components/HiddenAmount";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Edit, FileText, Send, MoreVertical, Clock, DollarSign, Mail, Calendar, Building, Plus, Trash2, Save, X, Loader2, Download, Receipt } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
@@ -87,6 +88,7 @@ const stageValues: Record<string, number> = {
 export default function QuoteDetail() {
   const { quoteId } = useParams();
   const { navigateOrg } = useOrgNavigation();
+  const canViewAmounts = useCanViewAmounts();
   const { organization } = useAuth();
   const { data: orgDetails } = useCurrentOrganization();
   const { data: quote, isLoading, error } = useQuoteByDisplayId(quoteId);
@@ -140,6 +142,7 @@ export default function QuoteDetail() {
   };
 
   const formatCurrency = (value: number) => {
+    if (!canViewAmounts) return "••••••";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useFinancialsOverview, ProjectFinancials } from "@/hooks/useFinancials";
 import { useBusinessCostsSummary, BUSINESS_COST_CATEGORIES } from "@/hooks/useBusinessCosts";
+import { useCanViewAmounts } from "@/components/HiddenAmount";
 import {
   DollarSign,
   TrendingUp,
@@ -52,9 +53,16 @@ export default function Financials() {
   const { navigateOrg } = useOrgNavigation();
   const { data: financials, isLoading, error } = useFinancialsOverview();
   const { data: businessCostsSummary } = useBusinessCostsSummary();
+  const canViewAmounts = useCanViewAmounts();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<keyof ProjectFinancials>("value");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Helper to format currency with permission check
+  const safeFormatCurrency = (value: number) => {
+    if (!canViewAmounts) return "••••••";
+    return formatCurrency(value);
+  };
 
   // Calculate combined financials with business costs
   const totalBusinessCosts = businessCostsSummary?.totalAmount || 0;
@@ -132,7 +140,7 @@ export default function Financials() {
               </div>
               <div>
                 <div className="text-2xl font-bold font-mono">
-                  {formatCurrency(financials.totalProjectValue)}
+                  {safeFormatCurrency(financials.totalProjectValue)}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Total Project Value
@@ -150,7 +158,7 @@ export default function Financials() {
               </div>
               <div>
                 <div className="text-2xl font-bold font-mono">
-                  {formatCurrency(financials.totalPaid)}
+                  {safeFormatCurrency(financials.totalPaid)}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Revenue Collected
@@ -168,7 +176,7 @@ export default function Financials() {
               </div>
               <div>
                 <div className="text-2xl font-bold font-mono">
-                  {formatCurrency(financials.totalOutstanding)}
+                  {safeFormatCurrency(financials.totalOutstanding)}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Outstanding
@@ -200,7 +208,7 @@ export default function Financials() {
                       : "text-red-600"
                   }`}
                 >
-                  {formatCurrency(financials.totalProfit)}
+                  {safeFormatCurrency(financials.totalProfit)}
                 </div>
                 <div className="text-sm text-muted-foreground">Net Profit</div>
               </div>
@@ -221,7 +229,7 @@ export default function Financials() {
                 <div>
                   <div className="text-sm text-muted-foreground">Business Operating Costs</div>
                   <div className="text-xl font-bold font-mono">
-                    {formatCurrency(totalBusinessCosts)}
+                    {safeFormatCurrency(totalBusinessCosts)}
                   </div>
                 </div>
               </div>
@@ -229,7 +237,7 @@ export default function Financials() {
                 <div className="text-right">
                   <div className="text-sm text-muted-foreground">Combined Net Profit</div>
                   <div className={`text-xl font-bold font-mono ${combinedProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                    {formatCurrency(combinedProfit)}
+                    {safeFormatCurrency(combinedProfit)}
                   </div>
                 </div>
                 <Button variant="outline" className="border-2" onClick={() => navigateOrg("/expenses")}>
@@ -247,11 +255,11 @@ export default function Financials() {
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Project Costs</div>
             <div className="text-xl font-bold font-mono">
-              {formatCurrency(financials.totalCosts)}
+              {safeFormatCurrency(financials.totalCosts)}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              Labor: {formatCurrency(financials.totalLaborCosts)} | Other:{" "}
-              {formatCurrency(financials.totalNonLaborCosts)}
+              Labor: {safeFormatCurrency(financials.totalLaborCosts)} | Other:{" "}
+              {safeFormatCurrency(financials.totalNonLaborCosts)}
             </div>
           </CardContent>
         </Card>
@@ -275,7 +283,7 @@ export default function Financials() {
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Total Invoiced</div>
             <div className="text-xl font-bold font-mono">
-              {formatCurrency(financials.totalInvoiced)}
+              {safeFormatCurrency(financials.totalInvoiced)}
             </div>
           </CardContent>
         </Card>
@@ -396,13 +404,13 @@ export default function Financials() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        {formatCurrency(project.value)}
+                        {safeFormatCurrency(project.value)}
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        {formatCurrency(project.paid)}
+                        {safeFormatCurrency(project.paid)}
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        {formatCurrency(project.costs)}
+                        {safeFormatCurrency(project.costs)}
                       </TableCell>
                       <TableCell
                         className={`text-right font-mono ${
@@ -417,7 +425,7 @@ export default function Financials() {
                           ) : (
                             <ArrowDownRight className="h-4 w-4" />
                           )}
-                          {formatCurrency(project.profit)}
+                          {safeFormatCurrency(project.profit)}
                         </div>
                       </TableCell>
                       <TableCell
@@ -447,17 +455,17 @@ export default function Financials() {
               </div>
               <div></div>
               <div className="text-right font-mono">
-                {formatCurrency(
+                {safeFormatCurrency(
                   sortedProjects.reduce((sum, p) => sum + p.value, 0)
                 )}
               </div>
               <div className="text-right font-mono">
-                {formatCurrency(
+                {safeFormatCurrency(
                   sortedProjects.reduce((sum, p) => sum + p.paid, 0)
                 )}
               </div>
               <div className="text-right font-mono">
-                {formatCurrency(
+                {safeFormatCurrency(
                   sortedProjects.reduce((sum, p) => sum + p.costs, 0)
                 )}
               </div>
@@ -468,7 +476,7 @@ export default function Financials() {
                     : "text-red-600"
                 }`}
               >
-                {formatCurrency(
+                {safeFormatCurrency(
                   sortedProjects.reduce((sum, p) => sum + p.profit, 0)
                 )}
               </div>

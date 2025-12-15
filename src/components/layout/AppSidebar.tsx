@@ -14,6 +14,8 @@ import {
   DollarSign,
   Receipt,
   ClipboardList,
+  BarChart3,
+  AlertCircle,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,10 +58,12 @@ const ticketCategories: NavItem[] = [
   { title: "Feature Requests", path: "tickets/features", icon: Lightbulb, permission: "features" },
   { title: "Customer Quotes", path: "tickets/quotes", icon: FileText, permission: "quotes" },
   { title: "Feedback", path: "tickets/feedback", icon: MessageSquare, permission: "feedback" },
+  { title: "Issues", path: "tickets/issues", icon: AlertCircle, permission: "issues" },
 ];
 
 const systemItems: NavItem[] = [
   { title: "Email Inbox", path: "emails", icon: Mail, permission: "emails" },
+  { title: "Reports", path: "reports", icon: BarChart3, permission: "crm" },
   { title: "Settings", path: "settings", icon: Settings, permission: "settings" },
 ];
 

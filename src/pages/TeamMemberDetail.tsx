@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useState } from "react";
+import { useCanViewAmounts } from "@/components/HiddenAmount";
 import {
   ArrowLeft,
   Mail,
@@ -101,6 +102,7 @@ const paymentMethods: { value: PaymentMethod; label: string }[] = [
 export default function TeamMemberDetail() {
   const { memberId } = useParams();
   const { navigateOrg, getOrgPath } = useOrgNavigation();
+  const canViewAmounts = useCanViewAmounts();
 
   const { data: member, isLoading, error } = useTeamMember(memberId);
   const { data: timeEntries, isLoading: timeEntriesLoading } = useTimeEntriesByMember(memberId);
@@ -465,7 +467,7 @@ export default function TeamMemberDetail() {
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold font-mono truncate">${totalEarned.toLocaleString()}</div>
+                <div className="text-lg sm:text-2xl font-bold font-mono truncate">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Earned</div>
               </div>
             </div>
@@ -478,7 +480,7 @@ export default function TeamMemberDetail() {
                 <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold font-mono text-chart-2 truncate">${totalPaid.toLocaleString()}</div>
+                <div className="text-lg sm:text-2xl font-bold font-mono text-chart-2 truncate">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Paid</div>
               </div>
             </div>
@@ -492,7 +494,7 @@ export default function TeamMemberDetail() {
               </div>
               <div className="min-w-0">
                 <div className={`text-lg sm:text-2xl font-bold font-mono truncate ${outstanding > 0 ? "text-chart-4" : ""}`}>
-                  ${outstanding.toLocaleString()}
+                  {canViewAmounts ? `$${outstanding.toLocaleString()}` : "••••••"}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Outstanding</div>
               </div>
@@ -549,12 +551,12 @@ export default function TeamMemberDetail() {
               <CardContent className="p-4 space-y-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Hourly Rate</span>
-                  <span className="font-mono font-bold">${member.hourly_rate}/hr</span>
+                  <span className="font-mono font-bold">{canViewAmounts ? `$${member.hourly_rate}/hr` : "••••••"}</span>
                 </div>
                 {member.salary > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Annual Salary</span>
-                    <span className="font-mono font-bold">${member.salary.toLocaleString()}</span>
+                    <span className="font-mono font-bold">{canViewAmounts ? `$${member.salary.toLocaleString()}` : "••••••"}</span>
                   </div>
                 )}
                 <div className="border-t-2 border-border pt-4">
@@ -564,16 +566,16 @@ export default function TeamMemberDetail() {
                   </div>
                   <div className="flex justify-between mt-2">
                     <span className="text-muted-foreground">Total Earned</span>
-                    <span className="font-mono font-bold">${totalEarned.toLocaleString()}</span>
+                    <span className="font-mono font-bold">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</span>
                   </div>
                   <div className="flex justify-between mt-2">
                     <span className="text-muted-foreground">Total Paid</span>
-                    <span className="font-mono font-bold text-chart-2">${totalPaid.toLocaleString()}</span>
+                    <span className="font-mono font-bold text-chart-2">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</span>
                   </div>
                   {outstanding > 0 && (
                     <div className="flex justify-between mt-2">
                       <span className="text-muted-foreground">Outstanding</span>
-                      <span className="font-mono font-bold text-chart-4">${outstanding.toLocaleString()}</span>
+                      <span className="font-mono font-bold text-chart-4">{canViewAmounts ? `$${outstanding.toLocaleString()}` : "••••••"}</span>
                     </div>
                   )}
                 </div>
@@ -629,7 +631,7 @@ export default function TeamMemberDetail() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Effective Rate</span>
-                  <span className="font-mono font-bold">${member.hourly_rate}/hr</span>
+                  <span className="font-mono font-bold">{canViewAmounts ? `$${member.hourly_rate}/hr` : "••••••"}</span>
                 </div>
               </CardContent>
             </Card>
@@ -771,20 +773,20 @@ export default function TeamMemberDetail() {
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-3 sm:p-4">
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Earned</div>
-                <div className="text-xl sm:text-2xl font-bold font-mono">${totalEarned.toLocaleString()}</div>
+                <div className="text-xl sm:text-2xl font-bold font-mono">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</div>
               </CardContent>
             </Card>
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-3 sm:p-4">
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Paid</div>
-                <div className="text-xl sm:text-2xl font-bold font-mono text-chart-2">${totalPaid.toLocaleString()}</div>
+                <div className="text-xl sm:text-2xl font-bold font-mono text-chart-2">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</div>
               </CardContent>
             </Card>
             <Card className="border-2 border-border shadow-sm">
               <CardContent className="p-3 sm:p-4">
                 <div className="text-xs sm:text-sm text-muted-foreground">Outstanding</div>
                 <div className={`text-xl sm:text-2xl font-bold font-mono ${outstanding > 0 ? "text-chart-4" : "text-chart-2"}`}>
-                  ${outstanding.toLocaleString()}
+                  {canViewAmounts ? `$${outstanding.toLocaleString()}` : "••••••"}
                 </div>
               </CardContent>
             </Card>
@@ -822,7 +824,7 @@ export default function TeamMemberDetail() {
                       <div key={payment.id} className="p-4 space-y-2">
                         <div className="flex items-start justify-between">
                           <div>
-                            <div className="font-mono font-bold text-lg">${payment.amount.toLocaleString()}</div>
+                            <div className="font-mono font-bold text-lg">{canViewAmounts ? `$${payment.amount.toLocaleString()}` : "••••••"}</div>
                             <div className="text-xs text-muted-foreground">
                               {format(new Date(payment.payment_date), "MMM d, yyyy")}
                             </div>
@@ -894,7 +896,7 @@ export default function TeamMemberDetail() {
                               {paymentMethods.find(m => m.value === payment.payment_method)?.label || payment.payment_method}
                             </TableCell>
                             <TableCell className="text-right font-mono font-bold">
-                              ${payment.amount.toLocaleString()}
+                              {canViewAmounts ? `$${payment.amount.toLocaleString()}` : "••••••"}
                             </TableCell>
                             <TableCell>
                               <Badge className={payment.status === "paid" ? "bg-chart-2 text-background" : payment.status === "pending" ? "bg-chart-4 text-foreground" : "bg-muted text-muted-foreground"}>
@@ -1042,7 +1044,7 @@ export default function TeamMemberDetail() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Hours: <span className="font-mono">{project.hours}h</span></span>
-                          <span className="font-mono font-bold">${project.earnings.toLocaleString()}</span>
+                          <span className="font-mono font-bold">{canViewAmounts ? `$${project.earnings.toLocaleString()}` : "••••••"}</span>
                         </div>
                       </div>
                     ))}
@@ -1072,7 +1074,7 @@ export default function TeamMemberDetail() {
                             </TableCell>
                             <TableCell className="text-right font-mono">{project.hours}h</TableCell>
                             <TableCell className="text-right font-mono font-bold">
-                              ${project.earnings.toLocaleString()}
+                              {canViewAmounts ? `$${project.earnings.toLocaleString()}` : "••••••"}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">

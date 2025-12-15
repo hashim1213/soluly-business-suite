@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+import { useCanViewAmounts } from "@/components/HiddenAmount";
 import {
   Users,
   Plus,
@@ -65,6 +66,7 @@ const contractTypes: ContractType[] = ["Full-time", "Part-time", "Contractor"];
 
 export default function TeamMembers() {
   const { navigateOrg } = useOrgNavigation();
+  const canViewAmounts = useCanViewAmounts();
   const { data: teamMembers, isLoading, error } = useTeamMembersWithProjects();
   const createTeamMember = useCreateTeamMember();
   const updateTeamMember = useUpdateTeamMember();
@@ -355,7 +357,7 @@ export default function TeamMembers() {
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold font-mono truncate">${totalLaborCost.toLocaleString()}</div>
+                <div className="text-lg sm:text-2xl font-bold font-mono truncate">{canViewAmounts ? `$${totalLaborCost.toLocaleString()}` : "••••••"}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Labor Cost</div>
               </div>
             </div>
@@ -470,7 +472,7 @@ export default function TeamMembers() {
                 <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
                   <span className="text-muted-foreground">{member.department}</span>
                   <span className="text-muted-foreground">•</span>
-                  <span className="font-mono">${member.hourly_rate}/hr</span>
+                  <span className="font-mono">{canViewAmounts ? `$${member.hourly_rate}/hr` : "••••••"}</span>
                   <span className="text-muted-foreground">•</span>
                   <span className="font-mono">{member.total_hours}h</span>
                 </div>
@@ -528,7 +530,7 @@ export default function TeamMembers() {
                         {member.contract_type}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-mono">${member.hourly_rate}</TableCell>
+                    <TableCell className="text-right font-mono">{canViewAmounts ? `$${member.hourly_rate}` : "••••••"}</TableCell>
                     <TableCell className="text-right font-mono">{member.total_hours}h</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">

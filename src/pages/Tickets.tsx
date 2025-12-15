@@ -16,6 +16,7 @@ import {
   FolderOpen,
   Trash2,
   Edit,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -70,18 +71,21 @@ const categoryConfig = {
   feature: { label: "Features", icon: Lightbulb, color: "bg-chart-4" },
   quote: { label: "Quotes", icon: FileText, color: "bg-chart-1" },
   feedback: { label: "Feedback", icon: MessageSquare, color: "bg-chart-2" },
+  issue: { label: "Issues", icon: AlertCircle, color: "bg-destructive" },
 };
 
 const categoryIcons: Record<TicketCategory, typeof Lightbulb> = {
   feature: Lightbulb,
   quote: FileText,
   feedback: MessageSquare,
+  issue: AlertCircle,
 };
 
 const categoryLabels: Record<TicketCategory, string> = {
   feature: "Feature Request",
   quote: "Customer Quote",
   feedback: "Feedback",
+  issue: "Issue",
 };
 
 import { ticketStatusStyles, ticketPriorityStyles } from "@/lib/styles";
@@ -154,6 +158,7 @@ export default function Tickets() {
       feature: tickets?.filter(t => t.category === "feature").length || 0,
       quote: tickets?.filter(t => t.category === "quote").length || 0,
       feedback: tickets?.filter(t => t.category === "feedback").length || 0,
+      issue: tickets?.filter(t => t.category === "issue").length || 0,
     };
   }, [tickets]);
 
@@ -322,6 +327,7 @@ export default function Tickets() {
                       <SelectItem value="feature">Feature Request</SelectItem>
                       <SelectItem value="quote">Customer Quote</SelectItem>
                       <SelectItem value="feedback">Feedback</SelectItem>
+                      <SelectItem value="issue">Issue</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -454,6 +460,10 @@ export default function Tickets() {
                   <TabsTrigger value="feedback" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                     <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     <span className="hidden sm:inline">Feedback</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="issue" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">Issues</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -640,6 +650,7 @@ export default function Tickets() {
                     <SelectItem value="feature">Feature Request</SelectItem>
                     <SelectItem value="quote">Customer Quote</SelectItem>
                     <SelectItem value="feedback">Feedback</SelectItem>
+                    <SelectItem value="issue">Issue</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -20,6 +20,9 @@ export type SettingsPermissions = {
   manage_users: Permission;
   manage_roles: Permission;
 };
+export type SensitiveDataPermissions = {
+  view_amounts: Permission; // View financial amounts (budgets, contract values, salaries, etc.)
+};
 export type Permissions = {
   dashboard: { view: Permission };
   projects: ResourcePermissions;
@@ -29,11 +32,13 @@ export type Permissions = {
   quotes: ResourcePermissions;
   features: ResourcePermissions;
   feedback: ResourcePermissions;
+  issues: ResourcePermissions;
   forms: ResourcePermissions;
   emails: ResourcePermissions;
   financials: ResourcePermissions;
   expenses: ResourcePermissions;
   settings: SettingsPermissions;
+  sensitive_data: SensitiveDataPermissions;
 };
 
 // Human-readable labels for permissions
@@ -46,11 +51,13 @@ export const PERMISSION_LABELS: Record<keyof Permissions, string> = {
   quotes: "Customer Quotes",
   features: "Feature Requests",
   feedback: "Feedback",
+  issues: "Issues",
   forms: "Forms",
   emails: "Emails",
   financials: "Financials",
   expenses: "Expenses",
   settings: "Settings",
+  sensitive_data: "Sensitive Data",
 };
 
 // Permission action labels
@@ -62,6 +69,7 @@ export const ACTION_LABELS: Record<string, string> = {
   manage_org: "Manage Organization",
   manage_users: "Manage Users",
   manage_roles: "Manage Roles",
+  view_amounts: "View Financial Amounts",
 };
 
 export type Database = {
@@ -744,6 +752,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          budget: number
           client_email: string | null
           client_name: string
           created_at: string
@@ -758,6 +767,7 @@ export type Database = {
           value: number
         }
         Insert: {
+          budget?: number
           client_email?: string | null
           client_name: string
           created_at?: string
@@ -772,6 +782,7 @@ export type Database = {
           value?: number
         }
         Update: {
+          budget?: number
           client_email?: string | null
           client_name?: string
           created_at?: string
@@ -1476,6 +1487,332 @@ export type Database = {
           }
         ]
       }
+      contacts: {
+        Row: {
+          id: string
+          organization_id: string
+          display_id: string
+          name: string
+          email: string | null
+          phone: string | null
+          job_title: string | null
+          company_id: string | null
+          address: string | null
+          notes: string | null
+          social_profiles: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          display_id: string
+          name: string
+          email?: string | null
+          phone?: string | null
+          job_title?: string | null
+          company_id?: string | null
+          address?: string | null
+          notes?: string | null
+          social_profiles?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          display_id?: string
+          name?: string
+          email?: string | null
+          phone?: string | null
+          job_title?: string | null
+          company_id?: string | null
+          address?: string | null
+          notes?: string | null
+          social_profiles?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_clients"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      tags: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          color: string
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          color?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          color?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      contact_tags: {
+        Row: {
+          id: string
+          contact_id: string
+          tag_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          contact_id: string
+          tag_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          contact_id?: string
+          tag_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      contact_custom_fields: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          field_type: Database["public"]["Enums"]["custom_field_type"]
+          options: Json | null
+          required: boolean
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          field_type?: Database["public"]["Enums"]["custom_field_type"]
+          options?: Json | null
+          required?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          field_type?: Database["public"]["Enums"]["custom_field_type"]
+          options?: Json | null
+          required?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_custom_fields_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      contact_custom_field_values: {
+        Row: {
+          id: string
+          contact_id: string
+          field_id: string
+          value: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          contact_id: string
+          field_id: string
+          value: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          contact_id?: string
+          field_id?: string
+          value?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_custom_field_values_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_custom_field_values_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "contact_custom_fields"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      contact_activities: {
+        Row: {
+          id: string
+          organization_id: string
+          contact_id: string
+          display_id: string
+          activity_type: Database["public"]["Enums"]["contact_activity_type"]
+          title: string | null
+          description: string | null
+          activity_date: string
+          created_by: string | null
+          call_duration: number | null
+          call_outcome: Database["public"]["Enums"]["call_outcome_type"] | null
+          email_subject: string | null
+          email_direction: Database["public"]["Enums"]["email_direction_type"] | null
+          meeting_location: string | null
+          meeting_attendees: Json | null
+          meeting_outcome: string | null
+          meeting_start_time: string | null
+          meeting_end_time: string | null
+          task_due_date: string | null
+          task_status: Database["public"]["Enums"]["activity_task_status"] | null
+          task_priority: Database["public"]["Enums"]["activity_task_priority"] | null
+          task_completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          contact_id: string
+          display_id?: string
+          activity_type: Database["public"]["Enums"]["contact_activity_type"]
+          title?: string | null
+          description?: string | null
+          activity_date?: string
+          created_by?: string | null
+          call_duration?: number | null
+          call_outcome?: Database["public"]["Enums"]["call_outcome_type"] | null
+          email_subject?: string | null
+          email_direction?: Database["public"]["Enums"]["email_direction_type"] | null
+          meeting_location?: string | null
+          meeting_attendees?: Json | null
+          meeting_outcome?: string | null
+          meeting_start_time?: string | null
+          meeting_end_time?: string | null
+          task_due_date?: string | null
+          task_status?: Database["public"]["Enums"]["activity_task_status"] | null
+          task_priority?: Database["public"]["Enums"]["activity_task_priority"] | null
+          task_completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          contact_id?: string
+          display_id?: string
+          activity_type?: Database["public"]["Enums"]["contact_activity_type"]
+          title?: string | null
+          description?: string | null
+          activity_date?: string
+          created_by?: string | null
+          call_duration?: number | null
+          call_outcome?: Database["public"]["Enums"]["call_outcome_type"] | null
+          email_subject?: string | null
+          email_direction?: Database["public"]["Enums"]["email_direction_type"] | null
+          meeting_location?: string | null
+          meeting_attendees?: Json | null
+          meeting_outcome?: string | null
+          meeting_start_time?: string | null
+          meeting_end_time?: string | null
+          task_due_date?: string | null
+          task_status?: Database["public"]["Enums"]["activity_task_status"] | null
+          task_priority?: Database["public"]["Enums"]["activity_task_priority"] | null
+          task_completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_activities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1569,11 +1906,17 @@ export type Database = {
       project_status: "active" | "pending" | "completed"
       quote_status: "draft" | "sent" | "negotiating" | "accepted" | "rejected"
       task_priority: "high" | "medium" | "low"
-      ticket_category: "feature" | "quote" | "feedback"
+      ticket_category: "feature" | "quote" | "feedback" | "issue"
       ticket_priority: "high" | "medium" | "low"
       ticket_status: "open" | "in-progress" | "pending" | "closed"
       payment_status: "pending" | "paid" | "cancelled"
       payment_method: "direct_deposit" | "check" | "wire_transfer" | "e_transfer" | "cash" | "other"
+      custom_field_type: "text" | "number" | "date" | "select" | "multiselect" | "boolean" | "url" | "email" | "phone"
+      contact_activity_type: "call" | "email" | "meeting" | "note" | "task"
+      call_outcome_type: "answered" | "no_answer" | "voicemail" | "busy" | "callback_scheduled"
+      email_direction_type: "sent" | "received"
+      activity_task_status: "pending" | "in_progress" | "completed" | "cancelled"
+      activity_task_priority: "low" | "medium" | "high"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1717,7 +2060,7 @@ export const Constants = {
       project_status: ["active", "pending", "completed"],
       quote_status: ["draft", "sent", "negotiating", "accepted", "rejected"],
       task_priority: ["high", "medium", "low"],
-      ticket_category: ["feature", "quote", "feedback"],
+      ticket_category: ["feature", "quote", "feedback", "issue"],
       ticket_priority: ["high", "medium", "low"],
       ticket_status: ["open", "in-progress", "pending", "closed"],
     },

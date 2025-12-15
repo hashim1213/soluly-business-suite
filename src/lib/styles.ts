@@ -175,6 +175,45 @@ export const categoryCardStyles = {
   feedback: "bg-emerald-600",
 } as const;
 
+// Contact activity type styles
+export const activityTypeStyles = {
+  call: "bg-blue-600 text-white",
+  email: "bg-purple-600 text-white",
+  meeting: "bg-emerald-600 text-white",
+  note: "bg-amber-500 text-black",
+  task: "bg-cyan-600 text-white",
+} as const;
+
+// Call outcome styles
+export const callOutcomeStyles = {
+  answered: "bg-emerald-600 text-white",
+  no_answer: "bg-slate-400 text-black",
+  voicemail: "bg-amber-500 text-black",
+  busy: "bg-red-600 text-white",
+  callback_scheduled: "bg-blue-600 text-white",
+} as const;
+
+// Task status styles (for contact activities)
+export const taskStatusStyles = {
+  pending: "bg-slate-400 text-black",
+  in_progress: "bg-amber-500 text-black",
+  completed: "bg-emerald-600 text-white",
+  cancelled: "bg-slate-600 text-white",
+} as const;
+
+// Task priority styles (for contact activities)
+export const taskPriorityStyles = {
+  low: "bg-slate-300 text-black border border-slate-400",
+  medium: "bg-amber-500 text-black",
+  high: "bg-red-600 text-white",
+} as const;
+
+// Email direction styles
+export const emailDirectionStyles = {
+  sent: "bg-blue-600 text-white",
+  received: "bg-emerald-600 text-white",
+} as const;
+
 // Helper function to get style with fallback
 export function getStatusStyle<T extends Record<string, string>>(
   styles: T,

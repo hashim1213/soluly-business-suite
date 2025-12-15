@@ -33,6 +33,7 @@ import CustomerQuotes from "./pages/CustomerQuotes";
 import QuoteDetail from "./pages/QuoteDetail";
 import Feedback from "./pages/Feedback";
 import FeedbackDetail from "./pages/FeedbackDetail";
+import Issues from "./pages/Issues";
 import Emails from "./pages/Emails";
 import Settings from "./pages/Settings";
 import GmailCallback from "./pages/GmailCallback";
@@ -42,6 +43,9 @@ import Forms from "./pages/Forms";
 import FormBuilder from "./pages/FormBuilder";
 import FormResponses from "./pages/FormResponses";
 import FormSubmit from "./pages/public/FormSubmit";
+import ContactDetail from "./pages/ContactDetail";
+import ClientDetail from "./pages/ClientDetail";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 // Configure QueryClient with better defaults for stability
@@ -161,6 +165,30 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="contacts/:contactId"
+                  element={
+                    <AppLayout>
+                      <ContactDetail />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="clients/:clientId"
+                  element={
+                    <AppLayout>
+                      <ClientDetail />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="reports"
+                  element={
+                    <AppLayout>
+                      <Reports />
+                    </AppLayout>
+                  }
+                />
+                <Route
                   path="tickets/features"
                   element={
                     <AppLayout>
@@ -205,6 +233,14 @@ const App = () => (
                   element={
                     <AppLayout>
                       <FeedbackDetail />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="tickets/issues"
+                  element={
+                    <AppLayout>
+                      <Issues />
                     </AppLayout>
                   }
                 />

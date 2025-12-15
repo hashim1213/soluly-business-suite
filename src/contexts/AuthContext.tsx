@@ -59,6 +59,7 @@ interface AuthContextType {
   canViewOwn: (resource: keyof Permissions) => boolean;
   hasProjectAccess: (projectId: string) => boolean;
   hasFullProjectAccess: () => boolean;
+  canViewAmounts: () => boolean; // Check if user can view financial amounts
 
   // Refresh data
   refreshUserData: () => Promise<void>;
@@ -755,6 +756,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return allowedProjectIds === null;
   };
 
+  // Check if user can view financial amounts (budgets, contract values, salaries, etc.)
+  const canViewAmounts = (): boolean => {
+    const sensitiveData = permissions.sensitive_data;
+    if (!sensitiveData) return true; // Default to true if permission not set (backwards compatibility)
+    return sensitiveData.view_amounts === true;
+  };
+
   // Refresh user data
   const refreshUserData = async () => {
     if (user) {
@@ -783,6 +791,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     canViewOwn,
     hasProjectAccess,
     hasFullProjectAccess,
+    canViewAmounts,
     refreshUserData,
     clearAuthError,
   };
