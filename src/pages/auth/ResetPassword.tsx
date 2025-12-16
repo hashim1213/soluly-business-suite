@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,12 +13,15 @@ const REDIRECT_DELAY = 2000;
 
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const { updatePassword, session } = useAuth();
+  const location = useLocation();
+  const { updatePassword } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [hasValidSession, setHasValidSession] = useState(false);
 
   const passwordStrength = getPasswordStrength(password);
   const passwordStrengthColor = {
@@ -26,19 +30,46 @@ export default function ResetPassword() {
     strong: "bg-chart-2",
   }[passwordStrength];
 
-  // Check if we have a valid session (from the reset link)
+  // Handle the reset token from the URL
   useEffect(() => {
-    if (!session) {
-      // No session means the reset link is invalid or expired
-      // Wait a bit for the session to load
-      const timeout = setTimeout(() => {
-        if (!session) {
-          setError("Invalid or expired reset link. Please request a new one.");
+    const handleResetToken = async () => {
+      // Check if there's a hash with tokens (Supabase puts them in the hash)
+      const hash = location.hash;
+
+      if (hash && hash.includes("access_token")) {
+        // Supabase will automatically handle the hash and set up the session
+        // Wait for it to process
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          setError("Failed to validate reset link. Please try again.");
+          setIsValidating(false);
+          return;
         }
-      }, REDIRECT_DELAY);
-      return () => clearTimeout(timeout);
-    }
-  }, [session]);
+
+        if (session) {
+          setHasValidSession(true);
+          setIsValidating(false);
+          return;
+        }
+      }
+
+      // No hash or no session - check if there's an existing session
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        setHasValidSession(true);
+      } else {
+        setError("Invalid or expired reset link. Please request a new one.");
+      }
+
+      setIsValidating(false);
+    };
+
+    // Give Supabase a moment to process the hash
+    const timeout = setTimeout(handleResetToken, 500);
+    return () => clearTimeout(timeout);
+  }, [location.hash]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +101,22 @@ export default function ResetPassword() {
     }
   };
 
+  // Show loading while validating the reset token
+  if (isValidating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md border-2">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+              <p className="text-muted-foreground">Validating reset link...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -86,6 +133,35 @@ export default function ResetPassword() {
                 Your password has been successfully reset. Redirecting...
               </p>
               <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error state if token is invalid
+  if (!hasValidSession && error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md border-2">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="h-12 w-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                  <AlertCircle className="h-6 w-6 text-destructive" />
+                </div>
+              </div>
+              <h2 className="text-xl font-bold">Reset Link Invalid</h2>
+              <p className="text-muted-foreground">{error}</p>
+              <div className="space-y-2">
+                <Link to="/forgot-password" className="block">
+                  <Button className="w-full">Request new reset link</Button>
+                </Link>
+                <Link to="/login" className="block">
+                  <Button variant="outline" className="w-full">Back to login</Button>
+                </Link>
+              </div>
             </div>
           </CardContent>
         </Card>
