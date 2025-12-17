@@ -34,12 +34,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -281,17 +281,17 @@ export default function Tickets() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Tickets</h1>
           <p className="text-sm text-muted-foreground">Manage incoming tickets from email and other sources</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
+        <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <SheetTrigger asChild>
             <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
               <Plus className="h-4 w-4 mr-2" />
               New Ticket
             </Button>
-          </DialogTrigger>
-          <DialogContent className="border-2 sm:max-w-[500px]">
-            <DialogHeader className="border-b-2 border-border pb-4">
-              <DialogTitle>Create New Ticket</DialogTitle>
-            </DialogHeader>
+          </SheetTrigger>
+          <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+            <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+              <SheetTitle>Create New Ticket</SheetTitle>
+            </SheetHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="title">Title *</Label>
@@ -402,8 +402,8 @@ export default function Tickets() {
                 )}
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Stats Cards */}
@@ -623,12 +623,12 @@ export default function Tickets() {
         </CardContent>
       </Card>
 
-      {/* Edit Ticket Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
-            <DialogTitle>Edit Ticket</DialogTitle>
-          </DialogHeader>
+      {/* Edit Ticket Sheet */}
+      <Sheet open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+            <SheetTitle>Edit Ticket</SheetTitle>
+          </SheetHeader>
           <div className="grid gap-4 py-4">
             {selectedTicket && (
               <div className="p-3 bg-secondary rounded border-2 border-border">
@@ -740,8 +740,8 @@ export default function Tickets() {
               Save Changes
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

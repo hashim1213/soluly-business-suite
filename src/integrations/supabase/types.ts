@@ -607,46 +607,97 @@ export type Database = {
           }
         ]
       }
+      feature_request_assignees: {
+        Row: {
+          id: string
+          feature_request_id: string
+          team_member_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          feature_request_id: string
+          team_member_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          feature_request_id?: string
+          team_member_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_request_assignees_feature_request_id_fkey"
+            columns: ["feature_request_id"]
+            isOneToOne: false
+            referencedRelation: "feature_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_request_assignees_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       feature_requests: {
         Row: {
           added_to_roadmap: boolean
           client_name: string | null
+          cost_override: boolean
           created_at: string
           description: string | null
           display_id: string
+          estimated_cost: number | null
+          estimated_hours: number | null
           id: string
           notes: string | null
           priority: Database["public"]["Enums"]["feature_priority"]
           requested_by: string | null
           status: Database["public"]["Enums"]["feature_status"]
+          tentative_end_date: string | null
+          tentative_start_date: string | null
           title: string
           updated_at: string
         }
         Insert: {
           added_to_roadmap?: boolean
           client_name?: string | null
+          cost_override?: boolean
           created_at?: string
           description?: string | null
           display_id: string
+          estimated_cost?: number | null
+          estimated_hours?: number | null
           id?: string
           notes?: string | null
           priority?: Database["public"]["Enums"]["feature_priority"]
           requested_by?: string | null
           status?: Database["public"]["Enums"]["feature_status"]
+          tentative_end_date?: string | null
+          tentative_start_date?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           added_to_roadmap?: boolean
           client_name?: string | null
+          cost_override?: boolean
           created_at?: string
           description?: string | null
           display_id?: string
+          estimated_cost?: number | null
+          estimated_hours?: number | null
           id?: string
           notes?: string | null
           priority?: Database["public"]["Enums"]["feature_priority"]
           requested_by?: string | null
           status?: Database["public"]["Enums"]["feature_status"]
+          tentative_end_date?: string | null
+          tentative_start_date?: string | null
           title?: string
           updated_at?: string
         }
@@ -758,6 +809,7 @@ export type Database = {
           created_at: string
           description: string | null
           display_id: string
+          end_date: string | null
           id: string
           name: string
           progress: number
@@ -773,6 +825,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_id: string
+          end_date?: string | null
           id?: string
           name: string
           progress?: number
@@ -788,6 +841,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_id?: string
+          end_date?: string | null
           id?: string
           name?: string
           progress?: number

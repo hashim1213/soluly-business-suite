@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -257,18 +257,18 @@ export default function Feedback() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Customer Feedback</h1>
           <p className="text-sm text-muted-foreground">Track and manage customer feedback</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
+        <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <SheetTrigger asChild>
             <Button className="border-2">
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Log Feedback</span>
               <span className="sm:hidden">Log</span>
             </Button>
-          </DialogTrigger>
-          <DialogContent className="border-2 sm:max-w-[500px]">
-            <DialogHeader className="border-b-2 border-border pb-4">
-              <DialogTitle>Log Customer Feedback</DialogTitle>
-            </DialogHeader>
+          </SheetTrigger>
+          <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+            <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+              <SheetTitle>Log Customer Feedback</SheetTitle>
+            </SheetHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="title">Title *</Label>
@@ -379,8 +379,8 @@ export default function Feedback() {
                 Log Feedback
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Tabs */}

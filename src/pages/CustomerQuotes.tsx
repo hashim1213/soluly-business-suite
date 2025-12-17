@@ -10,11 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Popover,
@@ -415,18 +421,18 @@ export default function CustomerQuotes() {
           <h1 className="text-2xl font-bold tracking-tight">Customer Quotes</h1>
           <p className="text-muted-foreground">Manage quotes from initial contact to contract signing</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-          <DialogTrigger asChild>
+        <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+          <SheetTrigger asChild>
             <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
               <Plus className="h-4 w-4 mr-2" />
               New Quote
             </Button>
-          </DialogTrigger>
-          <DialogContent className="border-2 sm:max-w-[500px]">
-            <DialogHeader className="border-b-2 border-border pb-4">
-              <DialogTitle>Create New Quote</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+          </SheetTrigger>
+          <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+            <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+              <SheetTitle>Create New Quote</SheetTitle>
+            </SheetHeader>
+            <div className="grid gap-4 py-4">
               {/* Project Selection - for invoices */}
               <div className="grid gap-2">
                 <Label>Link to Project (for invoices)</Label>
@@ -666,8 +672,8 @@ export default function CustomerQuotes() {
                 Create Quote
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Rejection Reason Dialog */}

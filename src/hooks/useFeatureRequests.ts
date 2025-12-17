@@ -7,12 +7,17 @@ import { useAuth } from "@/contexts/AuthContext";
 export type FeatureRequest = Tables<"feature_requests">;
 export type FeatureRequestInsert = TablesInsert<"feature_requests">;
 export type FeatureRequestUpdate = TablesUpdate<"feature_requests">;
+export type FeatureRequestAssignee = Tables<"feature_request_assignees">;
 
-// Feature request with project associations
+// Feature request with project and assignee associations
 export type FeatureRequestWithProjects = FeatureRequest & {
   projects: Array<{
     project_id: string;
     project: { id: string; name: string; display_id: string } | null;
+  }>;
+  assignees: Array<{
+    team_member_id: string;
+    team_member: { id: string; name: string; hourly_rate: number } | null;
   }>;
 };
 
@@ -53,12 +58,31 @@ export function useFeatureRequests() {
 
       if (projectsError) throw projectsError;
 
+      // Fetch assignees for all features
+      const { data: featureAssignees, error: assigneesError } = await supabase
+        .from("feature_request_assignees")
+        .select(`
+          feature_request_id,
+          team_member_id,
+          team_member:team_members(id, name, hourly_rate)
+        `);
+
+      if (assigneesError) throw assigneesError;
+
       // Group projects by feature request
       const projectsByFeature = new Map<string, typeof featureProjects>();
       featureProjects?.forEach((fp) => {
         const existing = projectsByFeature.get(fp.feature_request_id) || [];
         existing.push(fp);
         projectsByFeature.set(fp.feature_request_id, existing);
+      });
+
+      // Group assignees by feature request
+      const assigneesByFeature = new Map<string, typeof featureAssignees>();
+      featureAssignees?.forEach((fa) => {
+        const existing = assigneesByFeature.get(fa.feature_request_id) || [];
+        existing.push(fa);
+        assigneesByFeature.set(fa.feature_request_id, existing);
       });
 
       // Filter features - only include those that have at least one allowed project (if restricted)
@@ -71,6 +95,7 @@ export function useFeatureRequests() {
       return filteredFeatures.map((feature) => ({
         ...feature,
         projects: projectsByFeature.get(feature.id) || [],
+        assignees: assigneesByFeature.get(feature.id) || [],
       })) as FeatureRequestWithProjects[];
     },
     enabled: !!organization?.id,
@@ -105,6 +130,15 @@ export function useFeatureRequest(id: string | undefined) {
 
       if (projectsError) throw projectsError;
 
+      // Fetch assignees
+      const { data: featureAssignees } = await supabase
+        .from("feature_request_assignees")
+        .select(`
+          team_member_id,
+          team_member:team_members(id, name, hourly_rate)
+        `)
+        .eq("feature_request_id", id);
+
       // Check project access - if user has restricted access, verify they can access at least one project
       if (!hasFullProjectAccess() && allowedProjectIds !== null) {
         const featureProjectIds = featureProjects?.map(fp => fp.project_id) || [];
@@ -118,6 +152,7 @@ export function useFeatureRequest(id: string | undefined) {
       return {
         ...feature,
         projects: featureProjects || [],
+        assignees: featureAssignees || [],
       } as FeatureRequestWithProjects;
     },
     enabled: !!id && !!organization?.id,
@@ -150,6 +185,15 @@ export function useFeatureRequestByDisplayId(displayId: string | undefined) {
         `)
         .eq("feature_request_id", feature.id);
 
+      // Fetch assignees
+      const { data: featureAssignees } = await supabase
+        .from("feature_request_assignees")
+        .select(`
+          team_member_id,
+          team_member:team_members(id, name, hourly_rate)
+        `)
+        .eq("feature_request_id", feature.id);
+
       // Check project access - if user has restricted access, verify they can access at least one project
       if (!hasFullProjectAccess() && allowedProjectIds !== null) {
         const featureProjectIds = featureProjects?.map(fp => fp.project_id) || [];
@@ -163,6 +207,7 @@ export function useFeatureRequestByDisplayId(displayId: string | undefined) {
       return {
         ...feature,
         projects: featureProjects || [],
+        assignees: featureAssignees || [],
       } as FeatureRequestWithProjects;
     },
     enabled: !!displayId && !!organization?.id,
@@ -198,10 +243,12 @@ export function useCreateFeatureRequest() {
   return useMutation({
     mutationFn: async ({
       projectIds,
+      assigneeIds,
       ...feature
     }: Omit<FeatureRequestInsert, "display_id" | "organization_id"> & {
       display_id?: string;
       projectIds: string[];
+      assigneeIds?: string[];
     }) => {
       if (!organization?.id) throw new Error("No organization found");
 
@@ -229,6 +276,20 @@ export function useCreateFeatureRequest() {
           );
 
         if (projectsError) throw projectsError;
+      }
+
+      // Add assignee associations
+      if (assigneeIds && assigneeIds.length > 0) {
+        const { error: assigneesError } = await supabase
+          .from("feature_request_assignees")
+          .insert(
+            assigneeIds.map((memberId) => ({
+              feature_request_id: newFeature.id,
+              team_member_id: memberId,
+            }))
+          );
+
+        if (assigneesError) throw assigneesError;
       }
 
       return {
@@ -277,8 +338,9 @@ export function useUpdateFeatureRequest() {
     mutationFn: async ({
       id,
       projectIds,
+      assigneeIds,
       ...updates
-    }: FeatureRequestUpdate & { id: string; projectIds?: string[] }) => {
+    }: FeatureRequestUpdate & { id: string; projectIds?: string[]; assigneeIds?: string[] }) => {
       if (!organization?.id) throw new Error("No organization found");
 
       const { data, error } = await supabase
@@ -303,6 +365,23 @@ export function useUpdateFeatureRequest() {
             projectIds.map((projectId) => ({
               feature_request_id: id,
               project_id: projectId,
+            }))
+          );
+        }
+      }
+
+      // Update assignee associations if provided
+      if (assigneeIds !== undefined) {
+        await supabase
+          .from("feature_request_assignees")
+          .delete()
+          .eq("feature_request_id", id);
+
+        if (assigneeIds.length > 0) {
+          await supabase.from("feature_request_assignees").insert(
+            assigneeIds.map((memberId) => ({
+              feature_request_id: id,
+              team_member_id: memberId,
             }))
           );
         }
