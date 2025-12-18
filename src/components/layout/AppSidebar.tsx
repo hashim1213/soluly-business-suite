@@ -16,6 +16,7 @@ import {
   ClipboardList,
   BarChart3,
   AlertCircle,
+  TrendingUp,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,6 +53,7 @@ const mainNavItems: NavItem[] = [
   { title: "CRM", path: "crm", icon: Contact, permission: "crm" },
   { title: "Financials", path: "financials", icon: DollarSign, permission: "financials" },
   { title: "Expenses", path: "expenses", icon: Receipt, permission: "expenses" },
+  { title: "Projections", path: "projections", icon: TrendingUp, permission: "financials" },
 ];
 
 const ticketCategories: NavItem[] = [

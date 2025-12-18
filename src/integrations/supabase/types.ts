@@ -810,7 +810,12 @@ export type Database = {
           description: string | null
           display_id: string
           end_date: string | null
+          has_maintenance: boolean
           id: string
+          maintenance_amount: number
+          maintenance_frequency: string
+          maintenance_notes: string | null
+          maintenance_start_date: string | null
           name: string
           progress: number
           start_date: string
@@ -826,7 +831,12 @@ export type Database = {
           description?: string | null
           display_id: string
           end_date?: string | null
+          has_maintenance?: boolean
           id?: string
+          maintenance_amount?: number
+          maintenance_frequency?: string
+          maintenance_notes?: string | null
+          maintenance_start_date?: string | null
           name: string
           progress?: number
           start_date?: string
@@ -842,7 +852,12 @@ export type Database = {
           description?: string | null
           display_id?: string
           end_date?: string | null
+          has_maintenance?: boolean
           id?: string
+          maintenance_amount?: number
+          maintenance_frequency?: string
+          maintenance_notes?: string | null
+          maintenance_start_date?: string | null
           name?: string
           progress?: number
           start_date?: string
@@ -1863,6 +1878,56 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      quarterly_goals: {
+        Row: {
+          id: string
+          organization_id: string
+          year: number
+          quarter: number
+          revenue_target: number
+          projects_target: number
+          new_clients_target: number
+          profit_margin_target: number
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          year: number
+          quarter: number
+          revenue_target?: number
+          projects_target?: number
+          new_clients_target?: number
+          profit_margin_target?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          year?: number
+          quarter?: number
+          revenue_target?: number
+          projects_target?: number
+          new_clients_target?: number
+          profit_margin_target?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quarterly_goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           }
         ]

@@ -50,6 +50,8 @@ import {
   Timer,
   Briefcase,
   ExternalLink,
+  Wrench,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +62,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
@@ -352,6 +355,14 @@ export default function ProjectDetail() {
     billable: true,
   });
   const [newTodoDueDate, setNewTodoDueDate] = useState("");
+  const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = useState(false);
+  const [maintenanceSettings, setMaintenanceSettings] = useState({
+    has_maintenance: false,
+    maintenance_amount: "",
+    maintenance_frequency: "monthly",
+    maintenance_start_date: "",
+    maintenance_notes: "",
+  });
 
   // Fetch the database project by display_id
   const { data: dbProject, isLoading: projectLoading } = useProjectByDisplayId(projectId);
@@ -879,6 +890,68 @@ export default function ProjectDetail() {
   const handleDeleteCost = async (costId: string) => {
     try {
       await deleteCost.mutateAsync(costId);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  // Maintenance functions
+  const openMaintenanceDialog = () => {
+    if (dbProject) {
+      setMaintenanceSettings({
+        has_maintenance: dbProject.has_maintenance || false,
+        maintenance_amount: dbProject.maintenance_amount?.toString() || "",
+        maintenance_frequency: dbProject.maintenance_frequency || "monthly",
+        maintenance_start_date: dbProject.maintenance_start_date?.split("T")[0] || "",
+        maintenance_notes: dbProject.maintenance_notes || "",
+      });
+      setIsMaintenanceDialogOpen(true);
+    }
+  };
+
+  const handleSaveMaintenance = async () => {
+    if (!dbProject) return;
+
+    try {
+      await updateProject.mutateAsync({
+        id: dbProject.id,
+        has_maintenance: maintenanceSettings.has_maintenance,
+        maintenance_amount: parseFloat(maintenanceSettings.maintenance_amount) || 0,
+        maintenance_frequency: maintenanceSettings.maintenance_frequency,
+        maintenance_start_date: maintenanceSettings.maintenance_start_date || null,
+        maintenance_notes: maintenanceSettings.maintenance_notes || null,
+      });
+      setIsMaintenanceDialogOpen(false);
+      toast.success("Maintenance settings updated");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleCreateMaintenanceInvoice = async () => {
+    if (!dbProject || !dbProject.has_maintenance || !dbProject.maintenance_amount) {
+      toast.error("No maintenance fee configured");
+      return;
+    }
+
+    const amount = dbProject.maintenance_amount;
+    const frequency = dbProject.maintenance_frequency || "monthly";
+    const today = new Date();
+    const dueDate = new Date(today);
+    dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
+
+    const invoiceNumber = `MAINT-${dbProject.display_id}-${today.toISOString().slice(0, 7).replace("-", "")}`;
+
+    try {
+      await createInvoice.mutateAsync({
+        project_id: dbProject.id,
+        invoice_number: invoiceNumber,
+        description: `${frequency.charAt(0).toUpperCase() + frequency.slice(1)} Maintenance - ${format(today, "MMMM yyyy")}`,
+        amount: amount,
+        due_date: dueDate.toISOString().split("T")[0],
+        status: "draft",
+      });
+      toast.success("Maintenance invoice created");
     } catch (error) {
       // Error handled by hook
     }
@@ -1666,6 +1739,43 @@ export default function ProjectDetail() {
                     <Progress value={project.progress} className="h-3" />
                     <div className="text-right font-mono text-sm mt-1">{project.progress}%</div>
                   </div>
+                  <div className="border-t-2 border-border pt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Wrench className="h-4 w-4" />
+                        Maintenance
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs border-2 border-transparent hover:border-border"
+                        onClick={openMaintenanceDialog}
+                      >
+                        Configure
+                      </Button>
+                    </div>
+                    {dbProject?.has_maintenance ? (
+                      <div className="space-y-2">
+                        <Badge variant="secondary" className="border-2 border-chart-2 bg-chart-2/10 text-chart-2">
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          {dbProject.maintenance_frequency?.charAt(0).toUpperCase() + dbProject.maintenance_frequency?.slice(1) || "Monthly"}
+                        </Badge>
+                        <div className="font-mono font-bold">
+                          <HiddenAmount value={Number(dbProject?.maintenance_amount || 0)} />
+                          <span className="text-xs text-muted-foreground font-normal ml-1">
+                            /{dbProject.maintenance_frequency === "yearly" ? "year" : dbProject.maintenance_frequency === "quarterly" ? "quarter" : "month"}
+                          </span>
+                        </div>
+                        {dbProject.maintenance_start_date && (
+                          <div className="text-xs text-muted-foreground">
+                            Started: {format(new Date(dbProject.maintenance_start_date), "MMM d, yyyy")}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">No maintenance plan</div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -1715,6 +1825,57 @@ export default function ProjectDetail() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Maintenance Card */}
+          {dbProject?.has_maintenance && (
+            <Card className="border-2 border-chart-2/50 bg-chart-2/5 shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 border-2 border-chart-2 flex items-center justify-center bg-chart-2/20 rounded-lg">
+                      <RefreshCw className="h-6 w-6 text-chart-2" />
+                    </div>
+                    <div>
+                      <div className="font-semibold flex items-center gap-2">
+                        Recurring Maintenance
+                        <Badge variant="secondary" className="border border-chart-2 text-chart-2">
+                          {dbProject.maintenance_frequency?.charAt(0).toUpperCase() + dbProject.maintenance_frequency?.slice(1) || "Monthly"}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        <span className="font-mono font-bold text-foreground">
+                          ${Number(dbProject.maintenance_amount || 0).toLocaleString()}
+                        </span>
+                        {" "}per {dbProject.maintenance_frequency === "yearly" ? "year" : dbProject.maintenance_frequency === "quarterly" ? "quarter" : "month"}
+                        {dbProject.maintenance_notes && (
+                          <span className="ml-2">• {dbProject.maintenance_notes}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-2 border-chart-2 text-chart-2 hover:bg-chart-2 hover:text-background"
+                      onClick={handleCreateMaintenanceInvoice}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Invoice
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="border-2 border-transparent hover:border-border"
+                      onClick={openMaintenanceDialog}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-2 border-border shadow-sm">
             <CardHeader className="border-b-2 border-border">
@@ -3373,6 +3534,97 @@ export default function ProjectDetail() {
             <Button onClick={handleSaveProject} className="border-2" disabled={updateProject.isPending}>
               {updateProject.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Maintenance Settings Dialog */}
+      <Dialog open={isMaintenanceDialogOpen} onOpenChange={setIsMaintenanceDialogOpen}>
+        <DialogContent className="border-2 sm:max-w-[500px]">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              Maintenance Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="has-maintenance" className="text-base font-medium">Enable Maintenance Plan</Label>
+                <p className="text-sm text-muted-foreground">Set up recurring maintenance fees for this project</p>
+              </div>
+              <Switch
+                id="has-maintenance"
+                checked={maintenanceSettings.has_maintenance}
+                onCheckedChange={(checked) => setMaintenanceSettings({ ...maintenanceSettings, has_maintenance: checked })}
+              />
+            </div>
+
+            {maintenanceSettings.has_maintenance && (
+              <>
+                <div className="border-t-2 border-border pt-4 grid gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="maintenance-amount">Amount ($) *</Label>
+                      <Input
+                        id="maintenance-amount"
+                        type="number"
+                        placeholder="0"
+                        value={maintenanceSettings.maintenance_amount}
+                        onChange={(e) => setMaintenanceSettings({ ...maintenanceSettings, maintenance_amount: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="maintenance-frequency">Frequency *</Label>
+                      <Select
+                        value={maintenanceSettings.maintenance_frequency}
+                        onValueChange={(value) => setMaintenanceSettings({ ...maintenanceSettings, maintenance_frequency: value })}
+                      >
+                        <SelectTrigger className="border-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="quarterly">Quarterly</SelectItem>
+                          <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="maintenance-start-date">Start Date</Label>
+                    <Input
+                      id="maintenance-start-date"
+                      type="date"
+                      value={maintenanceSettings.maintenance_start_date}
+                      onChange={(e) => setMaintenanceSettings({ ...maintenanceSettings, maintenance_start_date: e.target.value })}
+                      className="border-2"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="maintenance-notes">Notes</Label>
+                    <Textarea
+                      id="maintenance-notes"
+                      placeholder="e.g., Includes hosting, updates, and support"
+                      value={maintenanceSettings.maintenance_notes}
+                      onChange={(e) => setMaintenanceSettings({ ...maintenanceSettings, maintenance_notes: e.target.value })}
+                      className="border-2"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(false)} className="border-2">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveMaintenance} className="border-2" disabled={updateProject.isPending}>
+              {updateProject.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Save
             </Button>
           </div>
         </DialogContent>

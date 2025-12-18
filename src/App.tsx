@@ -49,6 +49,7 @@ import FormSubmit from "./pages/public/FormSubmit";
 import ContactDetail from "./pages/ContactDetail";
 import ClientDetail from "./pages/ClientDetail";
 import Reports from "./pages/Reports";
+import Projections from "./pages/Projections";
 import NotFound from "./pages/NotFound";
 
 // Configure QueryClient with better defaults for stability
@@ -272,6 +273,14 @@ const App = () => (
                   element={
                     <AppLayout>
                       <BusinessCosts />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="projections"
+                  element={
+                    <AppLayout>
+                      <Projections />
                     </AppLayout>
                   }
                 />

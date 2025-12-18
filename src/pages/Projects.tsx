@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download } from "lucide-react";
+import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench } from "lucide-react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -209,6 +211,11 @@ export default function Projects() {
     progress: "",
     start_date: "",
     end_date: "",
+    has_maintenance: false,
+    maintenance_amount: "",
+    maintenance_frequency: "monthly",
+    maintenance_start_date: "",
+    maintenance_notes: "",
   });
 
   // Count open tickets per project
@@ -291,6 +298,11 @@ export default function Projects() {
       progress: project.progress.toString(),
       start_date: project.start_date?.split("T")[0] || "",
       end_date: project.end_date?.split("T")[0] || "",
+      has_maintenance: project.has_maintenance || false,
+      maintenance_amount: project.maintenance_amount?.toString() || "",
+      maintenance_frequency: project.maintenance_frequency || "monthly",
+      maintenance_start_date: project.maintenance_start_date?.split("T")[0] || "",
+      maintenance_notes: project.maintenance_notes || "",
     });
     setIsEditSheetOpen(true);
   };
@@ -315,6 +327,11 @@ export default function Projects() {
         progress: parseInt(editForm.progress) || 0,
         start_date: editForm.start_date || undefined,
         end_date: editForm.end_date || null,
+        has_maintenance: editForm.has_maintenance,
+        maintenance_amount: parseFloat(editForm.maintenance_amount.replace(/[$,]/g, "")) || 0,
+        maintenance_frequency: editForm.maintenance_frequency,
+        maintenance_start_date: editForm.maintenance_start_date || null,
+        maintenance_notes: editForm.maintenance_notes || null,
       });
 
       setIsEditSheetOpen(false);
@@ -891,6 +908,81 @@ export default function Projects() {
                     className="border-2"
                   />
                 </div>
+              </div>
+
+              {/* Maintenance Section */}
+              <Separator className="my-4" />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="edit-maintenance" className="text-base font-semibold">
+                      Monthly Maintenance
+                    </Label>
+                  </div>
+                  <Switch
+                    id="edit-maintenance"
+                    checked={editForm.has_maintenance}
+                    onCheckedChange={(checked) => setEditForm({ ...editForm, has_maintenance: checked })}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Enable recurring maintenance payments for this project
+                </p>
+
+                {editForm.has_maintenance && (
+                  <div className="space-y-4 p-4 border-2 rounded-lg bg-muted/30">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-maintenance-amount">Amount ($)</Label>
+                        <Input
+                          id="edit-maintenance-amount"
+                          placeholder="500"
+                          value={editForm.maintenance_amount}
+                          onChange={(e) => setEditForm({ ...editForm, maintenance_amount: e.target.value })}
+                          className="border-2"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-maintenance-frequency">Frequency</Label>
+                        <Select
+                          value={editForm.maintenance_frequency}
+                          onValueChange={(value) => setEditForm({ ...editForm, maintenance_frequency: value })}
+                        >
+                          <SelectTrigger className="border-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="border-2">
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="quarterly">Quarterly</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-maintenance-start">Maintenance Start Date</Label>
+                      <Input
+                        id="edit-maintenance-start"
+                        type="date"
+                        value={editForm.maintenance_start_date}
+                        onChange={(e) => setEditForm({ ...editForm, maintenance_start_date: e.target.value })}
+                        className="border-2"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-maintenance-notes">Maintenance Notes</Label>
+                      <Textarea
+                        id="edit-maintenance-notes"
+                        placeholder="Details about what's included in maintenance..."
+                        value={editForm.maintenance_notes}
+                        onChange={(e) => setEditForm({ ...editForm, maintenance_notes: e.target.value })}
+                        className="border-2"
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
