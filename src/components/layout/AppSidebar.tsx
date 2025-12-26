@@ -17,6 +17,7 @@ import {
   BarChart3,
   AlertCircle,
   TrendingUp,
+  Clock,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +47,7 @@ type NavItem = {
 
 const mainNavItems: NavItem[] = [
   { title: "Dashboard", path: "", icon: LayoutDashboard, permission: "dashboard" },
+  { title: "My Hours", path: "my-hours", icon: Clock },
   { title: "Projects", path: "projects", icon: FolderKanban, permission: "projects" },
   { title: "Tickets", path: "tickets", icon: Ticket, permission: "tickets" },
   { title: "Forms", path: "forms", icon: ClipboardList, permission: "forms" },
@@ -72,14 +74,18 @@ const systemItems: NavItem[] = [
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
-  const { hasPermission, organization } = useAuth();
+  const { hasPermission, organization, member } = useAuth();
 
   // Build the base URL for the organization
   const orgBase = organization?.slug ? `/org/${organization.slug}` : "";
 
-  // Filter items based on permissions
+  // Filter items based on permissions and member status
   const filterByPermission = (items: NavItem[]) => {
     return items.filter((item) => {
+      // My Hours only shows if user has a team member record
+      if (item.path === "my-hours") {
+        return !!member;
+      }
       if (!item.permission) return true;
       return hasPermission(item.permission, "view");
     });

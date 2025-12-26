@@ -252,7 +252,9 @@ export default function TicketDetail() {
               <CardTitle>Description</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              <p className="whitespace-pre-wrap">{ticket.description || "No description provided."}</p>
+              <div className="max-h-[500px] overflow-y-auto">
+                <p className="whitespace-pre-wrap break-words text-sm">{ticket.description || "No description provided."}</p>
+              </div>
             </CardContent>
           </Card>
 

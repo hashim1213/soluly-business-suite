@@ -59,6 +59,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleManagement } from "@/components/settings/RoleManagement";
+import { EmailAccountsSettings } from "@/components/settings/EmailAccountsSettings";
 import { useInvitations, useCreateInvitation, useDeleteInvitation } from "@/hooks/useInvitations";
 import { useUpdateOrganization, useOrganizationStats, useCurrentOrganization } from "@/hooks/useOrganization";
 import { Textarea } from "@/components/ui/textarea";
@@ -443,55 +444,91 @@ export default function Settings() {
                 <p className="text-sm text-muted-foreground">
                   Select a visual style that matches your preference
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {[
                     {
                       value: "default" as ThemeStyle,
-                      label: "Vibrant",
-                      description: "Bold neobrutalist style",
+                      label: "Neobrutalist",
+                      description: "Bold black borders, sharp edges",
                       colors: ["#000000", "#404040", "#737373"],
                     },
                     {
                       value: "professional" as ThemeStyle,
                       label: "Professional",
-                      description: "Clean corporate look with blue accents",
+                      description: "Clean corporate blue accents",
                       colors: ["#1e40af", "#3b82f6", "#60a5fa"],
                     },
                     {
                       value: "modern" as ThemeStyle,
                       label: "Modern",
-                      description: "Contemporary with purple accents",
+                      description: "Contemporary violet accents",
                       colors: ["#7c3aed", "#8b5cf6", "#a78bfa"],
                     },
                     {
+                      value: "minimal" as ThemeStyle,
+                      label: "Minimal",
+                      description: "Ultra clean grayscale",
+                      colors: ["#374151", "#6b7280", "#9ca3af"],
+                    },
+                    {
                       value: "green" as ThemeStyle,
-                      label: "Green",
-                      description: "Fresh and natural feel",
+                      label: "Nature",
+                      description: "Fresh and natural greens",
                       colors: ["#15803d", "#22c55e", "#4ade80"],
                     },
                     {
                       value: "pink" as ThemeStyle,
-                      label: "Pink",
-                      description: "Warm and playful design",
+                      label: "Rose",
+                      description: "Warm and playful pinks",
                       colors: ["#be185d", "#ec4899", "#f472b6"],
                     },
                     {
                       value: "pastel" as ThemeStyle,
                       label: "Pastel",
-                      description: "Soft and gentle colors",
+                      description: "Soft and gentle tones",
                       colors: ["#60a5fa", "#f9a8d4", "#86efac"],
-                    },
-                    {
-                      value: "minimal" as ThemeStyle,
-                      label: "Minimal",
-                      description: "Clean grayscale palette",
-                      colors: ["#374151", "#6b7280", "#9ca3af"],
                     },
                     {
                       value: "enterprise" as ThemeStyle,
                       label: "Enterprise",
-                      description: "Premium corporate design",
+                      description: "Premium Morgan Stanley style",
                       colors: ["#1e3a5f", "#2563eb", "#64748b"],
+                    },
+                    {
+                      value: "ocean" as ThemeStyle,
+                      label: "Soluly Ocean",
+                      description: "Signature teal oceanic theme",
+                      colors: ["#0d9488", "#14b8a6", "#2dd4bf"],
+                    },
+                    {
+                      value: "sunset" as ThemeStyle,
+                      label: "Soluly Sunset",
+                      description: "Warm amber sunset vibes",
+                      colors: ["#ea580c", "#f97316", "#fb923c"],
+                    },
+                    {
+                      value: "midnight" as ThemeStyle,
+                      label: "Midnight",
+                      description: "Deep violet midnight aesthetic",
+                      colors: ["#7c3aed", "#8b5cf6", "#a78bfa"],
+                    },
+                    {
+                      value: "carbon" as ThemeStyle,
+                      label: "Carbon",
+                      description: "IBM-inspired industrial design",
+                      colors: ["#0072c3", "#42be65", "#f1c21b"],
+                    },
+                    {
+                      value: "lightning" as ThemeStyle,
+                      label: "Lightning",
+                      description: "Salesforce-inspired business",
+                      colors: ["#0176d3", "#1b96ff", "#57cbff"],
+                    },
+                    {
+                      value: "spectrum" as ThemeStyle,
+                      label: "Spectrum",
+                      description: "Adobe-inspired creative style",
+                      colors: ["#1473e6", "#2680eb", "#4b9cf5"],
                     },
                   ].map(({ value, label, description, colors }) => (
                     <button
@@ -1174,21 +1211,23 @@ export default function Settings() {
           </TabsContent>
         )}
 
-        {/* Email Accounts Tab - Coming Soon */}
+        {/* Email Accounts Tab */}
         {hasPermission("emails", "edit") && (
           <TabsContent value="email-accounts" className="space-y-6">
-            <Card className="border-2 border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                  <Mail className="h-8 w-8 text-primary" />
+            <Card className="border-2 border-border shadow-sm">
+              <CardHeader className="border-b-2 border-border">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle>Email Accounts</CardTitle>
+                    <CardDescription>Connect email accounts to sync and categorize incoming emails</CardDescription>
+                  </div>
                 </div>
-                <h2 className="text-xl font-bold mb-2">Email Accounts</h2>
-                <p className="text-muted-foreground mb-6 max-w-md">
-                  Connect Gmail and other email accounts to automatically sync and categorize incoming emails.
-                </p>
-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-100 text-yellow-800 font-medium">
-                  Coming Soon
-                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <EmailAccountsSettings />
               </CardContent>
             </Card>
           </TabsContent>

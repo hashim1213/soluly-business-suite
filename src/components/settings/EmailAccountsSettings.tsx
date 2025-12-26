@@ -22,8 +22,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Settings2, Trash2, CheckCircle, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Mail, Settings2, Trash2, CheckCircle, Loader2, RefreshCw, AlertCircle, Filter, Plus, X } from "lucide-react";
 import {
   useEmailAccounts,
   useUpdateEmailAccount,
@@ -52,6 +59,8 @@ export function EmailAccountsSettings() {
 
   const [editingAccount, setEditingAccount] = useState<any | null>(null);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
+  const [filterAccount, setFilterAccount] = useState<any | null>(null);
+  const [newSender, setNewSender] = useState("");
 
   const handleConnectGmail = async () => {
     connectGmail.mutate();
@@ -77,6 +86,62 @@ export function EmailAccountsSettings() {
       await deleteAccount.mutateAsync(deleteAccountId);
       setDeleteAccountId(null);
     }
+  };
+
+  const handleOpenFilters = (account: any) => {
+    setFilterAccount({
+      ...account,
+      filter_mode: account.filter_mode || "all",
+      allowed_senders: account.allowed_senders || [],
+      blocked_senders: account.blocked_senders || [],
+    });
+    setNewSender("");
+  };
+
+  const handleSaveFilters = async () => {
+    if (!filterAccount) return;
+
+    const updateData = {
+      id: filterAccount.id,
+      filter_mode: filterAccount.filter_mode as "all" | "whitelist" | "blacklist",
+      allowed_senders: filterAccount.allowed_senders,
+      blocked_senders: filterAccount.blocked_senders,
+    };
+
+    console.log("Saving filter settings:", updateData);
+
+    try {
+      await updateAccount.mutateAsync(updateData);
+      console.log("Filter settings saved successfully");
+      setFilterAccount(null);
+    } catch (error) {
+      console.error("Error saving filter settings:", error);
+    }
+  };
+
+  const addSender = (listType: "allowed" | "blocked") => {
+    if (!newSender.trim() || !filterAccount) return;
+
+    const key = listType === "allowed" ? "allowed_senders" : "blocked_senders";
+    const current = filterAccount[key] || [];
+
+    if (!current.includes(newSender.trim().toLowerCase())) {
+      setFilterAccount({
+        ...filterAccount,
+        [key]: [...current, newSender.trim().toLowerCase()],
+      });
+    }
+    setNewSender("");
+  };
+
+  const removeSender = (listType: "allowed" | "blocked", sender: string) => {
+    if (!filterAccount) return;
+
+    const key = listType === "allowed" ? "allowed_senders" : "blocked_senders";
+    setFilterAccount({
+      ...filterAccount,
+      [key]: (filterAccount[key] || []).filter((s: string) => s !== sender),
+    });
   };
 
   const getStatusBadge = (account: any) => {
@@ -186,6 +251,14 @@ export function EmailAccountsSettings() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => handleOpenFilters(account)}
+                      >
+                        <Filter className="h-4 w-4" />
+                        <span className="ml-2 hidden sm:inline">Filters</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setEditingAccount(account)}
                       >
                         <Settings2 className="h-4 w-4" />
@@ -200,12 +273,19 @@ export function EmailAccountsSettings() {
                       </Button>
                     </div>
                   </div>
-                  <div className="mt-3 flex gap-4 text-sm">
+                  <div className="mt-3 flex gap-4 text-sm flex-wrap">
                     <span className={account.auto_categorize ? "text-green-600" : "text-muted-foreground"}>
                       {account.auto_categorize ? "Auto-categorize on" : "Auto-categorize off"}
                     </span>
                     <span className={account.auto_create_records ? "text-green-600" : "text-muted-foreground"}>
                       {account.auto_create_records ? "Auto-create on" : "Review first"}
+                    </span>
+                    <span className={account.filter_mode === "whitelist" ? "text-blue-600" : account.filter_mode === "blacklist" ? "text-orange-600" : "text-muted-foreground"}>
+                      {account.filter_mode === "whitelist"
+                        ? `Whitelist (${(account.allowed_senders || []).length})`
+                        : account.filter_mode === "blacklist"
+                          ? `Blacklist (${(account.blocked_senders || []).length})`
+                          : "All senders"}
                     </span>
                   </div>
                 </CardContent>
@@ -365,6 +445,174 @@ export function EmailAccountsSettings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sender Filters Dialog */}
+      <Dialog open={!!filterAccount} onOpenChange={(open) => !open && setFilterAccount(null)}>
+        <DialogContent className="border-2 sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Sender Filters
+            </DialogTitle>
+            <DialogDescription>
+              Control which emails get synced and processed from this account.
+            </DialogDescription>
+          </DialogHeader>
+          {filterAccount && (
+            <div className="space-y-6 py-4">
+              {/* Account Info */}
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                {filterAccount.oauth_provider === "google" ? <GmailLogo /> : <Mail className="h-5 w-5" />}
+                <div>
+                  <div className="font-medium">{filterAccount.display_name}</div>
+                  <div className="text-sm text-muted-foreground">{filterAccount.email_address}</div>
+                </div>
+              </div>
+
+              {/* Filter Mode */}
+              <div className="space-y-2">
+                <Label>Filter Mode</Label>
+                <Select
+                  value={filterAccount.filter_mode}
+                  onValueChange={(value) => setFilterAccount({ ...filterAccount, filter_mode: value })}
+                >
+                  <SelectTrigger className="border-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      <div className="flex flex-col">
+                        <span>All Senders</span>
+                        <span className="text-xs text-muted-foreground">Sync all emails (can still block specific senders)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="whitelist">
+                      <div className="flex flex-col">
+                        <span>Whitelist Only</span>
+                        <span className="text-xs text-muted-foreground">Only sync from approved senders</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="blacklist">
+                      <div className="flex flex-col">
+                        <span>Blacklist</span>
+                        <span className="text-xs text-muted-foreground">Sync all except blocked senders</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Allowed Senders (for whitelist mode) */}
+              {(filterAccount.filter_mode === "whitelist" || filterAccount.filter_mode === "all") && (
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    {filterAccount.filter_mode === "whitelist" ? "Allowed Senders" : "Preferred Senders (informational)"}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {filterAccount.filter_mode === "whitelist"
+                      ? "Only emails from these addresses or domains will be synced."
+                      : "Add specific senders you want to track."}
+                    Use @domain.com to allow all emails from a domain.
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="email@example.com or @domain.com"
+                      value={newSender}
+                      onChange={(e) => setNewSender(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSender("allowed"))}
+                      className="border-2"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => addSender("allowed")}
+                      className="border-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {filterAccount.allowed_senders?.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {filterAccount.allowed_senders.map((sender: string) => (
+                        <Badge key={sender} variant="secondary" className="pl-2 pr-1 py-1 gap-1">
+                          {sender}
+                          <button
+                            onClick={() => removeSender("allowed", sender)}
+                            className="ml-1 hover:bg-muted rounded p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Blocked Senders */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <X className="h-4 w-4 text-red-600" />
+                  Blocked Senders
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Emails from these addresses or domains will never be synced.
+                  Use @domain.com to block all emails from a domain.
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="spam@example.com or @newsletter.com"
+                    value={filterAccount.filter_mode !== "whitelist" ? newSender : ""}
+                    onChange={(e) => setNewSender(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && filterAccount.filter_mode !== "whitelist" && (e.preventDefault(), addSender("blocked"))}
+                    className="border-2"
+                    disabled={filterAccount.filter_mode === "whitelist"}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => addSender("blocked")}
+                    className="border-2"
+                    disabled={filterAccount.filter_mode === "whitelist"}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {filterAccount.blocked_senders?.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {filterAccount.blocked_senders.map((sender: string) => (
+                      <Badge key={sender} variant="destructive" className="pl-2 pr-1 py-1 gap-1">
+                        {sender}
+                        <button
+                          onClick={() => removeSender("blocked", sender)}
+                          className="ml-1 hover:bg-red-700 rounded p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {filterAccount.filter_mode === "whitelist" && (
+                  <p className="text-xs text-muted-foreground italic">
+                    Blocked list is disabled in whitelist mode - only allowed senders will be synced.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFilterAccount(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveFilters} disabled={updateAccount.isPending}>
+              {updateAccount.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save Filters
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

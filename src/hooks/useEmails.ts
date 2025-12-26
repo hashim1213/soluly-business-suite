@@ -349,6 +349,9 @@ export function useEmailStats() {
         other: emails.filter((e) => e.category === "other").length,
       };
 
+      // Count emails that have been converted to tickets
+      const tickets = byCategory.ticket;
+
       return {
         total,
         pending,
@@ -357,8 +360,38 @@ export function useEmailStats() {
         approved,
         dismissed,
         byCategory,
+        tickets,
       };
     },
     enabled: !!organization?.id,
+  });
+}
+
+/**
+ * Hook to clear all synced emails (for re-syncing with new filters)
+ */
+export function useClearAllEmails() {
+  const queryClient = useQueryClient();
+  const { organization } = useAuth();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!organization?.id) throw new Error("No organization");
+
+      const { error } = await supabase
+        .from("emails")
+        .delete()
+        .eq("organization_id", organization.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["emails"] });
+      queryClient.invalidateQueries({ queryKey: ["email_stats"] });
+      toast.success("All emails cleared. You can now re-sync.");
+    },
+    onError: (error) => {
+      toast.error(`Failed to clear emails: ${error.message}`);
+    },
   });
 }

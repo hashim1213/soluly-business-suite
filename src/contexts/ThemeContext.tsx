@@ -1,7 +1,21 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 export type ThemeMode = "light" | "dark" | "system";
-export type ThemeStyle = "default" | "professional" | "modern" | "minimal" | "green" | "pink" | "pastel" | "enterprise";
+export type ThemeStyle =
+  | "default"
+  | "professional"
+  | "modern"
+  | "minimal"
+  | "green"
+  | "pink"
+  | "pastel"
+  | "enterprise"
+  | "ocean"
+  | "sunset"
+  | "carbon"
+  | "midnight"
+  | "lightning"
+  | "spectrum";
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -70,7 +84,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     // Remove all theme classes
     root.classList.remove("light", "dark");
-    root.classList.remove("theme-default", "theme-professional", "theme-modern", "theme-minimal", "theme-green", "theme-pink", "theme-pastel", "theme-enterprise");
+    root.classList.remove(
+      "theme-default",
+      "theme-professional",
+      "theme-modern",
+      "theme-minimal",
+      "theme-green",
+      "theme-pink",
+      "theme-pastel",
+      "theme-enterprise",
+      "theme-ocean",
+      "theme-sunset",
+      "theme-carbon",
+      "theme-midnight",
+      "theme-lightning",
+      "theme-spectrum"
+    );
 
     // Add current theme classes
     root.classList.add(resolvedMode);

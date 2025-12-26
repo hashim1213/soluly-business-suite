@@ -436,6 +436,17 @@ export default function Reports() {
   // Filter templates by category
   const categoryTemplates = reportTemplates.filter((t) => t.category === selectedCategory);
 
+  // Get actual data counts for each category
+  const categoryCounts: Record<ReportCategory, number> = useMemo(() => ({
+    projects: projects?.length || 0,
+    contacts: contacts?.length || 0,
+    leads: leads?.length || 0,
+    clients: clients?.length || 0,
+    sales: quotes?.length || 0,
+    activities: activities?.length || 0,
+    team: teamMembers?.length || 0,
+  }), [projects, contacts, leads, clients, quotes, activities, teamMembers]);
+
   // Get active report template
   const activeTemplate = reportTemplates.find((t) => t.id === selectedReport);
 
@@ -1332,20 +1343,35 @@ export default function Reports() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
           <p className="text-muted-foreground">
             Generate and export reports for your organization
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-8 w-32 border-0 bg-background text-sm"
+            />
+            <span className="text-muted-foreground text-sm">to</span>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-8 w-32 border-0 bg-background text-sm"
+            />
+          </div>
           {reportData?.type === "table" && (
-            <Button onClick={handleExportCSV} variant="outline" className="border-2">
+            <Button onClick={handleExportCSV} variant="outline" size="sm" className="border-2">
               <Download className="h-4 w-4 mr-2" />
-              Export CSV
+              CSV
             </Button>
           )}
           {reportData?.pdfData && (
@@ -1362,13 +1388,13 @@ export default function Reports() {
               fileName={`${activeTemplate?.name || "report"}-${format(new Date(), "yyyy-MM-dd")}.pdf`}
             >
               {({ loading }) => (
-                <Button disabled={loading} className="border-2">
+                <Button disabled={loading} size="sm" className="border-2">
                   {loading ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
                     <FileText className="h-4 w-4 mr-2" />
                   )}
-                  Export PDF
+                  PDF
                 </Button>
               )}
             </PDFDownloadLink>
@@ -1376,43 +1402,17 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card className="border-2">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4">
-            <div className="space-y-2">
-              <Label>Date From</Label>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="w-40 border-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Date To</Label>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="w-40 border-2"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Sidebar - Report Categories & Templates */}
         <div className="lg:col-span-1 space-y-4">
           <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Categories</CardTitle>
+            <CardHeader className="pb-2 pt-4">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Categories</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1">
+            <CardContent className="p-2">
               {(Object.keys(categoryLabels) as ReportCategory[]).map((category) => {
                 const Icon = categoryIcons[category];
-                const count = reportTemplates.filter((t) => t.category === category).length;
+                const count = categoryCounts[category];
                 return (
                   <button
                     key={category}
@@ -1422,15 +1422,18 @@ export default function Reports() {
                       setSelectedReport(firstTemplate?.id || "");
                       setSelectedProjectId("");
                     }}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                       selectedCategory === category
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "hover:bg-muted/80"
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="flex-1 text-sm font-medium">{categoryLabels[category]}</span>
-                    <Badge variant="secondary" className="text-xs">
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1 text-sm font-medium truncate">{categoryLabels[category].replace(" Reports", "")}</span>
+                    <Badge
+                      variant={selectedCategory === category ? "secondary" : "outline"}
+                      className={`text-xs shrink-0 ${selectedCategory === category ? "bg-primary-foreground/20 text-primary-foreground" : ""}`}
+                    >
                       {count}
                     </Badge>
                   </button>
@@ -1440,14 +1443,15 @@ export default function Reports() {
           </Card>
 
           <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">
-                {categoryLabels[selectedCategory]}
+            <CardHeader className="pb-2 pt-4">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                {categoryLabels[selectedCategory].replace(" Reports", "")} Reports
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1">
+            <CardContent className="p-2 space-y-1">
               {categoryTemplates.map((template) => {
                 const Icon = template.icon;
+                const isSelected = selectedReport === template.id;
                 return (
                   <button
                     key={template.id}
@@ -1457,19 +1461,18 @@ export default function Reports() {
                         setSelectedProjectId("");
                       }
                     }}
-                    className={`w-full flex items-start gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                      selectedReport === template.id
-                        ? "bg-muted border-2 border-border"
-                        : "hover:bg-muted/50 border-2 border-transparent"
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all ${
+                      isSelected
+                        ? "bg-primary/10 border-2 border-primary/30"
+                        : "hover:bg-muted/60 border-2 border-transparent"
                     }`}
                   >
-                    <Icon className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{template.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {template.description}
-                      </p>
+                    <div className={`p-1.5 rounded-md ${isSelected ? "bg-primary/20" : "bg-muted"}`}>
+                      <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                     </div>
+                    <span className={`text-sm font-medium truncate ${isSelected ? "text-primary" : ""}`}>
+                      {template.name}
+                    </span>
                   </button>
                 );
               })}
@@ -1478,49 +1481,56 @@ export default function Reports() {
         </div>
 
         {/* Main Content - Report Display */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 space-y-4">
+          {/* Report Header */}
           <Card className="border-2">
-            <CardHeader className="border-b-2 border-border">
-              <div className="flex items-center gap-3">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-4">
                 {activeTemplate && (
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <activeTemplate.icon className="h-5 w-5 text-primary" />
+                  <div className="p-3 rounded-xl bg-primary/10 border-2 border-primary/20">
+                    <activeTemplate.icon className="h-6 w-6 text-primary" />
                   </div>
                 )}
-                <div>
-                  <CardTitle>{activeTemplate?.name || "Select a Report"}</CardTitle>
-                  <CardDescription>{activeTemplate?.description}</CardDescription>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold">{activeTemplate?.name || "Select a Report"}</h2>
+                  <p className="text-sm text-muted-foreground">{activeTemplate?.description}</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="pt-6">
+            </CardContent>
+          </Card>
+
+          {/* Stats Cards */}
+          {reportData?.stats && reportData.stats.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {reportData.stats.map((stat: any, idx: number) => (
+                <Card key={idx} className="border-2">
+                  <CardContent className="p-4">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</p>
+                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Report Content */}
+          <Card className="border-2">
+            <CardContent className="p-6">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center py-16">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                  <p className="text-sm text-muted-foreground">Loading report data...</p>
                 </div>
               ) : reportData ? (
-                <div className="space-y-4">
-                  {/* Summary Stats */}
-                  {reportData.stats && reportData.stats.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      {reportData.stats.map((stat: any, idx: number) => (
-                        <div key={idx} className="p-4 rounded-lg bg-muted/50 border-2 border-border">
-                          <div className="text-sm text-muted-foreground">{stat.label}</div>
-                          <div className="text-xl font-bold">{stat.value}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Chart/Table */}
-                  {renderChart()}
-                </div>
+                renderChart()
               ) : (
-                <div className="text-center py-12">
-                  <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-medium mb-2">No Data Available</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Select a report from the sidebar to view data
+                <div className="text-center py-16">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+                    <BarChart3 className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">No Data Available</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Select a report from the sidebar to view data and generate insights
                   </p>
                 </div>
               )}

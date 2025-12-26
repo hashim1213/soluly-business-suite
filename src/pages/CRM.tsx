@@ -61,7 +61,7 @@ import { useCrmClients, useCrmLeads, useCreateCrmClient, useCreateCrmLead, useDe
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, Contact } from "@/hooks/useContacts";
 import { useBulkAddClientContacts } from "@/hooks/useClientContacts";
 import { useTags } from "@/hooks/useTags";
-import { useExportContacts, useImportContacts, parseCSV, generateImportTemplate } from "@/hooks/useContactImportExport";
+import { useExportContacts, useImportContacts, parseCSV } from "@/hooks/useContactImportExport";
 import { Database } from "@/integrations/supabase/types";
 import { X, PlusCircle, Upload, Download, Tags, Filter } from "lucide-react";
 
@@ -1313,66 +1313,160 @@ export default function CRM() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredClients.map((client) => (
-                <Card
-                  key={client.id}
-                  className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigateOrg(`/clients/${client.display_id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className="bg-emerald-600 text-white">
-                            {client.status}
-                          </Badge>
-                          <span className="font-mono text-xs text-muted-foreground">{client.display_id}</span>
+            <>
+              {/* Mobile List View */}
+              <div className="md:hidden space-y-3">
+                {filteredClients.map((client) => (
+                  <Card
+                    key={client.id}
+                    className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => navigateOrg(`/clients/${client.display_id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge className="bg-emerald-600 text-white text-xs">
+                              {client.status}
+                            </Badge>
+                            <span className="font-mono text-xs text-muted-foreground">{client.display_id}</span>
+                          </div>
+                          <h3 className="font-semibold truncate">{client.name}</h3>
+                          {client.contact_name && (
+                            <p className="text-sm text-muted-foreground">{client.contact_name}</p>
+                          )}
+                          {client.contact_email && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                              <Mail className="h-3 w-3" /> {client.contact_email}
+                            </p>
+                          )}
+                          {client.contact_phone && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                              <Phone className="h-3 w-3" /> {client.contact_phone}
+                            </p>
+                          )}
+                          {client.industry && (
+                            <p className="text-xs text-muted-foreground mt-1">Industry: {client.industry}</p>
+                          )}
                         </div>
-                        <h3 className="font-semibold truncate">{client.name}</h3>
-                        {client.contact_name && (
-                          <p className="text-sm text-muted-foreground">{client.contact_name}</p>
-                        )}
-                        {client.contact_email && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            <Mail className="h-3 w-3" /> {client.contact_email}
-                          </p>
-                        )}
-                        {client.contact_phone && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            <Phone className="h-3 w-3" /> {client.contact_phone}
-                          </p>
-                        )}
-                        {client.industry && (
-                          <p className="text-xs text-muted-foreground mt-1">Industry: {client.industry}</p>
-                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="border-2">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
+                              <ChevronRight className="h-4 w-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingClient(client); }}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Quick Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteClient.mutate(client.id); }} className="text-destructive">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Client
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-2">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
-                            <ChevronRight className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingClient(client); }}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Quick Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteClient.mutate(client.id); }} className="text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Client
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Card className="border-2 border-border">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b-2 border-border bg-muted/50">
+                          <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Client Name</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Contact</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Email</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Phone</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Industry</th>
+                          <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredClients.map((client) => (
+                          <tr
+                            key={client.id}
+                            className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
+                            onClick={() => navigateOrg(`/clients/${client.display_id}`)}
+                          >
+                            <td className="py-3 px-4">
+                              <Badge className="bg-emerald-600 text-white text-xs">
+                                {client.status}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="font-mono text-xs text-muted-foreground">{client.display_id}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <Building className="h-4 w-4 text-primary" />
+                                </div>
+                                <span className="font-medium truncate max-w-[200px]" title={client.name}>{client.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm text-muted-foreground truncate max-w-[150px] block" title={client.contact_name || ""}>
+                                {client.contact_name || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={client.contact_email || ""}>
+                                {client.contact_email || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm text-muted-foreground">
+                                {client.contact_phone || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={client.industry || ""}>
+                                {client.industry || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="border-2">
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
+                                    <ChevronRight className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingClient(client); }}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Quick Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteClient.mutate(client.id); }} className="text-destructive">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Client
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
-              ))}
-            </div>
+              </div>
+            </>
           )}
         </TabsContent>
 
@@ -1570,23 +1664,6 @@ export default function CRM() {
               <Button
                 variant="outline"
                 className="border-2"
-                onClick={() => {
-                  const template = generateImportTemplate();
-                  const blob = new Blob([template], { type: "text/csv" });
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = "contacts-import-template.csv";
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Template
-              </Button>
-              <Button
-                variant="outline"
-                className="border-2"
                 onClick={() => setIsImportDialogOpen(true)}
               >
                 <Upload className="h-4 w-4 mr-2" />
@@ -1756,95 +1833,210 @@ export default function CRM() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredContacts.map((contact) => (
-                <Card
-                  key={contact.id}
-                  className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-4 w-4 text-primary" />
+            <>
+              {/* Mobile List View */}
+              <div className="md:hidden space-y-3">
+                {filteredContacts.map((contact) => (
+                  <Card
+                    key={contact.id}
+                    className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold truncate">{contact.name}</h3>
+                              {contact.job_title && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Briefcase className="h-3 w-3" /> {contact.job_title}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-semibold truncate">{contact.name}</h3>
-                            {contact.job_title && (
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Briefcase className="h-3 w-3" /> {contact.job_title}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {contact.company && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
-                            <Building className="h-3 w-3" /> {contact.company.name}
-                          </p>
-                        )}
-                        {contact.email && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Mail className="h-3 w-3" /> {contact.email}
-                          </p>
-                        )}
-                        {contact.phone && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            <Phone className="h-3 w-3" /> {contact.phone}
-                          </p>
-                        )}
-                        {/* Tags */}
-                        {contact.tags && contact.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {contact.tags.slice(0, 3).map((ct) => {
-                              const tag = tags?.find((t) => t.id === ct.tag_id);
-                              return tag ? (
-                                <Badge
-                                  key={ct.tag_id}
-                                  variant="secondary"
-                                  className="text-xs px-1.5 py-0"
-                                  style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
-                                >
-                                  {tag.name}
+                          {contact.company && (
+                            <p className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
+                              <Building className="h-3 w-3" /> {contact.company.name}
+                            </p>
+                          )}
+                          {contact.email && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" /> {contact.email}
+                            </p>
+                          )}
+                          {contact.phone && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                              <Phone className="h-3 w-3" /> {contact.phone}
+                            </p>
+                          )}
+                          {/* Tags */}
+                          {contact.tags && contact.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {contact.tags.slice(0, 3).map((ct) => {
+                                const tag = tags?.find((t) => t.id === ct.tag_id);
+                                return tag ? (
+                                  <Badge
+                                    key={ct.tag_id}
+                                    variant="secondary"
+                                    className="text-xs px-1.5 py-0"
+                                    style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
+                                  >
+                                    {tag.name}
+                                  </Badge>
+                                ) : null;
+                              })}
+                              {contact.tags.length > 3 && (
+                                <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                  +{contact.tags.length - 3}
                                 </Badge>
-                              ) : null;
-                            })}
-                            {contact.tags.length > 3 && (
-                              <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                +{contact.tags.length - 3}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                        <p className="text-xs font-mono text-muted-foreground mt-2">{contact.display_id}</p>
+                              )}
+                            </div>
+                          )}
+                          <p className="text-xs font-mono text-muted-foreground mt-2">{contact.display_id}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="border-2">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
+                              <ChevronRight className="h-4 w-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingContact(contact); }}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Quick Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteContact.mutate(contact.id); }} className="text-destructive">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Contact
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-2">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
-                            <ChevronRight className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingContact(contact); }}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Quick Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteContact.mutate(contact.id); }} className="text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Contact
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Card className="border-2 border-border">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b-2 border-border bg-muted/50">
+                          <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Job Title</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Company</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Email</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Phone</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">Tags</th>
+                          <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredContacts.map((contact) => (
+                          <tr
+                            key={contact.id}
+                            className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
+                            onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
+                          >
+                            <td className="py-3 px-4">
+                              <span className="font-mono text-xs text-muted-foreground">{contact.display_id}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <User className="h-4 w-4 text-primary" />
+                                </div>
+                                <span className="font-medium truncate max-w-[150px]" title={contact.name}>{contact.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={contact.job_title || ""}>
+                                {contact.job_title || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={contact.company?.name || ""}>
+                                {contact.company?.name || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={contact.email || ""}>
+                                {contact.email || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm text-muted-foreground">
+                                {contact.phone || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              {contact.tags && contact.tags.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {contact.tags.slice(0, 2).map((ct) => {
+                                    const tag = tags?.find((t) => t.id === ct.tag_id);
+                                    return tag ? (
+                                      <Badge
+                                        key={ct.tag_id}
+                                        variant="secondary"
+                                        className="text-xs px-1.5 py-0"
+                                        style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
+                                      >
+                                        {tag.name}
+                                      </Badge>
+                                    ) : null;
+                                  })}
+                                  {contact.tags.length > 2 && (
+                                    <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                      +{contact.tags.length - 2}
+                                    </Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">-</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="border-2">
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
+                                    <ChevronRight className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingContact(contact); }}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Quick Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteContact.mutate(contact.id); }} className="text-destructive">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Contact
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
-              ))}
-            </div>
+              </div>
+            </>
           )}
         </TabsContent>
       </Tabs>

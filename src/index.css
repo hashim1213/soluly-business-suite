@@ -761,6 +761,559 @@ All colors MUST be HSL.
     --chart-4: 200 98% 39%;
     --chart-5: 280 65% 60%;
   }
+
+  /* ========================================
+     SOLULY OCEAN THEME - Signature Teal/Aqua
+     Unique Soluly brand theme with oceanic feel
+     ======================================== */
+  .theme-ocean {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --radius: 0.5rem;
+    --shadow-2xs: 0 1px 2px 0 rgba(0, 77, 92, 0.04);
+    --shadow-xs: 0 1px 3px 0 rgba(0, 77, 92, 0.06);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 77, 92, 0.08), 0 1px 2px -1px rgba(0, 77, 92, 0.08);
+    --shadow: 0 4px 6px -1px rgba(0, 77, 92, 0.1), 0 2px 4px -2px rgba(0, 77, 92, 0.1);
+    --shadow-md: 0 10px 15px -3px rgba(0, 77, 92, 0.1), 0 4px 6px -4px rgba(0, 77, 92, 0.1);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 77, 92, 0.1), 0 8px 10px -6px rgba(0, 77, 92, 0.1);
+    --shadow-xl: 0 25px 50px -12px rgba(0, 77, 92, 0.2);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 77, 92, 0.25);
+  }
+
+  .theme-ocean.light {
+    --background: 180 25% 98%;
+    --foreground: 185 50% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 185 50% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 185 50% 10%;
+    --primary: 174 72% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 180 30% 94%;
+    --secondary-foreground: 185 50% 10%;
+    --muted: 180 30% 94%;
+    --muted-foreground: 185 20% 45%;
+    --accent: 180 30% 94%;
+    --accent-foreground: 185 50% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 180 25% 88%;
+    --input: 180 25% 88%;
+    --ring: 174 72% 40%;
+    --sidebar-background: 185 50% 10%;
+    --sidebar-foreground: 180 25% 95%;
+    --sidebar-primary: 174 72% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 185 40% 18%;
+    --sidebar-accent-foreground: 180 25% 95%;
+    --sidebar-border: 185 40% 18%;
+    --sidebar-ring: 174 72% 40%;
+    --sidebar: 185 50% 10%;
+    --chart-1: 174 72% 40%;
+    --chart-2: 200 80% 50%;
+    --chart-3: 45 90% 55%;
+    --chart-4: 280 70% 55%;
+    --chart-5: 340 80% 55%;
+  }
+
+  .theme-ocean.dark {
+    --background: 185 50% 6%;
+    --foreground: 180 25% 95%;
+    --card: 185 45% 9%;
+    --card-foreground: 180 25% 95%;
+    --popover: 185 45% 9%;
+    --popover-foreground: 180 25% 95%;
+    --primary: 174 65% 50%;
+    --primary-foreground: 185 50% 6%;
+    --secondary: 185 35% 15%;
+    --secondary-foreground: 180 25% 95%;
+    --muted: 185 35% 15%;
+    --muted-foreground: 180 20% 60%;
+    --accent: 185 35% 15%;
+    --accent-foreground: 180 25% 95%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 185 30% 20%;
+    --input: 185 30% 20%;
+    --ring: 174 65% 50%;
+    --sidebar-background: 185 50% 5%;
+    --sidebar-foreground: 180 25% 95%;
+    --sidebar-primary: 174 65% 50%;
+    --sidebar-primary-foreground: 185 50% 6%;
+    --sidebar-accent: 185 35% 15%;
+    --sidebar-accent-foreground: 180 25% 95%;
+    --sidebar-border: 185 30% 18%;
+    --sidebar-ring: 174 65% 50%;
+    --sidebar: 185 50% 5%;
+    --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-xs: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* ========================================
+     SOLULY SUNSET THEME - Warm Amber/Orange
+     Warm, energetic theme with sunset vibes
+     ======================================== */
+  .theme-sunset {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --radius: 0.625rem;
+    --shadow-2xs: 0 1px 2px 0 rgba(180, 83, 9, 0.04);
+    --shadow-xs: 0 1px 3px 0 rgba(180, 83, 9, 0.06);
+    --shadow-sm: 0 1px 3px 0 rgba(180, 83, 9, 0.08), 0 1px 2px -1px rgba(180, 83, 9, 0.08);
+    --shadow: 0 4px 6px -1px rgba(180, 83, 9, 0.1), 0 2px 4px -2px rgba(180, 83, 9, 0.1);
+    --shadow-md: 0 10px 15px -3px rgba(180, 83, 9, 0.1), 0 4px 6px -4px rgba(180, 83, 9, 0.1);
+    --shadow-lg: 0 20px 25px -5px rgba(180, 83, 9, 0.12), 0 8px 10px -6px rgba(180, 83, 9, 0.1);
+    --shadow-xl: 0 25px 50px -12px rgba(180, 83, 9, 0.2);
+    --shadow-2xl: 0 25px 50px -12px rgba(180, 83, 9, 0.25);
+  }
+
+  .theme-sunset.light {
+    --background: 35 40% 98%;
+    --foreground: 25 40% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 25 40% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 40% 12%;
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 35 35% 93%;
+    --secondary-foreground: 25 40% 12%;
+    --muted: 35 35% 93%;
+    --muted-foreground: 25 20% 45%;
+    --accent: 35 35% 93%;
+    --accent-foreground: 25 40% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 35 30% 88%;
+    --input: 35 30% 88%;
+    --ring: 25 95% 53%;
+    --sidebar-background: 25 40% 12%;
+    --sidebar-foreground: 35 35% 95%;
+    --sidebar-primary: 25 90% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 30% 20%;
+    --sidebar-accent-foreground: 35 35% 95%;
+    --sidebar-border: 25 30% 20%;
+    --sidebar-ring: 25 95% 53%;
+    --sidebar: 25 40% 12%;
+    --chart-1: 25 95% 53%;
+    --chart-2: 340 82% 52%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 262 83% 58%;
+    --chart-5: 200 98% 39%;
+  }
+
+  .theme-sunset.dark {
+    --background: 25 35% 7%;
+    --foreground: 35 30% 95%;
+    --card: 25 30% 10%;
+    --card-foreground: 35 30% 95%;
+    --popover: 25 30% 10%;
+    --popover-foreground: 35 30% 95%;
+    --primary: 25 85% 55%;
+    --primary-foreground: 25 35% 7%;
+    --secondary: 25 25% 16%;
+    --secondary-foreground: 35 30% 95%;
+    --muted: 25 25% 16%;
+    --muted-foreground: 35 20% 60%;
+    --accent: 25 25% 16%;
+    --accent-foreground: 35 30% 95%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 25 22% 22%;
+    --input: 25 22% 22%;
+    --ring: 25 85% 55%;
+    --sidebar-background: 25 35% 6%;
+    --sidebar-foreground: 35 30% 95%;
+    --sidebar-primary: 25 85% 55%;
+    --sidebar-primary-foreground: 25 35% 7%;
+    --sidebar-accent: 25 25% 16%;
+    --sidebar-accent-foreground: 35 30% 95%;
+    --sidebar-border: 25 22% 20%;
+    --sidebar-ring: 25 85% 55%;
+    --sidebar: 25 35% 6%;
+    --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-xs: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* ========================================
+     CARBON THEME - IBM Carbon-Inspired
+     Industrial, systematic design language
+     ======================================== */
+  .theme-carbon {
+    --font-sans: 'IBM Plex Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --radius: 0rem;
+    --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+    --shadow-xs: 0 2px 6px 0 rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 2px 6px 0 rgba(0, 0, 0, 0.2);
+    --shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 6px 12px 0 rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.2);
+    --shadow-xl: 0 12px 28px 0 rgba(0, 0, 0, 0.25);
+    --shadow-2xl: 0 16px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .theme-carbon.light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 14%;
+    --primary: 207 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 10% 93%;
+    --secondary-foreground: 0 0% 14%;
+    --muted: 210 10% 93%;
+    --muted-foreground: 210 10% 40%;
+    --accent: 210 10% 93%;
+    --accent-foreground: 0 0% 14%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 10% 85%;
+    --input: 210 10% 85%;
+    --ring: 207 100% 40%;
+    --sidebar-background: 210 10% 23%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 207 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 10% 30%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 210 10% 30%;
+    --sidebar-ring: 207 100% 40%;
+    --sidebar: 210 10% 23%;
+    --chart-1: 207 100% 40%;
+    --chart-2: 162 72% 45%;
+    --chart-3: 43 100% 50%;
+    --chart-4: 300 45% 50%;
+    --chart-5: 0 72% 51%;
+  }
+
+  .theme-carbon.dark {
+    --background: 210 10% 10%;
+    --foreground: 0 0% 98%;
+    --card: 210 10% 13%;
+    --card-foreground: 0 0% 98%;
+    --popover: 210 10% 13%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 207 90% 55%;
+    --primary-foreground: 210 10% 10%;
+    --secondary: 210 10% 20%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 210 10% 20%;
+    --muted-foreground: 210 10% 60%;
+    --accent: 210 10% 20%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 10% 25%;
+    --input: 210 10% 25%;
+    --ring: 207 90% 55%;
+    --sidebar-background: 210 10% 8%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 207 90% 55%;
+    --sidebar-primary-foreground: 210 10% 10%;
+    --sidebar-accent: 210 10% 20%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 210 10% 22%;
+    --sidebar-ring: 207 90% 55%;
+    --sidebar: 210 10% 8%;
+    --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-xs: 0 2px 6px 0 rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 2px 6px 0 rgba(0, 0, 0, 0.5);
+    --shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 12px 0 rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 12px 28px 0 rgba(0, 0, 0, 0.6);
+    --shadow-2xl: 0 16px 32px 0 rgba(0, 0, 0, 0.6);
+  }
+
+  /* ========================================
+     MIDNIGHT THEME - Deep Violet/Purple
+     Sleek, modern midnight aesthetic
+     ======================================== */
+  .theme-midnight {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --radius: 0.625rem;
+    --shadow-2xs: 0 1px 2px 0 rgba(88, 28, 135, 0.05);
+    --shadow-xs: 0 1px 3px 0 rgba(88, 28, 135, 0.08);
+    --shadow-sm: 0 2px 4px 0 rgba(88, 28, 135, 0.08);
+    --shadow: 0 4px 6px -1px rgba(88, 28, 135, 0.12);
+    --shadow-md: 0 10px 15px -3px rgba(88, 28, 135, 0.12);
+    --shadow-lg: 0 20px 25px -5px rgba(88, 28, 135, 0.12);
+    --shadow-xl: 0 25px 50px -12px rgba(88, 28, 135, 0.2);
+    --shadow-2xl: 0 25px 50px -12px rgba(88, 28, 135, 0.25);
+  }
+
+  .theme-midnight.light {
+    --background: 270 25% 98%;
+    --foreground: 270 40% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 270 40% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 40% 12%;
+    --primary: 270 76% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 30% 94%;
+    --secondary-foreground: 270 40% 12%;
+    --muted: 270 30% 94%;
+    --muted-foreground: 270 15% 45%;
+    --accent: 270 30% 94%;
+    --accent-foreground: 270 40% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 270 25% 88%;
+    --input: 270 25% 88%;
+    --ring: 270 76% 50%;
+    --sidebar-background: 270 40% 12%;
+    --sidebar-foreground: 270 20% 95%;
+    --sidebar-primary: 270 70% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 35% 20%;
+    --sidebar-accent-foreground: 270 20% 95%;
+    --sidebar-border: 270 35% 20%;
+    --sidebar-ring: 270 76% 50%;
+    --sidebar: 270 40% 12%;
+    --chart-1: 270 76% 50%;
+    --chart-2: 200 80% 50%;
+    --chart-3: 340 80% 55%;
+    --chart-4: 142 70% 45%;
+    --chart-5: 45 90% 55%;
+  }
+
+  .theme-midnight.dark {
+    --background: 270 40% 6%;
+    --foreground: 270 20% 95%;
+    --card: 270 35% 9%;
+    --card-foreground: 270 20% 95%;
+    --popover: 270 35% 9%;
+    --popover-foreground: 270 20% 95%;
+    --primary: 270 70% 60%;
+    --primary-foreground: 270 40% 6%;
+    --secondary: 270 30% 15%;
+    --secondary-foreground: 270 20% 95%;
+    --muted: 270 30% 15%;
+    --muted-foreground: 270 15% 60%;
+    --accent: 270 30% 15%;
+    --accent-foreground: 270 20% 95%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 270 25% 20%;
+    --input: 270 25% 20%;
+    --ring: 270 70% 60%;
+    --sidebar-background: 270 40% 5%;
+    --sidebar-foreground: 270 20% 95%;
+    --sidebar-primary: 270 70% 60%;
+    --sidebar-primary-foreground: 270 40% 6%;
+    --sidebar-accent: 270 30% 15%;
+    --sidebar-accent-foreground: 270 20% 95%;
+    --sidebar-border: 270 25% 18%;
+    --sidebar-ring: 270 70% 60%;
+    --sidebar: 270 40% 5%;
+    --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+    --shadow-xs: 0 1px 3px 0 rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  /* ========================================
+     LIGHTNING THEME - Salesforce-Inspired
+     Clean, professional blue business look
+     ======================================== */
+  .theme-lightning {
+    --font-sans: 'Salesforce Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --radius: 0.25rem;
+    --shadow-2xs: 0 1px 1px 0 rgba(0, 0, 0, 0.05);
+    --shadow-xs: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+    --shadow-sm: 0 2px 3px 0 rgba(0, 0, 0, 0.1);
+    --shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.15);
+    --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 8px 20px -4px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 12px 28px -8px rgba(0, 0, 0, 0.2);
+    --shadow-2xl: 0 20px 36px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  .theme-lightning.light {
+    --background: 216 28% 97%;
+    --foreground: 214 31% 17%;
+    --card: 0 0% 100%;
+    --card-foreground: 214 31% 17%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 31% 17%;
+    --primary: 210 100% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 24% 93%;
+    --secondary-foreground: 214 31% 17%;
+    --muted: 216 24% 93%;
+    --muted-foreground: 214 20% 45%;
+    --accent: 216 24% 93%;
+    --accent-foreground: 214 31% 17%;
+    --destructive: 4 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 22% 88%;
+    --input: 216 22% 88%;
+    --ring: 210 100% 42%;
+    --sidebar-background: 214 31% 17%;
+    --sidebar-foreground: 216 28% 97%;
+    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 30% 25%;
+    --sidebar-accent-foreground: 216 28% 97%;
+    --sidebar-border: 214 30% 25%;
+    --sidebar-ring: 210 100% 42%;
+    --sidebar: 214 31% 17%;
+    --chart-1: 210 100% 42%;
+    --chart-2: 145 63% 42%;
+    --chart-3: 45 93% 47%;
+    --chart-4: 281 66% 52%;
+    --chart-5: 4 84% 50%;
+  }
+
+  .theme-lightning.dark {
+    --background: 214 32% 9%;
+    --foreground: 216 28% 95%;
+    --card: 214 30% 12%;
+    --card-foreground: 216 28% 95%;
+    --popover: 214 30% 12%;
+    --popover-foreground: 216 28% 95%;
+    --primary: 210 95% 55%;
+    --primary-foreground: 214 32% 9%;
+    --secondary: 214 25% 18%;
+    --secondary-foreground: 216 28% 95%;
+    --muted: 214 25% 18%;
+    --muted-foreground: 216 20% 60%;
+    --accent: 214 25% 18%;
+    --accent-foreground: 216 28% 95%;
+    --destructive: 4 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 25% 22%;
+    --input: 214 25% 22%;
+    --ring: 210 95% 55%;
+    --sidebar-background: 214 32% 7%;
+    --sidebar-foreground: 216 28% 95%;
+    --sidebar-primary: 210 95% 55%;
+    --sidebar-primary-foreground: 214 32% 9%;
+    --sidebar-accent: 214 25% 18%;
+    --sidebar-accent-foreground: 216 28% 95%;
+    --sidebar-border: 214 25% 20%;
+    --sidebar-ring: 210 95% 55%;
+    --sidebar: 214 32% 7%;
+    --shadow-2xs: 0 1px 1px 0 rgba(0, 0, 0, 0.35);
+    --shadow-xs: 0 2px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 2px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 20px -4px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 12px 28px -8px rgba(0, 0, 0, 0.55);
+    --shadow-2xl: 0 20px 36px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  /* ========================================
+     SPECTRUM THEME - Adobe-Inspired
+     Creative, vibrant professional look
+     ======================================== */
+  .theme-spectrum {
+    --font-sans: 'Adobe Clean', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --radius: 0.3125rem;
+    --shadow-2xs: 0 1px 1px 0 rgba(0, 0, 0, 0.04);
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
+    --shadow-sm: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
+    --shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.12);
+    --shadow-md: 0 4px 10px 0 rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 6px 16px 0 rgba(0, 0, 0, 0.14);
+    --shadow-xl: 0 8px 24px 0 rgba(0, 0, 0, 0.16);
+    --shadow-2xl: 0 12px 32px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .theme-spectrum.light {
+    --background: 240 4% 97%;
+    --foreground: 240 5% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 5% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 5% 12%;
+    --primary: 230 97% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 93%;
+    --secondary-foreground: 240 5% 12%;
+    --muted: 240 5% 93%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 93%;
+    --accent-foreground: 240 5% 12%;
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5% 87%;
+    --input: 240 5% 87%;
+    --ring: 230 97% 52%;
+    --sidebar-background: 240 10% 95%;
+    --sidebar-foreground: 240 5% 12%;
+    --sidebar-primary: 230 97% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 90%;
+    --sidebar-accent-foreground: 240 5% 12%;
+    --sidebar-border: 240 5% 87%;
+    --sidebar-ring: 230 97% 52%;
+    --sidebar: 240 10% 95%;
+    --chart-1: 230 97% 52%;
+    --chart-2: 169 100% 35%;
+    --chart-3: 45 100% 51%;
+    --chart-4: 313 84% 48%;
+    --chart-5: 0 75% 50%;
+  }
+
+  .theme-spectrum.dark {
+    --background: 240 10% 6%;
+    --foreground: 240 5% 94%;
+    --card: 240 8% 10%;
+    --card-foreground: 240 5% 94%;
+    --popover: 240 8% 10%;
+    --popover-foreground: 240 5% 94%;
+    --primary: 230 90% 60%;
+    --primary-foreground: 240 10% 6%;
+    --secondary: 240 6% 18%;
+    --secondary-foreground: 240 5% 94%;
+    --muted: 240 6% 18%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 240 6% 18%;
+    --accent-foreground: 240 5% 94%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 22%;
+    --input: 240 6% 22%;
+    --ring: 230 90% 60%;
+    --sidebar-background: 240 10% 8%;
+    --sidebar-foreground: 240 5% 94%;
+    --sidebar-primary: 230 90% 60%;
+    --sidebar-primary-foreground: 240 10% 6%;
+    --sidebar-accent: 240 6% 18%;
+    --sidebar-accent-foreground: 240 5% 94%;
+    --sidebar-border: 240 6% 20%;
+    --sidebar-ring: 230 90% 60%;
+    --sidebar: 240 10% 8%;
+    --shadow-2xs: 0 1px 1px 0 rgba(0, 0, 0, 0.3);
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 4px 0 rgba(0, 0, 0, 0.4);
+    --shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 4px 10px 0 rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 6px 16px 0 rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 8px 24px 0 rgba(0, 0, 0, 0.55);
+    --shadow-2xl: 0 12px 32px 0 rgba(0, 0, 0, 0.6);
+  }
 }
 
 @layer base {

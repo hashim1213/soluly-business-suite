@@ -23,7 +23,12 @@ serve(async (req) => {
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
     const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET");
 
+    console.log("Gmail OAuth function called");
+    console.log("Has GOOGLE_CLIENT_ID:", !!GOOGLE_CLIENT_ID);
+    console.log("Has GOOGLE_CLIENT_SECRET:", !!GOOGLE_CLIENT_SECRET);
+
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+      console.error("Missing Google OAuth credentials");
       throw new Error("Google OAuth credentials not configured");
     }
 
@@ -44,8 +49,12 @@ serve(async (req) => {
     const body: OAuthRequest = await req.json();
     const { action, code, redirectUri, organizationId, accountId } = body;
 
+    console.log("Action:", action);
+    console.log("RedirectUri:", redirectUri);
+
     // Action: Get OAuth URL
     if (action === "get_auth_url") {
+      console.log("Building OAuth URL...");
       const scopes = [
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/userinfo.email",
@@ -65,8 +74,11 @@ serve(async (req) => {
         authUrl.searchParams.set("state", organizationId);
       }
 
+      const authUrlString = authUrl.toString();
+      console.log("Generated OAuth URL:", authUrlString.substring(0, 100) + "...");
+
       return new Response(
-        JSON.stringify({ success: true, authUrl: authUrl.toString() }),
+        JSON.stringify({ success: true, authUrl: authUrlString }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -126,7 +138,7 @@ serve(async (req) => {
       const { data: teamMember, error: teamError } = await supabase
         .from("team_members")
         .select("organization_id")
-        .eq("user_id", userId)
+        .eq("auth_user_id", userId)
         .single();
 
       if (teamError || !teamMember) {

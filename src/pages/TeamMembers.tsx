@@ -13,6 +13,13 @@ import {
   Trash2,
   Briefcase,
   Loader2,
+  Mail,
+  UserPlus,
+  Key,
+  RefreshCw,
+  X,
+  Copy,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,7 +63,11 @@ import {
   useDeleteTeamMember,
   TeamMemberWithProjects,
 } from "@/hooks/useTeamMembers";
+import { useInvitations, useCreateInvitation, useDeleteInvitation, useResendInvitation } from "@/hooks/useInvitations";
+import { useRoles } from "@/hooks/useRoles";
+import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ContractType = Database["public"]["Enums"]["contract_type"];
 type MemberStatus = Database["public"]["Enums"]["member_status"];
@@ -65,12 +76,19 @@ const departments = ["Management", "Engineering", "Design", "Quality", "Operatio
 const contractTypes: ContractType[] = ["Full-time", "Part-time", "Contractor"];
 
 export default function TeamMembers() {
-  const { navigateOrg } = useOrgNavigation();
+  const { navigateOrg, getOrgPath } = useOrgNavigation();
   const canViewAmounts = useCanViewAmounts();
   const { data: teamMembers, isLoading, error } = useTeamMembersWithProjects();
   const createTeamMember = useCreateTeamMember();
   const updateTeamMember = useUpdateTeamMember();
   const deleteTeamMember = useDeleteTeamMember();
+
+  // Invitations
+  const { data: invitations, isLoading: invitationsLoading } = useInvitations();
+  const createInvitation = useCreateInvitation();
+  const deleteInvitation = useDeleteInvitation();
+  const resendInvitation = useResendInvitation();
+  const { data: roles } = useRoles();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
@@ -78,6 +96,10 @@ export default function TeamMembers() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMemberWithProjects | null>(null);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRoleId, setInviteRoleId] = useState("");
+  const [sendingPasswordReset, setSendingPasswordReset] = useState<string | null>(null);
   const [newMember, setNewMember] = useState({
     name: "",
     email: "",
@@ -174,6 +196,49 @@ export default function TeamMembers() {
     });
   };
 
+  const handleInviteMember = async () => {
+    if (!inviteEmail || !inviteRoleId) {
+      toast.error("Please enter an email and select a role");
+      return;
+    }
+    try {
+      await createInvitation.mutateAsync({ email: inviteEmail, roleId: inviteRoleId });
+      setInviteEmail("");
+      setInviteRoleId("");
+      setIsInviteDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleSendPasswordReset = async (email: string, memberId: string) => {
+    setSendingPasswordReset(memberId);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success(`Password reset email sent to ${email}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send reset email";
+      toast.error(errorMessage);
+    } finally {
+      setSendingPasswordReset(null);
+    }
+  };
+
+  const copyInviteLink = (token: string) => {
+    const baseUrl = import.meta.env.PROD ? "https://app.soluly.com" : window.location.origin;
+    const link = `${baseUrl}/invite/${token}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Invite link copied to clipboard");
+  };
+
+  // Count pending invitations
+  const pendingInvitations = invitations?.filter(
+    (inv) => new Date(inv.expires_at) > new Date()
+  ).length || 0;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -200,13 +265,71 @@ export default function TeamMembers() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Team Members</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Manage your team across all projects</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="border-2 w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Team Member
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="border-2 flex-1 sm:flex-none">
+                <Mail className="h-4 w-4 mr-2" />
+                Invite
+                {pendingInvitations > 0 && (
+                  <Badge variant="secondary" className="ml-2 h-5 min-w-5 flex items-center justify-center">
+                    {pendingInvitations}
+                  </Badge>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="border-2 sm:max-w-[425px]">
+              <DialogHeader className="border-b-2 border-border pb-4">
+                <DialogTitle>Invite Team Member</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label>Email Address *</Label>
+                  <Input
+                    type="email"
+                    placeholder="colleague@company.com"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Role *</Label>
+                  <Select value={inviteRoleId} onValueChange={setInviteRoleId}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent className="border-2">
+                      {roles?.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    The invited user will be able to access features based on this role's permissions.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+                <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)} className="border-2">
+                  Cancel
+                </Button>
+                <Button onClick={handleInviteMember} disabled={createInvitation.isPending} className="border-2">
+                  {createInvitation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                  Send Invitation
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="border-2 flex-1 sm:flex-none">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Member
+              </Button>
+            </DialogTrigger>
           <DialogContent className="border-2 sm:max-w-[500px]">
             <DialogHeader className="border-b-2 border-border pb-4">
               <DialogTitle>Add Team Member</DialogTitle>
@@ -321,6 +444,7 @@ export default function TeamMembers() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -377,6 +501,87 @@ export default function TeamMembers() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Invitations */}
+      {invitations && invitations.length > 0 && (
+        <Card className="border-2 border-border shadow-sm">
+          <CardHeader className="border-b-2 border-border py-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Pending Invitations
+                <Badge variant="secondary">{invitations.length}</Badge>
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {invitations.map((invitation) => {
+                const isExpired = new Date(invitation.expires_at) < new Date();
+                return (
+                  <div key={invitation.id} className="flex items-center justify-between p-4 gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar className="h-8 w-8 border-2 border-border">
+                        <AvatarFallback className="bg-muted text-xs">
+                          {invitation.email.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{invitation.email}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <span>Role: {invitation.role?.name || "Unknown"}</span>
+                          {invitation.inviter?.name && (
+                            <>
+                              <span>•</span>
+                              <span>Invited by {invitation.inviter.name}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isExpired ? (
+                        <Badge variant="destructive" className="text-xs">Expired</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs border-2">Pending</Badge>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => copyInviteLink(invitation.token)}
+                        title="Copy invite link"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => resendInvitation.mutate(invitation.id)}
+                        disabled={resendInvitation.isPending}
+                        title="Resend invitation"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${resendInvitation.isPending ? "animate-spin" : ""}`} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => deleteInvitation.mutate(invitation.id)}
+                        disabled={deleteInvitation.isPending}
+                        title="Cancel invitation"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-2 border-border shadow-sm">
         <CardHeader className="border-b-2 border-border">
@@ -458,6 +663,17 @@ export default function TeamMembers() {
                           <Users className="h-4 w-4 mr-2" />
                           {member.status === "active" ? "Deactivate" : "Activate"}
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          handleSendPasswordReset(member.email, member.id);
+                        }} disabled={sendingPasswordReset === member.id}>
+                          {sendingPasswordReset === member.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Key className="h-4 w-4 mr-2" />
+                          )}
+                          Send Password Reset
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteMember(member.id, member.name);
@@ -479,12 +695,12 @@ export default function TeamMembers() {
                 {member.projects.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {member.projects.slice(0, 2).map((p) => (
-                      <Badge key={p.project_id} variant="outline" className="border-2 text-xs">
+                      <Badge key={p.project_id} variant="outline" className="border-2 text-xs max-w-[100px] truncate" title={p.project?.name || p.project_id}>
                         {p.project?.name || p.project_id}
                       </Badge>
                     ))}
                     {member.projects.length > 2 && (
-                      <Badge variant="outline" className="border-2 text-xs">
+                      <Badge variant="outline" className="border-2 text-xs shrink-0">
                         +{member.projects.length - 2}
                       </Badge>
                     )}
@@ -513,7 +729,7 @@ export default function TeamMembers() {
                 {filteredMembers.map((member) => (
                   <TableRow key={member.id} className="border-b-2 cursor-pointer hover:bg-accent/50" onClick={() => navigateOrg(`/team/${member.id}`)}>
                     <TableCell>
-                      <Link to={`/team/${member.id}`} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                      <Link to={getOrgPath(`/team/${member.id}`)} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                         <Avatar className="h-8 w-8 border-2 border-border">
                           <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
@@ -532,21 +748,21 @@ export default function TeamMembers() {
                     </TableCell>
                     <TableCell className="text-right font-mono">{canViewAmounts ? `$${member.hourly_rate}` : "••••••"}</TableCell>
                     <TableCell className="text-right font-mono">{member.total_hours}h</TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[200px]">
                       <div className="flex flex-wrap gap-1">
                         {member.projects.length > 0 ? (
                           member.projects.slice(0, 2).map((p) => (
-                            <Link key={p.project_id} to={`/projects/${p.project?.display_id}`} onClick={(e) => e.stopPropagation()}>
-                              <Badge variant="outline" className="border-2 cursor-pointer hover:bg-accent text-xs">
+                            <Link key={p.project_id} to={getOrgPath(`/projects/${p.project?.display_id}`)} onClick={(e) => e.stopPropagation()}>
+                              <Badge variant="outline" className="border-2 cursor-pointer hover:bg-accent text-xs max-w-[90px] truncate" title={p.project?.name || p.project_id}>
                                 {p.project?.name || p.project_id}
                               </Badge>
                             </Link>
                           ))
                         ) : (
-                          <span className="text-muted-foreground text-sm">No projects</span>
+                          <span className="text-muted-foreground text-sm">None</span>
                         )}
                         {member.projects.length > 2 && (
-                          <Badge variant="outline" className="border-2 text-xs">
+                          <Badge variant="outline" className="border-2 text-xs shrink-0">
                             +{member.projects.length - 2}
                           </Badge>
                         )}
@@ -579,6 +795,17 @@ export default function TeamMembers() {
                           }}>
                             <Users className="h-4 w-4 mr-2" />
                             {member.status === "active" ? "Deactivate" : "Activate"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            handleSendPasswordReset(member.email, member.id);
+                          }} disabled={sendingPasswordReset === member.id}>
+                            {sendingPasswordReset === member.id ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Key className="h-4 w-4 mr-2" />
+                            )}
+                            Send Password Reset
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive" onClick={(e) => {
                             e.stopPropagation();

@@ -20,7 +20,11 @@ import {
   Plus,
   Check,
   X,
+  Key,
+  UserCheck,
+  Shield,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +86,7 @@ import {
 } from "@/hooks/usePayments";
 import { useProjects } from "@/hooks/useProjects";
 import { useAddProjectTeamMember, useRemoveProjectTeamMember } from "@/hooks/useProjectTeamMembers";
+import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -125,6 +130,7 @@ export default function TeamMemberDetail() {
   const [isTimeEntryDialogOpen, setIsTimeEntryDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isAssignProjectDialogOpen, setIsAssignProjectDialogOpen] = useState(false);
+  const [sendingPasswordReset, setSendingPasswordReset] = useState(false);
 
   const [editData, setEditData] = useState<{
     name: string;
@@ -215,6 +221,23 @@ export default function TeamMemberDetail() {
       toast.success(`${member.name} is now ${member.status === "active" ? "inactive" : "active"}`);
     } catch (error) {
       // Error handled by hook
+    }
+  };
+
+  const handleSendPasswordReset = async () => {
+    if (!member) return;
+    setSendingPasswordReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(member.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success(`Password reset email sent to ${member.email}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send reset email";
+      toast.error(errorMessage);
+    } finally {
+      setSendingPasswordReset(false);
     }
   };
 
@@ -435,6 +458,14 @@ export default function TeamMemberDetail() {
               <DropdownMenuItem onClick={handleToggleStatus}>
                 <Users className="h-4 w-4 mr-2" />
                 {member.status === "active" ? "Deactivate" : "Activate"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSendPasswordReset} disabled={sendingPasswordReset}>
+                {sendingPasswordReset ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Key className="h-4 w-4 mr-2" />
+                )}
+                Send Password Reset
               </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -673,41 +704,64 @@ export default function TeamMemberDetail() {
                 <>
                   {/* Mobile view - cards */}
                   <div className="block sm:hidden divide-y-2 divide-border">
-                    {timeEntries.map((entry) => (
-                      <div key={entry.id} className="p-4 space-y-2">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="font-mono font-bold text-lg">{entry.hours}h</div>
-                            <div className="text-xs text-muted-foreground">
-                              {format(new Date(entry.date), "MMM d, yyyy")}
+                    {timeEntries.map((entry) => {
+                      const isSelfLogged = !entry.logged_by || entry.logged_by === entry.team_member_id;
+                      return (
+                        <div key={entry.id} className="p-4 space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-mono font-bold text-lg">{entry.hours}h</div>
+                              <div className="text-xs text-muted-foreground">
+                                {format(new Date(entry.date), "MMM d, yyyy")}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isSelfLogged ? (
+                                <Badge variant="outline" className="text-xs gap-1 border-green-500 text-green-600">
+                                  <UserCheck className="h-3 w-3" />
+                                  Self
+                                </Badge>
+                              ) : (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Badge variant="outline" className="text-xs gap-1 border-amber-500 text-amber-600">
+                                        <Shield className="h-3 w-3" />
+                                        Admin
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Logged by {entry.logged_by_member?.name || "Admin"}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                              {entry.billable ? (
+                                <Badge className="bg-chart-2 text-background text-xs">Billable</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="border-2 border-border text-xs">Non-billable</Badge>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteTimeEntry(entry.id, entry.hours, entry.project_id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {entry.billable ? (
-                              <Badge className="bg-chart-2 text-background text-xs">Billable</Badge>
-                            ) : (
-                              <Badge variant="secondary" className="border-2 border-border text-xs">Non-billable</Badge>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteTimeEntry(entry.id, entry.hours, entry.project_id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          {entry.project && (
+                            <Link to={getOrgPath(`/projects/${entry.project.display_id}`)} className="text-primary hover:underline text-sm block">
+                              {entry.project.name}
+                            </Link>
+                          )}
+                          {entry.description && (
+                            <p className="text-sm text-muted-foreground">{entry.description}</p>
+                          )}
                         </div>
-                        {entry.project && (
-                          <Link to={getOrgPath(`/projects/${entry.project.display_id}`)} className="text-primary hover:underline text-sm block">
-                            {entry.project.name}
-                          </Link>
-                        )}
-                        {entry.description && (
-                          <p className="text-sm text-muted-foreground">{entry.description}</p>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {/* Desktop view - table */}
                   <div className="hidden sm:block overflow-x-auto">
@@ -719,45 +773,71 @@ export default function TeamMemberDetail() {
                           <TableHead className="font-bold uppercase text-xs">Description</TableHead>
                           <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
                           <TableHead className="font-bold uppercase text-xs">Type</TableHead>
+                          <TableHead className="font-bold uppercase text-xs">Logged By</TableHead>
                           <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {timeEntries.map((entry) => (
-                          <TableRow key={entry.id} className="border-b-2">
-                            <TableCell className="text-muted-foreground">
-                              {format(new Date(entry.date), "MMM d, yyyy")}
-                            </TableCell>
-                            <TableCell>
-                              {entry.project ? (
-                                <Link to={getOrgPath(`/projects/${entry.project.display_id}`)} className="text-primary hover:underline">
-                                  {entry.project.name}
-                                </Link>
-                              ) : (
-                                <span className="text-muted-foreground">No project</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{entry.description || "-"}</TableCell>
-                            <TableCell className="text-right font-mono font-bold">{entry.hours}h</TableCell>
-                            <TableCell>
-                              {entry.billable ? (
-                                <Badge className="bg-chart-2 text-background">Billable</Badge>
-                              ) : (
-                                <Badge variant="secondary" className="border-2 border-border">Non-billable</Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteTimeEntry(entry.id, entry.hours, entry.project_id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {timeEntries.map((entry) => {
+                          const isSelfLogged = !entry.logged_by || entry.logged_by === entry.team_member_id;
+                          return (
+                            <TableRow key={entry.id} className="border-b-2">
+                              <TableCell className="text-muted-foreground">
+                                {format(new Date(entry.date), "MMM d, yyyy")}
+                              </TableCell>
+                              <TableCell>
+                                {entry.project ? (
+                                  <Link to={getOrgPath(`/projects/${entry.project.display_id}`)} className="text-primary hover:underline">
+                                    {entry.project.name}
+                                  </Link>
+                                ) : (
+                                  <span className="text-muted-foreground">No project</span>
+                                )}
+                              </TableCell>
+                              <TableCell>{entry.description || "-"}</TableCell>
+                              <TableCell className="text-right font-mono font-bold">{entry.hours}h</TableCell>
+                              <TableCell>
+                                {entry.billable ? (
+                                  <Badge className="bg-chart-2 text-background">Billable</Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="border-2 border-border">Non-billable</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {isSelfLogged ? (
+                                  <Badge variant="outline" className="text-xs gap-1 border-green-500 text-green-600">
+                                    <UserCheck className="h-3 w-3" />
+                                    Self
+                                  </Badge>
+                                ) : (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <Badge variant="outline" className="text-xs gap-1 border-amber-500 text-amber-600">
+                                          <Shield className="h-3 w-3" />
+                                          Admin
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Logged by {entry.logged_by_member?.name || "Admin"}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteTimeEntry(entry.id, entry.hours, entry.project_id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>

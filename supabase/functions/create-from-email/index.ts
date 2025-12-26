@@ -23,19 +23,43 @@ interface CreateFromEmailRequest {
   reviewedBy?: string;
 }
 
+// Truncate description to prevent UI overflow issues
+function truncateDescription(body: string, maxLength: number = 2000): string {
+  if (!body) return "";
+  if (body.length <= maxLength) return body;
+  return body.substring(0, maxLength) + "\n\n[Content truncated - see original email for full text]";
+}
+
 serve(async (req) => {
+  console.log("create-from-email called");
+  console.log("Method:", req.method);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Log all headers for debugging
+  const headers: Record<string, string> = {};
+  req.headers.forEach((value, key) => {
+    headers[key] = key.toLowerCase().includes('token') || key.toLowerCase().includes('auth')
+      ? `${value.substring(0, 20)}...`
+      : value;
+  });
+  console.log("Headers:", JSON.stringify(headers));
+
   // Validate CSRF token for state-changing requests
-  const csrfToken = req.headers.get(CSRF_HEADER);
+  const csrfToken = req.headers.get(CSRF_HEADER) || req.headers.get('X-CSRF-Token');
+  console.log("CSRF Token present:", !!csrfToken, "Length:", csrfToken?.length);
+
   if (!validateCsrfTokenFormat(csrfToken)) {
+    console.log("CSRF validation failed");
     return new Response(JSON.stringify({ error: "Invalid or missing CSRF token" }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  console.log("CSRF validation passed");
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -108,6 +132,51 @@ serve(async (req) => {
         const { data: maxTicket } = await supabase
           .from("tickets")
           .select("display_id")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        let nextNum = 1;
+        if (maxTicket?.display_id) {
+          const match = maxTicket.display_id.match(/TKT-(\d+)/);
+          if (match) nextNum = parseInt(match[1]) + 1;
+        }
+
+        const emailBody = truncateDescription(email.body);
+        const ticketData = {
+          organization_id: email.organization_id,
+          display_id: `TKT-${String(nextNum).padStart(4, '0')}`,
+          title: title,
+          description: `**From Email:** ${email.sender_name || email.sender_email}\n**Subject:** ${email.subject}\n\n${emailBody}`,
+          status: "open",
+          priority: priority,
+          project_id: projectId || null,
+        };
+
+        console.log("Creating ticket with data:", ticketData);
+
+        const { data: ticket, error: ticketError } = await supabase
+          .from("tickets")
+          .insert(ticketData)
+          .select("id")
+          .single();
+
+        if (ticketError) {
+          console.error("Ticket creation error:", ticketError);
+          throw ticketError;
+        }
+
+        console.log("Ticket created:", ticket);
+        recordId = ticket?.id || null;
+        linkedColumn = "linked_ticket_id";
+        break;
+      }
+
+      case 'feature_request': {
+        // Create a ticket with category "feature" instead of a separate feature request
+        const { data: maxTicket } = await supabase
+          .from("tickets")
+          .select("display_id")
           .eq("organization_id", email.organization_id)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -119,69 +188,41 @@ serve(async (req) => {
           if (match) nextNum = parseInt(match[1]) + 1;
         }
 
-        const { data: ticket, error: ticketError } = await supabase
+        const featureEmailBody = truncateDescription(email.body);
+        const featureTicketData = {
+          organization_id: email.organization_id,
+          display_id: `TKT-${String(nextNum).padStart(4, '0')}`,
+          title: title,
+          description: `**From Email:** ${email.sender_name || email.sender_email}\n**Subject:** ${email.subject}\n\n${featureEmailBody}`,
+          status: "open",
+          priority: priority,
+          category: "feature",
+          project_id: projectId || null,
+        };
+
+        console.log("Creating feature ticket with data:", featureTicketData);
+
+        const { data: featureTicket, error: featureError } = await supabase
           .from("tickets")
-          .insert({
-            organization_id: email.organization_id,
-            display_id: `TKT-${String(nextNum).padStart(4, '0')}`,
-            title: title,
-            description: `**From Email:** ${email.sender_name || email.sender_email}\n**Subject:** ${email.subject}\n\n${email.body}`,
-            status: "open",
-            priority: priority,
-            project_id: projectId || null,
-            source_email_id: emailId,
-          })
+          .insert(featureTicketData)
           .select("id")
           .single();
 
-        if (ticketError) throw ticketError;
-        recordId = ticket?.id || null;
+        if (featureError) {
+          console.error("Feature ticket creation error:", featureError);
+          throw featureError;
+        }
+
+        console.log("Feature ticket created:", featureTicket);
+        recordId = featureTicket?.id || null;
         linkedColumn = "linked_ticket_id";
         break;
       }
 
-      case 'feature_request': {
-        // Generate display_id for feature request
-        const { data: maxFeature } = await supabase
-          .from("feature_requests")
-          .select("display_id")
-          .eq("organization_id", email.organization_id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        let nextNum = 1;
-        if (maxFeature?.display_id) {
-          const match = maxFeature.display_id.match(/FTR-(\d+)/);
-          if (match) nextNum = parseInt(match[1]) + 1;
-        }
-
-        const { data: feature, error: featureError } = await supabase
-          .from("feature_requests")
-          .insert({
-            organization_id: email.organization_id,
-            display_id: `FTR-${String(nextNum).padStart(4, '0')}`,
-            title: title,
-            description: `**From Email:** ${email.sender_name || email.sender_email}\n**Subject:** ${email.subject}\n\n${email.body}`,
-            status: "pending",
-            priority: priority,
-            project_id: projectId || null,
-            requester_email: email.sender_email,
-            requester_name: email.sender_name,
-          })
-          .select("id")
-          .single();
-
-        if (featureError) throw featureError;
-        recordId = feature?.id || null;
-        linkedColumn = "linked_feature_request_id";
-        break;
-      }
-
       case 'customer_quote': {
-        // Generate display_id for quote
-        const { data: maxQuote } = await supabase
-          .from("quotes")
+        // Create a ticket with category "quote"
+        const { data: maxTicket } = await supabase
+          .from("tickets")
           .select("display_id")
           .eq("organization_id", email.organization_id)
           .order("created_at", { ascending: false })
@@ -189,36 +230,46 @@ serve(async (req) => {
           .single();
 
         let nextNum = 1;
-        if (maxQuote?.display_id) {
-          const match = maxQuote.display_id.match(/QTE-(\d+)/);
+        if (maxTicket?.display_id) {
+          const match = maxTicket.display_id.match(/TKT-(\d+)/);
           if (match) nextNum = parseInt(match[1]) + 1;
         }
 
-        const { data: quote, error: quoteError } = await supabase
-          .from("quotes")
-          .insert({
-            organization_id: email.organization_id,
-            display_id: `QTE-${String(nextNum).padStart(4, '0')}`,
-            title: title,
-            description: `**From Email:** ${email.sender_name || email.sender_email}\n**Subject:** ${email.subject}\n\n${email.body}`,
-            status: "pending",
-            project_id: projectId || null,
-            client_email: email.sender_email,
-            client_name: email.sender_name,
-          })
+        const quoteEmailBody = truncateDescription(email.body);
+        const quoteTicketData = {
+          organization_id: email.organization_id,
+          display_id: `TKT-${String(nextNum).padStart(4, '0')}`,
+          title: title,
+          description: `**From Email:** ${email.sender_name || email.sender_email}\n**Subject:** ${email.subject}\n\n${quoteEmailBody}`,
+          status: "open",
+          priority: priority,
+          category: "quote",
+          project_id: projectId || null,
+        };
+
+        console.log("Creating quote ticket with data:", quoteTicketData);
+
+        const { data: quoteTicket, error: quoteError } = await supabase
+          .from("tickets")
+          .insert(quoteTicketData)
           .select("id")
           .single();
 
-        if (quoteError) throw quoteError;
-        recordId = quote?.id || null;
-        linkedColumn = "linked_quote_id";
+        if (quoteError) {
+          console.error("Quote ticket creation error:", quoteError);
+          throw quoteError;
+        }
+
+        console.log("Quote ticket created:", quoteTicket);
+        recordId = quoteTicket?.id || null;
+        linkedColumn = "linked_ticket_id";
         break;
       }
 
       case 'feedback': {
-        // Generate display_id for feedback
-        const { data: maxFeedback } = await supabase
-          .from("feedback")
+        // Create a ticket with category "feedback"
+        const { data: maxTicket } = await supabase
+          .from("tickets")
           .select("display_id")
           .eq("organization_id", email.organization_id)
           .order("created_at", { ascending: false })
@@ -226,33 +277,39 @@ serve(async (req) => {
           .single();
 
         let nextNum = 1;
-        if (maxFeedback?.display_id) {
-          const match = maxFeedback.display_id.match(/FBK-(\d+)/);
+        if (maxTicket?.display_id) {
+          const match = maxTicket.display_id.match(/TKT-(\d+)/);
           if (match) nextNum = parseInt(match[1]) + 1;
         }
 
-        // Determine sentiment from extracted_data if available
-        const sentiment = email.extracted_data?.sentiment || 'neutral';
+        const feedbackEmailBody = truncateDescription(email.body);
+        const feedbackTicketData = {
+          organization_id: email.organization_id,
+          display_id: `TKT-${String(nextNum).padStart(4, '0')}`,
+          title: title,
+          description: `**From Email:** ${email.sender_name || email.sender_email}\n**Subject:** ${email.subject}\n\n${feedbackEmailBody}`,
+          status: "open",
+          priority: priority,
+          category: "feedback",
+          project_id: projectId || null,
+        };
 
-        const { data: feedback, error: feedbackError } = await supabase
-          .from("feedback")
-          .insert({
-            organization_id: email.organization_id,
-            display_id: `FBK-${String(nextNum).padStart(4, '0')}`,
-            title: title,
-            content: `**From Email:** ${email.sender_name || email.sender_email}\n**Subject:** ${email.subject}\n\n${email.body}`,
-            status: "new",
-            sentiment: sentiment,
-            project_id: projectId || null,
-            submitter_email: email.sender_email,
-            submitter_name: email.sender_name,
-          })
+        console.log("Creating feedback ticket with data:", feedbackTicketData);
+
+        const { data: feedbackTicket, error: feedbackError } = await supabase
+          .from("tickets")
+          .insert(feedbackTicketData)
           .select("id")
           .single();
 
-        if (feedbackError) throw feedbackError;
-        recordId = feedback?.id || null;
-        linkedColumn = "linked_feedback_id";
+        if (feedbackError) {
+          console.error("Feedback ticket creation error:", feedbackError);
+          throw feedbackError;
+        }
+
+        console.log("Feedback ticket created:", feedbackTicket);
+        recordId = feedbackTicket?.id || null;
+        linkedColumn = "linked_ticket_id";
         break;
       }
     }

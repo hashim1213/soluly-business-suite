@@ -50,6 +50,7 @@ import ContactDetail from "./pages/ContactDetail";
 import ClientDetail from "./pages/ClientDetail";
 import Reports from "./pages/Reports";
 import Projections from "./pages/Projections";
+import MyHours from "./pages/MyHours";
 import NotFound from "./pages/NotFound";
 
 // Configure QueryClient with better defaults for stability
@@ -161,6 +162,14 @@ const App = () => (
                   element={
                     <AppLayout>
                       <TeamMemberDetail />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="my-hours"
+                  element={
+                    <AppLayout>
+                      <MyHours />
                     </AppLayout>
                   }
                 />

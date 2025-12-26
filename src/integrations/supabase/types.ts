@@ -400,6 +400,9 @@ export type Database = {
           last_sync_at: string | null
           last_sync_uid: string | null
           last_error: string | null
+          filter_mode: "all" | "whitelist" | "blacklist"
+          allowed_senders: string[]
+          blocked_senders: string[]
           created_at: string
           updated_at: string
         }
@@ -420,6 +423,9 @@ export type Database = {
           last_sync_at?: string | null
           last_sync_uid?: string | null
           last_error?: string | null
+          filter_mode?: "all" | "whitelist" | "blacklist"
+          allowed_senders?: string[]
+          blocked_senders?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -440,6 +446,9 @@ export type Database = {
           last_sync_at?: string | null
           last_sync_uid?: string | null
           last_error?: string | null
+          filter_mode?: "all" | "whitelist" | "blacklist"
+          allowed_senders?: string[]
+          blocked_senders?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -1064,6 +1073,8 @@ export type Database = {
           hours: number
           description: string | null
           billable: boolean
+          logged_by: string | null
+          organization_id: string | null
           created_at: string
           updated_at: string
         }
@@ -1075,6 +1086,8 @@ export type Database = {
           hours: number
           description?: string | null
           billable?: boolean
+          logged_by?: string | null
+          organization_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1086,6 +1099,8 @@ export type Database = {
           hours?: number
           description?: string | null
           billable?: boolean
+          logged_by?: string | null
+          organization_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1102,6 +1117,20 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_logged_by_fkey"
+            columns: ["logged_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           }
         ]

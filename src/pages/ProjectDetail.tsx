@@ -446,7 +446,12 @@ export default function ProjectDetail() {
     client_name: string;
     client_email: string;
     start_date: string;
+    end_date: string;
   } | null>(null);
+
+  // Delete confirmation state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const projectData = projectsData[projectId || ""];
 
@@ -573,8 +578,8 @@ export default function ProjectDetail() {
     tickets: projectTickets?.length || 0,
     client: dbProject.client_name,
     clientEmail: dbProject.client_email || "",
-    startDate: dbProject.start_date || "",
-    endDate: "",
+    startDate: dbProject.start_date ? format(new Date(dbProject.start_date), "MMM d, yyyy") : "Not set",
+    endDate: dbProject.end_date ? format(new Date(dbProject.end_date), "MMM d, yyyy") : "Not set",
     internalTeam,
     externalTeam,
   };
@@ -750,6 +755,7 @@ export default function ProjectDetail() {
       client_name: dbProject.client_name,
       client_email: dbProject.client_email || "",
       start_date: dbProject.start_date ? dbProject.start_date.split("T")[0] : "",
+      end_date: dbProject.end_date ? dbProject.end_date.split("T")[0] : "",
     });
     setIsEditProjectDialogOpen(true);
   };
@@ -768,6 +774,7 @@ export default function ProjectDetail() {
         client_name: editProjectData.client_name,
         client_email: editProjectData.client_email || null,
         start_date: editProjectData.start_date || null,
+        end_date: editProjectData.end_date || null,
       });
       toast.success("Project updated successfully");
       setIsEditProjectDialogOpen(false);
@@ -777,12 +784,21 @@ export default function ProjectDetail() {
     }
   };
 
+  const openDeleteDialog = () => {
+    setDeleteConfirmText("");
+    setIsDeleteDialogOpen(true);
+  };
+
   const handleDeleteProject = async () => {
     if (!dbProject) return;
-    if (!confirm("Are you sure you want to delete this project? This action cannot be undone.")) return;
+    if (deleteConfirmText !== dbProject.name) {
+      toast.error("Project name doesn't match. Please type the exact project name.");
+      return;
+    }
     try {
       await deleteProject.mutateAsync(dbProject.id);
       toast.success("Project deleted");
+      setIsDeleteDialogOpen(false);
       navigateOrg("/projects");
     } catch (error) {
       // Error handled by hook
@@ -1232,7 +1248,7 @@ export default function ProjectDetail() {
             <DropdownMenuContent align="end" className="border-2">
               <DropdownMenuItem>Duplicate Project</DropdownMenuItem>
               <DropdownMenuItem>Export Data</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={handleDeleteProject}>Delete Project</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={openDeleteDialog}>Delete Project</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -1297,6 +1313,64 @@ export default function ProjectDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Budget Alerts */}
+      {dbProject && (dbProject.budget || 0) > 0 && canViewAmounts() && (() => {
+        const budgetUsedPercent = (laborCosts / (dbProject.budget || 1)) * 100;
+        const budgetRemaining = (dbProject.budget || 0) - laborCosts;
+        const isOverBudget = laborCosts > (dbProject.budget || 0);
+        const isNearBudget = budgetUsedPercent >= 80 && !isOverBudget;
+
+        if (isOverBudget) {
+          return (
+            <Card className="border-2 border-destructive bg-destructive/10">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-destructive flex items-center justify-center bg-destructive rounded-full">
+                    <AlertTriangle className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-destructive">Budget Exceeded</div>
+                    <div className="text-sm text-muted-foreground">
+                      This project is <span className="font-mono font-bold text-destructive">${Math.abs(budgetRemaining).toLocaleString()}</span> over budget ({budgetUsedPercent.toFixed(1)}% used)
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-muted-foreground">Budget</div>
+                    <div className="font-mono font-bold">${(dbProject.budget || 0).toLocaleString()}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+
+        if (isNearBudget) {
+          return (
+            <Card className="border-2 border-yellow-500 bg-yellow-500/10">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border-2 border-yellow-500 flex items-center justify-center bg-yellow-500 rounded-full">
+                    <AlertCircle className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-yellow-700 dark:text-yellow-400">Budget Warning</div>
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-mono font-bold">${budgetRemaining.toLocaleString()}</span> remaining ({budgetUsedPercent.toFixed(1)}% used)
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-muted-foreground">Budget</div>
+                    <div className="font-mono font-bold">${(dbProject.budget || 0).toLocaleString()}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+
+        return null;
+      })()}
 
       {/* Team Members Dialog */}
       <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
@@ -3491,15 +3565,27 @@ export default function ProjectDetail() {
                   />
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-project-start-date">Start Date</Label>
-                <Input
-                  id="edit-project-start-date"
-                  type="date"
-                  value={editProjectData.start_date}
-                  onChange={(e) => setEditProjectData({ ...editProjectData, start_date: e.target.value })}
-                  className="border-2"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-project-start-date">Start Date</Label>
+                  <Input
+                    id="edit-project-start-date"
+                    type="date"
+                    value={editProjectData.start_date}
+                    onChange={(e) => setEditProjectData({ ...editProjectData, start_date: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-project-end-date">End Date</Label>
+                  <Input
+                    id="edit-project-end-date"
+                    type="date"
+                    value={editProjectData.end_date}
+                    onChange={(e) => setEditProjectData({ ...editProjectData, end_date: e.target.value })}
+                    className="border-2"
+                  />
+                </div>
               </div>
               <div className="border-t-2 border-border pt-4">
                 <h4 className="font-semibold mb-3">Client Information</h4>
@@ -3625,6 +3711,79 @@ export default function ProjectDetail() {
             <Button onClick={handleSaveMaintenance} className="border-2" disabled={updateProject.isPending}>
               {updateProject.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Project Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="border-2 sm:max-w-[450px]">
+          <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Project
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="bg-destructive/10 border-2 border-destructive/20 p-4 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="font-semibold text-destructive">This action cannot be undone!</p>
+                  <p className="text-sm text-muted-foreground">
+                    Deleting this project will permanently remove:
+                  </p>
+                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                    <li>All project tasks and milestones</li>
+                    <li>All time entries and invoices</li>
+                    <li>All contracts and documents</li>
+                    <li>All team member assignments</li>
+                    <li>All associated tickets</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="delete-confirm">
+                To confirm, type <span className="font-mono font-bold text-destructive">"{dbProject?.name}"</span> below:
+              </Label>
+              <Input
+                id="delete-confirm"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Enter project name"
+                className="border-2"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="border-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteProject}
+              disabled={deleteConfirmText !== dbProject?.name || deleteProject.isPending}
+              className="border-2"
+            >
+              {deleteProject.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Project
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>

@@ -8,14 +8,16 @@ export type TimeEntry = Tables<"time_entries">;
 export type TimeEntryInsert = TablesInsert<"time_entries">;
 export type TimeEntryUpdate = TablesUpdate<"time_entries">;
 
-// Extended time entry with project info
+// Extended time entry with project info and logged_by details
 export type TimeEntryWithProject = TimeEntry & {
   project?: { name: string; display_id: string } | null;
+  logged_by_member?: { id: string; name: string } | null;
 };
 
 // Extended type for project time entries
 export type TimeEntryWithTeamMember = TimeEntry & {
   team_member?: { name: string; avatar: string | null; hourly_rate: number } | null;
+  logged_by_member?: { id: string; name: string } | null;
 };
 
 // Fetch all time entries for a team member (validates member belongs to org)
@@ -41,7 +43,8 @@ export function useTimeEntriesByMember(memberId: string | undefined) {
         .from("time_entries")
         .select(`
           *,
-          project:projects(name, display_id)
+          project:projects(name, display_id),
+          logged_by_member:team_members!time_entries_logged_by_fkey(id, name)
         `)
         .eq("team_member_id", memberId)
         .order("date", { ascending: false });
@@ -76,7 +79,8 @@ export function useTimeEntriesByProject(projectId: string | undefined) {
         .from("time_entries")
         .select(`
           *,
-          team_member:team_members(name, avatar, hourly_rate)
+          team_member:team_members!time_entries_team_member_id_fkey(name, avatar, hourly_rate),
+          logged_by_member:team_members!time_entries_logged_by_fkey(id, name)
         `)
         .eq("project_id", projectId)
         .order("date", { ascending: false });
@@ -91,21 +95,22 @@ export function useTimeEntriesByProject(projectId: string | undefined) {
 // Create time entry (validates team member belongs to org)
 export function useCreateTimeEntry() {
   const queryClient = useQueryClient();
-  const { organization } = useAuth();
+  const { organization, member } = useAuth();
 
   return useMutation({
     mutationFn: async (entry: TimeEntryInsert) => {
       if (!organization?.id) throw new Error("No organization found");
+      if (!member?.id) throw new Error("No team member found - please ensure you are logged in");
 
       // Verify the team member belongs to this organization
-      const { data: member, error: memberError } = await supabase
+      const { data: targetMember, error: memberError } = await supabase
         .from("team_members")
         .select("id, total_hours")
         .eq("id", entry.team_member_id)
         .eq("organization_id", organization.id)
         .single();
 
-      if (memberError || !member) {
+      if (memberError || !targetMember) {
         throw new Error("Team member not found in your organization");
       }
 
@@ -123,9 +128,14 @@ export function useCreateTimeEntry() {
         }
       }
 
+      // Insert with logged_by and organization_id
       const { data, error } = await supabase
         .from("time_entries")
-        .insert(entry)
+        .insert({
+          ...entry,
+          logged_by: member.id,
+          organization_id: organization.id,
+        })
         .select()
         .single();
 
@@ -134,7 +144,7 @@ export function useCreateTimeEntry() {
       // Update team member's total_hours
       await supabase
         .from("team_members")
-        .update({ total_hours: member.total_hours + entry.hours })
+        .update({ total_hours: targetMember.total_hours + entry.hours })
         .eq("id", entry.team_member_id)
         .eq("organization_id", organization.id);
 

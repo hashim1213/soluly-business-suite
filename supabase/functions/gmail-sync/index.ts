@@ -29,6 +29,85 @@ interface GmailMessageDetail {
   snippet: string;
 }
 
+// Check if a sender email matches any pattern in the list
+// Patterns can be:
+// - Full email: "user@example.com"
+// - Domain: "@example.com" or "example.com"
+function matchesSenderPattern(senderEmail: string, patterns: string[]): boolean {
+  if (!patterns || patterns.length === 0) {
+    console.log(`matchesSenderPattern: No patterns provided`);
+    return false;
+  }
+
+  const emailLower = senderEmail.toLowerCase().trim();
+  const domain = emailLower.split("@")[1] || "";
+
+  console.log(`matchesSenderPattern: Checking ${emailLower} (domain: ${domain}) against patterns:`, patterns);
+
+  for (const pattern of patterns) {
+    const patternLower = pattern.toLowerCase().trim();
+
+    // Full email match
+    if (patternLower === emailLower) {
+      console.log(`matchesSenderPattern: Full email match with ${patternLower}`);
+      return true;
+    }
+
+    // Domain match (with or without @)
+    const domainPattern = patternLower.startsWith("@") ? patternLower.slice(1) : patternLower;
+    if (domain === domainPattern) {
+      console.log(`matchesSenderPattern: Domain match with ${domainPattern}`);
+      return true;
+    }
+
+    // Subdomain match (e.g., "@company.com" matches "mail.company.com")
+    if (domain.endsWith("." + domainPattern)) {
+      console.log(`matchesSenderPattern: Subdomain match with ${domainPattern}`);
+      return true;
+    }
+  }
+
+  console.log(`matchesSenderPattern: No match found`);
+  return false;
+}
+
+// Check if sender should be processed based on filter settings
+function shouldProcessSender(
+  senderEmail: string,
+  filterMode: string,
+  allowedSenders: string[],
+  blockedSenders: string[]
+): boolean {
+  // No filtering - process all
+  if (filterMode === "all" || !filterMode) {
+    // Still check blocked list even in "all" mode
+    if (blockedSenders && blockedSenders.length > 0) {
+      if (matchesSenderPattern(senderEmail, blockedSenders)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Whitelist mode - only process if in allowed list
+  if (filterMode === "whitelist") {
+    if (!allowedSenders || allowedSenders.length === 0) {
+      return false; // No whitelist configured, don't process anything
+    }
+    return matchesSenderPattern(senderEmail, allowedSenders);
+  }
+
+  // Blacklist mode - process unless in blocked list
+  if (filterMode === "blacklist") {
+    if (!blockedSenders || blockedSenders.length === 0) {
+      return true; // No blacklist configured, process everything
+    }
+    return !matchesSenderPattern(senderEmail, blockedSenders);
+  }
+
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -89,6 +168,13 @@ serve(async (req) => {
     if (accountError || !account) {
       throw new Error("Email account not found");
     }
+
+    // Log filter settings from database
+    console.log("=== ACCOUNT FILTER SETTINGS ===");
+    console.log("filter_mode:", account.filter_mode, typeof account.filter_mode);
+    console.log("allowed_senders:", account.allowed_senders, typeof account.allowed_senders);
+    console.log("blocked_senders:", account.blocked_senders, typeof account.blocked_senders);
+    console.log("================================");
 
     if (account.oauth_provider !== "google") {
       throw new Error("Account is not a Gmail account");
@@ -229,11 +315,86 @@ serve(async (req) => {
         const senderName = fromMatch[1]?.trim().replace(/^"|"$/g, "") || "";
         const senderEmail = fromMatch[2]?.trim() || from;
 
+        // Check sender filtering
+        // Parse JSONB arrays (might come as string or array)
+        let allowedSenders: string[] = [];
+        let blockedSenders: string[] = [];
+
+        try {
+          if (typeof account.allowed_senders === 'string') {
+            allowedSenders = JSON.parse(account.allowed_senders);
+          } else if (Array.isArray(account.allowed_senders)) {
+            allowedSenders = account.allowed_senders;
+          }
+        } catch (e) {
+          console.error("Error parsing allowed_senders:", e);
+        }
+
+        try {
+          if (typeof account.blocked_senders === 'string') {
+            blockedSenders = JSON.parse(account.blocked_senders);
+          } else if (Array.isArray(account.blocked_senders)) {
+            blockedSenders = account.blocked_senders;
+          }
+        } catch (e) {
+          console.error("Error parsing blocked_senders:", e);
+        }
+
+        // Determine effective filter mode
+        // If allowed_senders has values, treat as whitelist regardless of filter_mode setting
+        // (workaround for filter_mode not saving properly)
+        let effectiveFilterMode = account.filter_mode || "all";
+        if (allowedSenders.length > 0 && effectiveFilterMode === "all") {
+          console.log("Auto-switching to whitelist mode because allowed_senders has values");
+          effectiveFilterMode = "whitelist";
+        }
+
+        console.log(`Filter check for ${senderEmail}:`, {
+          filterMode: effectiveFilterMode,
+          allowedSenders,
+          blockedSenders,
+        });
+
+        const shouldProcess = shouldProcessSender(
+          senderEmail,
+          effectiveFilterMode,
+          allowedSenders,
+          blockedSenders
+        );
+
+        console.log(`Should process ${senderEmail}: ${shouldProcess}`);
+
+        if (!shouldProcess) {
+          console.log(`Skipping email from ${senderEmail} - filtered out`);
+          continue;
+        }
+
         // Extract body
         let body = "";
+
+        // Properly decode base64 with UTF-8 support
+        const decodeBase64Utf8 = (base64: string): string => {
+          try {
+            // Convert URL-safe base64 to standard base64
+            const standardBase64 = base64.replace(/-/g, "+").replace(/_/g, "/");
+            // Decode base64 to binary string
+            const binaryString = atob(standardBase64);
+            // Convert binary string to Uint8Array
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            // Decode as UTF-8
+            return new TextDecoder("utf-8").decode(bytes);
+          } catch (e) {
+            console.error("Error decoding base64:", e);
+            return "";
+          }
+        };
+
         const getBody = (payload: any): string => {
           if (payload.body?.data) {
-            return atob(payload.body.data.replace(/-/g, "+").replace(/_/g, "/"));
+            return decodeBase64Utf8(payload.body.data);
           }
           if (payload.parts) {
             // Prefer plain text

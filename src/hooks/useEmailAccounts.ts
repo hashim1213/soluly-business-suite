@@ -83,6 +83,8 @@ export function useUpdateEmailAccount() {
 
   return useMutation({
     mutationFn: async ({ id, ...update }: EmailAccountUpdate & { id: string }) => {
+      console.log("Updating email account:", id, update);
+
       const { data, error } = await supabase
         .from("email_accounts")
         .update(update)
@@ -90,14 +92,21 @@ export function useUpdateEmailAccount() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Update error:", error);
+        throw error;
+      }
+
+      console.log("Update result:", data);
       return data as EmailAccount;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Update success, new data:", data);
       queryClient.invalidateQueries({ queryKey: ["email_accounts"] });
       toast.success("Email account updated");
     },
     onError: (error) => {
+      console.error("Update mutation error:", error);
       toast.error(error.message);
     },
   });
