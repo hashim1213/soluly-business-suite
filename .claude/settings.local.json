@@ -37,7 +37,8 @@
       "Bash(npm run electron:build:win:*)",
       "Bash(git reset:*)",
       "Bash(git rm:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ]
   }
 }
