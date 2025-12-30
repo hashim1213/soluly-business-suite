@@ -35,8 +35,7 @@ export function OrgSwitcher({ collapsed = false }: OrgSwitcherProps) {
     setOpen(false);
     if (org.slug !== currentOrg?.slug) {
       // Navigate to the new org's dashboard
-      // This will trigger a page reload to switch context
-      window.location.href = `/org/${org.slug}`;
+      navigate(`/org/${org.slug}`);
     }
   };
 

@@ -24,7 +24,7 @@ export function TasksList() {
         `)
         .eq("organization_id", organization.id)
         .eq("assignee_id", member.id)
-        .neq("status", "done")
+        .eq("completed", false)
         .order("due_date", { ascending: true, nullsFirst: false })
         .limit(5);
 

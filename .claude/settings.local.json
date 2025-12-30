@@ -28,7 +28,16 @@
       "Bash(xargs basename:*)",
       "Bash(while read f)",
       "Bash(done)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run electron:dev:*)",
+      "Bash(npm run electron:build:mac:*)",
+      "Bash(identify:*)",
+      "Bash(sips:*)",
+      "Bash(npm run electron:build:win:*)",
+      "Bash(git reset:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { validatePassword, getPasswordStrength, PASSWORD_MIN_LENGTH } from "@/li
 const REDIRECT_DELAY = 2000;
 
 export default function ResetPassword() {
+  useDocumentTitle("Reset Password");
   const navigate = useNavigate();
   const location = useLocation();
   const { updatePassword } = useAuth();

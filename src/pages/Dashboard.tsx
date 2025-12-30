@@ -48,7 +48,7 @@ export default function Dashboard() {
         .select("*", { count: "exact", head: true })
         .eq("organization_id", organization.id)
         .eq("due_date", today)
-        .neq("status", "done");
+        .eq("completed", false);
       return count || 0;
     },
     enabled: !!organization?.id,
@@ -65,7 +65,7 @@ export default function Dashboard() {
         .from("project_milestones")
         .select("*", { count: "exact", head: true })
         .eq("organization_id", organization.id)
-        .eq("status", "pending")
+        .eq("completed", false)
         .gte("due_date", today.toISOString().split("T")[0])
         .lte("due_date", nextWeek.toISOString().split("T")[0]);
       return count || 0;

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { isElectron } from "@/lib/platform";
 import Landing from "@/pages/Landing";
 
 /**
@@ -11,8 +13,10 @@ import Landing from "@/pages/Landing";
  * Also handles completing pending signup after email confirmation
  */
 export function OrgRedirect() {
-  const { organization, isLoading, user, authError, clearAuthError } = useAuth();
+  const { organization, isLoading, user, authError, clearAuthError, refreshAuth } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
 
@@ -84,8 +88,9 @@ export function OrgRedirect() {
         } catch {
           // Ignore storage errors
         }
-        // Reload to get fresh auth state
-        window.location.reload();
+        // Refresh auth state and invalidate queries
+        await queryClient.invalidateQueries();
+        if (refreshAuth) await refreshAuth();
       } catch {
         if (!isMounted) return;
         setSetupError("An error occurred while setting up your organization");
@@ -142,8 +147,9 @@ export function OrgRedirect() {
         return;
       }
 
-      // Reload to get fresh auth state
-      window.location.reload();
+      // Refresh auth state and invalidate queries
+      await queryClient.invalidateQueries();
+      if (refreshAuth) await refreshAuth();
     } catch {
       setSetupError("An error occurred while creating your organization");
       setIsSettingUp(false);
@@ -168,9 +174,10 @@ export function OrgRedirect() {
 
           <div className="space-y-3">
             <button
-              onClick={() => {
+              onClick={async () => {
                 clearAuthError();
-                window.location.reload();
+                await queryClient.invalidateQueries();
+                if (refreshAuth) await refreshAuth();
               }}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
@@ -178,12 +185,12 @@ export function OrgRedirect() {
               Try Again
             </button>
 
-            <a
-              href="/login"
+            <button
+              onClick={() => navigate("/login")}
               className="block w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-center"
             >
               Go to Login
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -202,8 +209,11 @@ export function OrgRedirect() {
     );
   }
 
-  // Not logged in - show landing page
+  // Not logged in - in Electron go directly to login, on web show landing page
   if (!user) {
+    if (isElectron()) {
+      return <Navigate to="/login" replace />;
+    }
     return <Landing />;
   }
 
@@ -292,7 +302,7 @@ export function OrgRedirect() {
           <button
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href = "/login";
+              navigate("/login");
             }}
             className="text-sm text-muted-foreground hover:underline"
           >

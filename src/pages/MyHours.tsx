@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeEntriesByMember, useCreateTimeEntry, useDeleteTimeEntry, TimeEntryWithProject } from "@/hooks/useTimeEntries";
 import { useProjects } from "@/hooks/useProjects";
+import { SessionTracker } from "@/components/SessionTracker";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -261,6 +262,9 @@ export default function MyHours() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Session Tracker */}
+      <SessionTracker />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">

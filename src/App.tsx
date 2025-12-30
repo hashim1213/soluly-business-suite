@@ -51,27 +51,41 @@ import ClientDetail from "./pages/ClientDetail";
 import Reports from "./pages/Reports";
 import Projections from "./pages/Projections";
 import MyHours from "./pages/MyHours";
+import AuditLog from "./pages/AuditLog";
 import NotFound from "./pages/NotFound";
 
-// Configure QueryClient with better defaults for stability
+// Configure QueryClient with enterprise-grade defaults
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Don't retry failed queries aggressively - prevents freeze loops
-      retry: 1,
-      retryDelay: 1000,
+      // Smart retry with exponential backoff
+      retry: (failureCount, error: any) => {
+        // Don't retry auth errors
+        if (error?.status === 401 || error?.status === 403) return false;
+        // Don't retry client errors
+        if (error?.status >= 400 && error?.status < 500) return false;
+        // Retry up to 3 times for server errors
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       // Keep data fresh for 30 seconds
       staleTime: 30 * 1000,
       // Cache data for 5 minutes
       gcTime: 5 * 60 * 1000,
       // Don't refetch on window focus by default (prevents unnecessary requests)
       refetchOnWindowFocus: false,
-      // Don't refetch on reconnect automatically
-      refetchOnReconnect: false,
+      // Refetch on reconnect to sync data
+      refetchOnReconnect: true,
     },
     mutations: {
-      // Don't retry mutations
-      retry: 0,
+      // Smart retry for mutations
+      retry: (failureCount, error: any) => {
+        // Don't retry auth or client errors
+        if (error?.status >= 400 && error?.status < 500) return false;
+        // Retry once for network errors
+        return failureCount < 1;
+      },
+      retryDelay: 1000,
     },
   },
 });
@@ -322,6 +336,14 @@ const App = () => (
                   element={
                     <AppLayout>
                       <Settings />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="audit-log"
+                  element={
+                    <AppLayout>
+                      <AuditLog />
                     </AppLayout>
                   }
                 />

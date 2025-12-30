@@ -103,6 +103,8 @@ export function useCreateProjectTask() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["project_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["my_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks_due_today"] });
       queryClient.invalidateQueries({ queryKey: ["projects", variables.project_id] });
       toast.success("Task created successfully");
     },
@@ -144,6 +146,8 @@ export function useUpdateProjectTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["my_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks_due_today"] });
     },
     onError: (error) => {
       toast.error(`Failed to update task: ${error.message}`);
@@ -180,6 +184,8 @@ export function useToggleProjectTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["my_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks_due_today"] });
     },
     onError: (error) => {
       toast.error(`Failed to update task: ${error.message}`);
@@ -210,6 +216,8 @@ export function useDeleteProjectTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["my_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks_due_today"] });
       toast.success("Task deleted successfully");
     },
     onError: (error) => {

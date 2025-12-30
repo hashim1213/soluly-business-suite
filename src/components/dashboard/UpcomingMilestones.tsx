@@ -23,7 +23,7 @@ export function UpcomingMilestones() {
           project:projects(id, name, display_id)
         `)
         .eq("organization_id", organization.id)
-        .eq("status", "pending")
+        .eq("completed", false)
         .not("due_date", "is", null)
         .order("due_date", { ascending: true })
         .limit(5);

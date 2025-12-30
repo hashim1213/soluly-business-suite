@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { Search, User, LogOut, Settings, Building2, ChevronDown, Bell, Check, MessageSquare, Ticket, Lightbulb, MessageCircle } from "lucide-react";
+import { User, LogOut, Settings, Building2, ChevronDown, Bell, Check, MessageSquare, Ticket, Lightbulb, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -86,18 +84,7 @@ export function AppHeader() {
     .slice(0, 2) || "??";
 
   return (
-    <header className="h-14 border-b-2 border-border bg-background flex items-center justify-between px-2 sm:px-4">
-      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-        <SidebarTrigger className="border-2 border-transparent hover:border-border shrink-0" />
-        <div className="relative hidden sm:block flex-1 max-w-xs lg:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tickets, projects..."
-            className="w-full pl-10 border-2 focus:ring-0 focus:border-primary"
-          />
-        </div>
-      </div>
-
+    <header className="h-14 border-b-2 border-border bg-background flex items-center justify-end px-2 sm:px-4">
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Notifications */}
         <Popover>

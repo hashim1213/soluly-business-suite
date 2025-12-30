@@ -1,4 +1,8 @@
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+
 const NotFound = () => {
+  useDocumentTitle("Page Not Found");
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
       <div className="text-center">

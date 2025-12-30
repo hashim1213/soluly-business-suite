@@ -7,8 +7,6 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   Users,
   Contact,
   DollarSign,
@@ -18,6 +16,9 @@ import {
   AlertCircle,
   TrendingUp,
   Clock,
+  Shield,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,13 +31,13 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type NavItem = {
   title: string;
@@ -68,6 +69,7 @@ const ticketCategories: NavItem[] = [
 const systemItems: NavItem[] = [
   { title: "Email Inbox", path: "emails", icon: Mail, permission: "emails" },
   { title: "Reports", path: "reports", icon: BarChart3, permission: "crm" },
+  { title: "Audit Log", path: "audit-log", icon: Shield, permission: "settings" },
   { title: "Settings", path: "settings", icon: Settings, permission: "settings" },
 ];
 
@@ -98,8 +100,39 @@ export function AppSidebar() {
   const visibleTicketCategories = filterByPermission(ticketCategories);
   const visibleSystemItems = filterByPermission(systemItems);
 
+  const renderNavItem = (item: NavItem) => {
+    const content = (
+      <NavLink
+        to={getFullUrl(item.path)}
+        end={item.path === ""}
+        className={`flex items-center border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all ${
+          collapsed ? "justify-center p-2" : "gap-3 px-3 py-2"
+        }`}
+        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
+      >
+        <item.icon className="h-5 w-5 shrink-0" />
+        {!collapsed && <span className="font-medium">{item.title}</span>}
+      </NavLink>
+    );
+
+    if (collapsed) {
+      return (
+        <Tooltip key={item.title}>
+          <TooltipTrigger asChild>
+            {content}
+          </TooltipTrigger>
+          <TooltipContent side="right" className="border-2">
+            {item.title}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return content;
+  };
+
   return (
-    <Sidebar className="border-r-2 border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r-2 border-sidebar-border">
       <SidebarHeader className="h-14 border-b-2 border-sidebar-border px-2 flex items-center">
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
@@ -114,17 +147,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {visibleMainItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={getFullUrl(item.path)}
-                        end={item.path === ""}
-                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
-                        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span className="font-medium">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
+                    {renderNavItem(item)}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -141,16 +164,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {visibleTicketCategories.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={getFullUrl(item.path)}
-                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
-                        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span className="font-medium">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
+                    {renderNavItem(item)}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -167,16 +181,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {visibleSystemItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={getFullUrl(item.path)}
-                        className="flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
-                        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span className="font-medium">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
+                    {renderNavItem(item)}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -186,14 +191,32 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t-2 border-sidebar-border p-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleSidebar}
-          className="w-full justify-center border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className={`w-full border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                collapsed ? "justify-center p-2" : "justify-start gap-3 px-3"
+              }`}
+            >
+              {collapsed ? (
+                <ChevronRight className="h-5 w-5" />
+              ) : (
+                <>
+                  <ChevronLeft className="h-5 w-5" />
+                  <span className="font-medium">Collapse</span>
+                </>
+              )}
+            </Button>
+          </TooltipTrigger>
+          {collapsed && (
+            <TooltipContent side="right" className="border-2">
+              Expand sidebar
+            </TooltipContent>
+          )}
+        </Tooltip>
       </SidebarFooter>
     </Sidebar>
   );

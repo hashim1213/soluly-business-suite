@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -20,11 +21,15 @@ import {
   Sparkles,
   Mountain,
   Flag,
-  Timer
+  Timer,
+  Apple,
+  Monitor,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Landing() {
+  useDocumentTitle("Welcome");
   const [scrollY, setScrollY] = useState(0);
   const [activeSection, setActiveSection] = useState(0);
   const sectionsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -132,6 +137,22 @@ export default function Landing() {
               >
                 Pricing
               </button>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://soluly.com/downloads/Soluly-1.0.0-arm64.dmg"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <Apple className="h-4 w-4" />
+                  Mac
+                </a>
+                <a
+                  href="https://soluly.com/downloads/Soluly-Setup-1.0.0.exe"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <Monitor className="h-4 w-4" />
+                  Windows
+                </a>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -212,7 +233,7 @@ export default function Landing() {
           </p>
 
           <div
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in-up"
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-8 animate-fade-in-up"
             style={{ animationDelay: "0.5s" }}
           >
             <Link to="/signup">
@@ -229,6 +250,29 @@ export default function Landing() {
             >
               Explore Features
             </Button>
+          </div>
+
+          {/* Desktop Downloads */}
+          <div
+            className="flex justify-center gap-3 mb-16 animate-fade-in-up"
+            style={{ animationDelay: "0.55s" }}
+          >
+            <a
+              href="https://soluly.com/downloads/Soluly-1.0.0-arm64.dmg"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-muted/50 border border-border/50 hover:bg-muted hover:border-border transition-all text-sm"
+            >
+              <Apple className="h-5 w-5" />
+              <span>Download for Mac</span>
+              <Download className="h-4 w-4 text-muted-foreground" />
+            </a>
+            <a
+              href="https://soluly.com/downloads/Soluly-Setup-1.0.0.exe"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-muted/50 border border-border/50 hover:bg-muted hover:border-border transition-all text-sm"
+            >
+              <Monitor className="h-5 w-5" />
+              <span>Download for Windows</span>
+              <Download className="h-4 w-4 text-muted-foreground" />
+            </a>
           </div>
 
           {/* Dashboard Preview */}
