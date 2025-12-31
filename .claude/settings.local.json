@@ -38,7 +38,18 @@
       "Bash(git reset:*)",
       "Bash(git rm:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(gh release create:*)",
+      "Bash(release/Soluly-1.0.0-arm64.dmg )",
+      "Bash(release/Soluly-1.0.0-x64.dmg )",
+      "Bash(release/Soluly-Setup-1.0.0.exe )",
+      "Bash(release/Soluly-1.0.0-arm64.zip )",
+      "Bash(release/Soluly-1.0.0-x64.zip)",
+      "Bash(brew install:*)",
+      "Bash(gh auth:*)",
+      "Bash(xattr:*)",
+      "Bash(security find-identity:*)",
+      "Bash(tr:*)"
     ]
   }
 }

@@ -30,6 +30,12 @@ mac:
         - x64
   icon: build/icon.png
   artifactName: Soluly-${version}-${arch}.${ext}
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+afterSign: scripts/notarize.js
 
 dmg:
   artifactName: Soluly-${version}-${arch}.${ext}
