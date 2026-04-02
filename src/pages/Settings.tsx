@@ -302,10 +302,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account and organization</p>
-      </div>
+      <p className="text-sm text-muted-foreground">Manage your account and organization</p>
 
       <Tabs defaultValue="profile" className="space-y-4 sm:space-y-6">
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">

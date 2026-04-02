@@ -178,12 +178,9 @@ export default function Forms() {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Forms</h1>
-          <p className="text-sm text-muted-foreground">
-            Create and manage custom forms for collecting feedback
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Create and manage custom forms for collecting feedback
+        </p>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>

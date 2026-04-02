@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { User, LogOut, Settings, Building2, ChevronDown, Bell, Check, MessageSquare, Ticket, Lightbulb, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,61 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationRead, useMarkAllNotificationsRead, type Notification } from "@/hooks/useNotifications";
 import { formatDistanceToNow } from "date-fns";
+
+const routeTitles: Record<string, string> = {
+  '': 'Dashboard',
+  'projects': 'Projects',
+  'tickets': 'Tickets',
+  'team': 'Team',
+  'my-hours': 'My Hours',
+  'crm': 'CRM',
+  'reports': 'Reports',
+  'emails': 'Email Inbox',
+  'financials': 'Financials',
+  'expenses': 'Business Expenses',
+  'projections': 'Projections & Goals',
+  'forms': 'Forms',
+  'settings': 'Settings',
+  'audit-log': 'Audit Log',
+  'tickets/features': 'Feature Requests',
+  'tickets/quotes': 'Quotes',
+  'tickets/feedback': 'Feedback',
+  'tickets/issues': 'Issues',
+};
+
+function usePageTitle(): string {
+  const location = useLocation();
+  const path = location.pathname;
+  const pathWithoutOrg = path.replace(/^\/org\/[^/]+\/?/, '');
+
+  if (routeTitles[pathWithoutOrg]) {
+    return routeTitles[pathWithoutOrg];
+  }
+
+  const segments = pathWithoutOrg.split('/').filter(Boolean);
+
+  if (segments.length >= 2) {
+    const baseRoute = segments[0];
+    if (baseRoute === 'projects') return 'Project Details';
+    if (baseRoute === 'tickets') return 'Ticket Details';
+    if (baseRoute === 'team') return 'Team Member';
+    if (baseRoute === 'contacts') return 'Contact Details';
+    if (baseRoute === 'clients') return 'Client Details';
+    if (baseRoute === 'features') return 'Feature Request';
+    if (baseRoute === 'quotes') return 'Quote Details';
+    if (baseRoute === 'feedback') return 'Feedback Details';
+    if (baseRoute === 'forms') {
+      if (segments[2] === 'responses') return 'Form Responses';
+      return 'Form Builder';
+    }
+  }
+
+  if (segments.length === 1 && routeTitles[segments[0]]) {
+    return routeTitles[segments[0]];
+  }
+
+  return 'Soluly';
+}
 
 function getNotificationIcon(type: Notification["type"]) {
   switch (type) {
@@ -55,6 +110,7 @@ export function AppHeader() {
   const navigate = useNavigate();
   const { navigateOrg } = useOrgNavigation();
   const { member, organization, role, signOut } = useAuth();
+  const pageTitle = usePageTitle();
 
   const { data: notifications = [] } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
@@ -84,7 +140,12 @@ export function AppHeader() {
     .slice(0, 2) || "??";
 
   return (
-    <header className="h-14 border-b-2 border-border bg-background flex items-center justify-end px-2 sm:px-4">
+    <header className="h-14 border-b-2 border-border bg-background flex items-center justify-between px-2 sm:px-4">
+      {/* Page Title */}
+      <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
+        {pageTitle}
+      </h1>
+
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Notifications */}
         <Popover>

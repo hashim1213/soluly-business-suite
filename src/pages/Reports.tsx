@@ -136,6 +136,7 @@ const reportTemplates: ReportTemplate[] = [
   { id: "team-overview", name: "Team Overview", description: "Team member summary", category: "team", icon: Users },
   { id: "team-by-department", name: "Team by Department", description: "Members grouped by department", category: "team", icon: Filter },
   { id: "team-by-role", name: "Team by Role", description: "Members grouped by role", category: "team", icon: UserCheck },
+  { id: "team-labor-expenses", name: "Team Labor & Expenses", description: "Detailed labor costs and work history", category: "team", icon: DollarSign },
 ];
 
 const categoryLabels: Record<ReportCategory, string> = {
@@ -1061,6 +1062,51 @@ export default function Reports() {
           },
         };
 
+      case "team-labor-expenses":
+        const laborData = (teamMembers || []).map((member) => ({
+          name: member.name,
+          email: member.email,
+          role: member.role || "-",
+          department: member.department || "-",
+          contract_type: member.contract_type || "Full-time",
+          hourly_rate: member.hourly_rate || 0,
+          total_hours: member.total_hours || 0,
+          total_cost: (member.total_hours || 0) * (member.hourly_rate || 0),
+          salary: member.salary || 0,
+        }));
+
+        const totalHours = laborData.reduce((sum, m) => sum + m.total_hours, 0);
+        const totalCost = laborData.reduce((sum, m) => sum + m.total_cost, 0);
+
+        return {
+          type: "table",
+          data: laborData,
+          columns: ["name", "role", "department", "contract_type", "hourly_rate", "total_hours", "total_cost"],
+          stats: [
+            { label: "Total Members", value: laborData.length },
+            { label: "Total Hours", value: totalHours.toFixed(1) },
+            { label: "Total Labor Cost", value: `$${totalCost.toLocaleString()}` },
+          ],
+          pdfData: {
+            stats: [
+              { label: "Total Members", value: laborData.length },
+              { label: "Total Hours", value: totalHours.toFixed(1) },
+              { label: "Total Labor Cost", value: `$${totalCost.toLocaleString()}` },
+            ],
+            tableData: laborData.map((m) => ({
+              name: m.name,
+              role: m.role,
+              department: m.department,
+              contract: m.contract_type,
+              rate: `$${m.hourly_rate}`,
+              hours: m.total_hours.toFixed(1),
+              cost: `$${m.total_cost.toLocaleString()}`,
+            })),
+            columns: ["name", "role", "department", "contract", "rate", "hours", "cost"],
+            sectionTitle: "Team Labor & Expenses",
+          },
+        };
+
       default:
         return null;
     }
@@ -1346,12 +1392,9 @@ export default function Reports() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
-          <p className="text-muted-foreground">
-            Generate and export reports for your organization
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Generate and export reports for your organization
+        </p>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
             <Input

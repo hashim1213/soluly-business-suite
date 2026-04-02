@@ -166,10 +166,7 @@ export default function MyHours() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Hours</h1>
-          <p className="text-muted-foreground">Track and manage your work hours</p>
-        </div>
+        <p className="text-muted-foreground">Track and manage your work hours</p>
         <Dialog open={isQuickEntryOpen} onOpenChange={setIsQuickEntryOpen}>
           <DialogTrigger asChild>
             <Button className="border-2">

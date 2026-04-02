@@ -190,12 +190,9 @@ export default function Projections() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Projections & Goals</h1>
-          <p className="text-muted-foreground">
-            Financial projections, what-if scenarios, and quarterly goals
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Financial projections, what-if scenarios, and quarterly goals
+        </p>
       </div>
 
       <Tabs defaultValue="kpis" className="space-y-4">

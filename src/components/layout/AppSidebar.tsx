@@ -3,9 +3,6 @@ import {
   FolderKanban,
   Ticket,
   Mail,
-  Lightbulb,
-  FileText,
-  MessageSquare,
   Settings,
   Users,
   Contact,
@@ -13,7 +10,6 @@ import {
   Receipt,
   ClipboardList,
   BarChart3,
-  AlertCircle,
   TrendingUp,
   Clock,
   Shield,
@@ -59,12 +55,13 @@ const mainNavItems: NavItem[] = [
   { title: "Projections", path: "projections", icon: TrendingUp, permission: "financials" },
 ];
 
-const ticketCategories: NavItem[] = [
-  { title: "Feature Requests", path: "tickets/features", icon: Lightbulb, permission: "features" },
-  { title: "Customer Quotes", path: "tickets/quotes", icon: FileText, permission: "quotes" },
-  { title: "Feedback", path: "tickets/feedback", icon: MessageSquare, permission: "feedback" },
-  { title: "Issues", path: "tickets/issues", icon: AlertCircle, permission: "issues" },
-];
+// Ticket categories have been consolidated into the main Tickets page with tabs
+// const ticketCategories: NavItem[] = [
+//   { title: "Feature Requests", path: "tickets/features", icon: Lightbulb, permission: "features" },
+//   { title: "Customer Quotes", path: "tickets/quotes", icon: FileText, permission: "quotes" },
+//   { title: "Feedback", path: "tickets/feedback", icon: MessageSquare, permission: "feedback" },
+//   { title: "Issues", path: "tickets/issues", icon: AlertCircle, permission: "issues" },
+// ];
 
 const systemItems: NavItem[] = [
   { title: "Email Inbox", path: "emails", icon: Mail, permission: "emails" },
@@ -97,7 +94,8 @@ export function AppSidebar() {
   const getFullUrl = (path: string) => `${orgBase}${path ? `/${path}` : ""}`;
 
   const visibleMainItems = filterByPermission(mainNavItems);
-  const visibleTicketCategories = filterByPermission(ticketCategories);
+  // Ticket categories removed - now handled via tabs in the unified Tickets page
+  // const visibleTicketCategories = filterByPermission(ticketCategories);
   const visibleSystemItems = filterByPermission(systemItems);
 
   const renderNavItem = (item: NavItem) => {
@@ -146,23 +144,6 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {visibleMainItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    {renderNavItem(item)}
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {visibleTicketCategories.length > 0 && (
-          <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2">
-              {!collapsed && "Ticket Categories"}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {visibleTicketCategories.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     {renderNavItem(item)}
                   </SidebarMenuItem>

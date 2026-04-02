@@ -123,12 +123,9 @@ export default function Financials() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Financials</h1>
-        <p className="text-muted-foreground">
-          Overview of project finances, revenue, and profitability
-        </p>
-      </div>
+      <p className="text-muted-foreground">
+        Overview of project finances, revenue, and profitability
+      </p>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

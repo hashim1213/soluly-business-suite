@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import {
   Plus,
@@ -8,7 +9,6 @@ import {
   Search,
   Loader2,
   Inbox,
-  Mail,
   Building,
   MoreVertical,
   ArrowRight,
@@ -17,6 +17,10 @@ import {
   Trash2,
   Edit,
   AlertCircle,
+  Filter,
+  X,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -25,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -54,6 +59,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import { useTickets, useCreateTicket, useUpdateTicket, useDeleteTicket, TicketWithProject } from "@/hooks/useTickets";
 import { useProjects } from "@/hooks/useProjects";
@@ -92,6 +102,7 @@ import { ticketStatusStyles, ticketPriorityStyles } from "@/lib/styles";
 
 export default function Tickets() {
   const { navigateOrg } = useOrgNavigation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Fetch data
   const { data: tickets, isLoading, error } = useTickets();
@@ -103,12 +114,20 @@ export default function Tickets() {
   const updateTicket = useUpdateTicket();
   const deleteTicket = useDeleteTicket();
 
+  // State
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState(searchParams.get("category") || "all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<TicketWithProject | null>(null);
+  const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set());
+
+  // Advanced filters
+  const [filterAssignee, setFilterAssignee] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [filterProject, setFilterProject] = useState<string>("all");
+  const [showClosedTickets, setShowClosedTickets] = useState<boolean>(false);
 
   const [newTicket, setNewTicket] = useState({
     title: "",
@@ -127,9 +146,30 @@ export default function Tickets() {
     assignee_id: "",
   });
 
-  // Filter tickets based on search and category
+  // Sync URL with active tab
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam && categoryParam !== activeTab) {
+      setActiveTab(categoryParam);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (activeTab && activeTab !== "all") {
+      setSearchParams({ category: activeTab });
+    } else {
+      setSearchParams({});
+    }
+  }, [activeTab, setSearchParams]);
+
+  // Filter tickets
   const filteredTickets = useMemo(() => {
-    return tickets?.filter((ticket) => {
+    let filtered = tickets?.filter((ticket) => {
+      // Hide closed tickets by default unless showClosedTickets is true
+      if (!showClosedTickets && ticket.status === "closed") {
+        return false;
+      }
+
       // Search filter
       const matchesSearch = searchQuery === "" ||
         ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -140,27 +180,136 @@ export default function Tickets() {
       // Category filter
       let matchesCategory = true;
       if (activeTab === "uncategorized") {
-        // Uncategorized = no project assigned
         matchesCategory = !ticket.project_id;
       } else if (activeTab !== "all") {
         matchesCategory = ticket.category === activeTab;
       }
 
-      return matchesSearch && matchesCategory;
-    }) || [];
-  }, [tickets, searchQuery, activeTab]);
+      // Assignee filter
+      const matchesAssignee = filterAssignee === "all" ||
+        (filterAssignee === "unassigned" ? !ticket.assignee_id : ticket.assignee_id === filterAssignee);
 
-  // Count tickets per category
+      // Status filter
+      const matchesStatus = filterStatus === "all" || ticket.status === filterStatus;
+
+      // Priority filter
+      const matchesPriority = filterPriority === "all" || ticket.priority === filterPriority;
+
+      // Project filter
+      const matchesProject = filterProject === "all" ||
+        (filterProject === "unassigned" ? !ticket.project_id : ticket.project_id === filterProject);
+
+      return matchesSearch && matchesCategory && matchesAssignee && matchesStatus && matchesPriority && matchesProject;
+    }) || [];
+
+    // Sort tickets: open tickets first, then by priority (high to low), then by created date (newest first)
+    filtered.sort((a, b) => {
+      // First sort by status - closed tickets go to the bottom
+      const statusOrder = { 'open': 0, 'in-progress': 1, 'pending': 2, 'closed': 3 };
+      const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+      if (statusDiff !== 0) return statusDiff;
+
+      // Then by priority
+      const priorityOrder = { 'high': 0, 'medium': 1, 'low': 2 };
+      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+      if (priorityDiff !== 0) return priorityDiff;
+
+      // Finally by created date (newest first)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    return filtered;
+  }, [tickets, searchQuery, activeTab, filterAssignee, filterStatus, filterPriority, filterProject, showClosedTickets]);
+
+  // Count tickets per category (excluding closed tickets unless showClosedTickets is true)
   const categoryCounts = useMemo(() => {
+    const ticketsToCount = showClosedTickets ? tickets : tickets?.filter(t => t.status !== "closed");
     return {
-      all: tickets?.length || 0,
-      uncategorized: tickets?.filter(t => !t.project_id).length || 0,
-      feature: tickets?.filter(t => t.category === "feature").length || 0,
-      quote: tickets?.filter(t => t.category === "quote").length || 0,
-      feedback: tickets?.filter(t => t.category === "feedback").length || 0,
-      issue: tickets?.filter(t => t.category === "issue").length || 0,
+      all: ticketsToCount?.length || 0,
+      uncategorized: ticketsToCount?.filter(t => !t.project_id).length || 0,
+      feature: ticketsToCount?.filter(t => t.category === "feature").length || 0,
+      quote: ticketsToCount?.filter(t => t.category === "quote").length || 0,
+      feedback: ticketsToCount?.filter(t => t.category === "feedback").length || 0,
+      issue: ticketsToCount?.filter(t => t.category === "issue").length || 0,
     };
-  }, [tickets]);
+  }, [tickets, showClosedTickets]);
+
+  // Check if any filters are active
+  const hasActiveFilters = filterAssignee !== "all" || filterStatus !== "all" ||
+    filterPriority !== "all" || filterProject !== "all";
+
+  const clearFilters = () => {
+    setFilterAssignee("all");
+    setFilterStatus("all");
+    setFilterPriority("all");
+    setFilterProject("all");
+  };
+
+  // Batch operations
+  const toggleTicketSelection = (ticketId: string) => {
+    const newSelected = new Set(selectedTickets);
+    if (newSelected.has(ticketId)) {
+      newSelected.delete(ticketId);
+    } else {
+      newSelected.add(ticketId);
+    }
+    setSelectedTickets(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedTickets.size === filteredTickets.length) {
+      setSelectedTickets(new Set());
+    } else {
+      setSelectedTickets(new Set(filteredTickets.map(t => t.id)));
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status: TicketStatus) => {
+    if (selectedTickets.size === 0) return;
+
+    try {
+      const promises = Array.from(selectedTickets).map(id =>
+        updateTicket.mutateAsync({ id, status })
+      );
+      await Promise.all(promises);
+      toast.success(`Updated ${selectedTickets.size} ticket(s)`);
+      setSelectedTickets(new Set());
+    } catch (error) {
+      toast.error("Failed to update some tickets");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTickets.size === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedTickets.size} ticket(s)?`)) return;
+
+    try {
+      const promises = Array.from(selectedTickets).map(id =>
+        deleteTicket.mutateAsync(id)
+      );
+      await Promise.all(promises);
+      toast.success(`Deleted ${selectedTickets.size} ticket(s)`);
+      setSelectedTickets(new Set());
+    } catch (error) {
+      toast.error("Failed to delete some tickets");
+    }
+  };
+
+  const handleBulkAssign = async (assigneeId: string) => {
+    if (selectedTickets.size === 0) return;
+
+    try {
+      const promises = Array.from(selectedTickets).map(id =>
+        updateTicket.mutateAsync({ id, assignee_id: assigneeId || null })
+      );
+      await Promise.all(promises);
+      toast.success(`Assigned ${selectedTickets.size} ticket(s)`);
+      setSelectedTickets(new Set());
+    } catch (error) {
+      toast.error("Failed to assign some tickets");
+    }
+  };
 
   const handleCreateTicket = async () => {
     if (!newTicket.title) {
@@ -277,10 +426,7 @@ export default function Tickets() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Tickets</h1>
-          <p className="text-sm text-muted-foreground">Manage incoming tickets from email and other sources</p>
-        </div>
+        <p className="text-sm text-muted-foreground">Manage incoming tickets from email and other sources</p>
         <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <SheetTrigger asChild>
             <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
@@ -311,6 +457,7 @@ export default function Tickets() {
                   value={newTicket.description}
                   onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                   className="border-2"
+                  rows={5}
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -407,7 +554,7 @@ export default function Tickets() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-4">
         {Object.entries(categoryConfig).map(([key, config]) => {
           const Icon = config.icon;
           const count = categoryCounts[key as keyof typeof categoryCounts];
@@ -425,7 +572,7 @@ export default function Tickets() {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">{count}</div>
-                    <div className="text-sm text-muted-foreground">{config.label}</div>
+                    <div className="text-xs text-muted-foreground">{config.label}</div>
                   </div>
                 </div>
               </CardContent>
@@ -468,17 +615,197 @@ export default function Tickets() {
                 </TabsList>
               </Tabs>
             </div>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tickets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 border-2"
-              />
+
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tickets..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 border-2"
+                />
+              </div>
+
+              {/* Show Closed Tickets Toggle */}
+              <Button
+                variant={showClosedTickets ? "default" : "outline"}
+                onClick={() => setShowClosedTickets(!showClosedTickets)}
+                className="border-2"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                {showClosedTickets ? "Hide Closed" : "Show Closed"}
+              </Button>
+
+              {/* Advanced Filters */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="border-2">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                    {hasActiveFilters && (
+                      <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+                        !
+                      </Badge>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold">Advanced Filters</h4>
+                      {hasActiveFilters && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                          <X className="h-4 w-4 mr-1" />
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>Status</Label>
+                        <Select value={filterStatus} onValueChange={setFilterStatus}>
+                          <SelectTrigger className="border-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Priority</Label>
+                        <Select value={filterPriority} onValueChange={setFilterPriority}>
+                          <SelectTrigger className="border-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Priorities</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Assignee</Label>
+                        <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+                          <SelectTrigger className="border-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Assignees</SelectItem>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {teamMembers?.filter(m => m.status === "active").map((member) => (
+                              <SelectItem key={member.id} value={member.id}>
+                                {member.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Project</Label>
+                        <Select value={filterProject} onValueChange={setFilterProject}>
+                          <SelectTrigger className="border-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Projects</SelectItem>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {projects?.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
+
+            {/* Batch Actions Bar */}
+            {selectedTickets.size > 0 && (
+              <div className="flex items-center justify-between p-3 bg-primary/10 border-2 border-primary rounded">
+                <span className="text-sm font-medium">
+                  {selectedTickets.size} ticket(s) selected
+                </span>
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="border-2">
+                        Update Status
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleBulkStatusUpdate("open")}>
+                        Set as Open
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkStatusUpdate("in-progress")}>
+                        Set as In Progress
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkStatusUpdate("pending")}>
+                        Set as Pending
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkStatusUpdate("closed")}>
+                        Set as Closed
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="border-2">
+                        Assign
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleBulkAssign("")}>
+                        Unassign
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {teamMembers?.filter(m => m.status === "active").map((member) => (
+                        <DropdownMenuItem key={member.id} onClick={() => handleBulkAssign(member.id)}>
+                          {member.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedTickets(new Set())}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </CardHeader>
+
         <CardContent className="p-0">
           {filteredTickets.length === 0 ? (
             <div className="text-center py-12">
@@ -495,6 +822,12 @@ export default function Tickets() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-b-2 hover:bg-transparent">
+                    <TableHead className="w-[40px]">
+                      <Checkbox
+                        checked={selectedTickets.size === filteredTickets.length && filteredTickets.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="font-bold uppercase text-xs w-[80px] sm:w-[100px]">ID</TableHead>
                     <TableHead className="font-bold uppercase text-xs min-w-[200px]">Title</TableHead>
                     <TableHead className="font-bold uppercase text-xs w-[120px] hidden md:table-cell">Category</TableHead>
@@ -508,12 +841,19 @@ export default function Tickets() {
                 <TableBody>
                   {filteredTickets.map((ticket) => {
                     const CategoryIcon = categoryIcons[ticket.category];
+                    const isSelected = selectedTickets.has(ticket.id);
                     return (
                       <TableRow
                         key={ticket.id}
-                        className="border-b-2 cursor-pointer hover:bg-accent/50"
+                        className={`border-b-2 cursor-pointer hover:bg-accent/50 ${isSelected ? "bg-primary/5" : ""}`}
                         onClick={() => navigateOrg(`/tickets/${ticket.display_id}`)}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleTicketSelection(ticket.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-mono text-xs sm:text-sm">{ticket.display_id}</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
@@ -527,7 +867,7 @@ export default function Tickets() {
                               )}
                             </div>
                             {ticket.assignee?.name && (
-                              <span className="text-xs text-muted-foreground hidden sm:block">Assigned to: {ticket.assignee.name}</span>
+                              <span className="text-xs text-muted-foreground">Assigned to: {ticket.assignee.name}</span>
                             )}
                           </div>
                         </TableCell>
@@ -561,61 +901,61 @@ export default function Tickets() {
                           {formatDate(ticket.created_at)}
                         </TableCell>
                         <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-2">
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              navigateOrg(`/tickets/${ticket.display_id}`);
-                            }}>
-                              <ArrowRight className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => openEditDialog(ticket, e)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Ticket
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {!ticket.project_id && projects && projects.length > 0 && (
-                              <>
-                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                                  Quick Assign to Project
-                                </div>
-                                {projects.slice(0, 5).map((project) => (
-                                  <DropdownMenuItem
-                                    key={project.id}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleQuickAssign(ticket.id, project.id);
-                                    }}
-                                  >
-                                    <Building className="h-4 w-4 mr-2" />
-                                    {project.name}
-                                  </DropdownMenuItem>
-                                ))}
-                                <DropdownMenuSeparator />
-                              </>
-                            )}
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={(e) => {
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="border-2">
+                              <DropdownMenuItem onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteTicket(ticket.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Ticket
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                                navigateOrg(`/tickets/${ticket.display_id}`);
+                              }}>
+                                <ArrowRight className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => openEditDialog(ticket, e)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Ticket
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {!ticket.project_id && projects && projects.length > 0 && (
+                                <>
+                                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                    Quick Assign to Project
+                                  </div>
+                                  {projects.slice(0, 5).map((project) => (
+                                    <DropdownMenuItem
+                                      key={project.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleQuickAssign(ticket.id, project.id);
+                                      }}
+                                    >
+                                      <Building className="h-4 w-4 mr-2" />
+                                      {project.name}
+                                    </DropdownMenuItem>
+                                  ))}
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTicket(ticket.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Ticket
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

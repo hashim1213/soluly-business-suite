@@ -641,10 +641,7 @@ export default function CRM() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">CRM</h1>
-        <p className="text-sm text-muted-foreground">Manage your sales pipeline, leads, clients, and tasks</p>
-      </div>
+      <p className="text-sm text-muted-foreground">Manage your sales pipeline, leads, clients, and tasks</p>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">

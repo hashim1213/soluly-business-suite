@@ -10,8 +10,8 @@ export function RecentTickets() {
   const { navigateOrg } = useOrgNavigation();
   const { data: tickets, isLoading } = useTickets();
 
-  // Get recent tickets (limit to 5)
-  const recentTickets = tickets?.slice(0, 5) || [];
+  // Get recent open tickets (exclude closed, limit to 5)
+  const recentTickets = tickets?.filter(t => t.status !== "closed").slice(0, 5) || [];
 
   const formatDate = (dateString: string) => {
     try {

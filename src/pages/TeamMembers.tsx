@@ -261,10 +261,7 @@ export default function TeamMembers() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Team Members</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Manage your team across all projects</p>
-        </div>
+        <p className="text-sm sm:text-base text-muted-foreground">Manage your team across all projects</p>
         <div className="flex gap-2 w-full sm:w-auto">
           <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
             <DialogTrigger asChild>

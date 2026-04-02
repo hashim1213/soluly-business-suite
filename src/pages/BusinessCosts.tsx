@@ -390,12 +390,9 @@ export default function BusinessCosts() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Business Expenses</h1>
-          <p className="text-muted-foreground mt-1">
-            Track and manage your business operating costs
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Track and manage your business operating costs
+        </p>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="border-2">

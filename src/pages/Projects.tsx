@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench, Archive } from "lucide-react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
 import { Button } from "@/components/ui/button";
@@ -189,6 +189,7 @@ export default function Projects() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [isAddingNewContact, setIsAddingNewContact] = useState(false);
   const [newContactName, setNewContactName] = useState("");
+  const [showArchivedProjects, setShowArchivedProjects] = useState(false);
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -222,6 +223,14 @@ export default function Projects() {
   const getOpenTicketCount = (projectId: string) => {
     return tickets?.filter(t => t.project_id === projectId && t.status !== "closed").length || 0;
   };
+
+  // Filter projects - hide completed/cancelled unless user wants to see them
+  const filteredProjects = useMemo(() => {
+    if (!projects) return [];
+    if (showArchivedProjects) return projects;
+
+    return projects.filter(p => p.status !== "completed" && p.status !== "cancelled");
+  }, [projects, showArchivedProjects]);
 
   // Handle contact selection
   const handleSelectContact = (contact: Contact) => {
@@ -418,17 +427,26 @@ export default function Projects() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Projects</h1>
+        <div className="flex items-center gap-2">
           <p className="text-sm text-muted-foreground">Manage your consulting projects</p>
         </div>
-        <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-          <SheetTrigger asChild>
-            <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Button>
-          </SheetTrigger>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowArchivedProjects(!showArchivedProjects)}
+            className="border-2"
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            {showArchivedProjects ? "Hide Archived" : "Show Archived"}
+          </Button>
+          <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+            <SheetTrigger asChild>
+              <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
+                <Plus className="h-4 w-4 mr-2" />
+                New Project
+              </Button>
+            </SheetTrigger>
           <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
             <SheetHeader className="border-b-2 border-border pb-4 mb-4">
               <SheetTitle>Create New Project</SheetTitle>
@@ -673,7 +691,8 @@ export default function Projects() {
               </Button>
             </div>
           </SheetContent>
-        </Sheet>
+          </Sheet>
+        </div>
       </div>
 
       {projects?.length === 0 ? (
@@ -686,9 +705,19 @@ export default function Projects() {
             </Button>
           </CardContent>
         </Card>
+      ) : filteredProjects.length === 0 ? (
+        <Card className="border-2 border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Archive className="h-8 w-8 text-muted-foreground mb-3" />
+            <p className="text-muted-foreground mb-2">All projects are archived</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Click "Show Archived" to view completed or cancelled projects
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-          {projects?.map((project) => (
+          {filteredProjects.map((project) => (
             <Card key={project.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="border-b-2 border-border pb-3">
                 <div className="flex items-start justify-between">

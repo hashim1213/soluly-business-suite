@@ -279,12 +279,9 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            {member?.name ? `Welcome, ${member.name}!` : "Overview of your consulting business"}
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          {member?.name ? `Welcome, ${member.name}!` : "Overview of your consulting business"}
+        </p>
         <DashboardCustomizer />
       </div>
 

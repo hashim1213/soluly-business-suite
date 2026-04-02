@@ -141,7 +141,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-6 space-y-6">
+      <div className="p-8 space-y-6 max-w-5xl">
         {/* Header */}
         <div>
           <div className="flex items-start justify-between mb-2">
@@ -176,18 +176,19 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
                 </Badge>
               )}
             </div>
-            <span className="text-sm text-muted-foreground">
-              {format(new Date(email.received_at), "MMM d, yyyy h:mm a")}
+            <span className="text-base font-medium text-muted-foreground">
+              {format(new Date(email.received_at), "MMM d, yyyy 'at' h:mm a")}
             </span>
           </div>
-          <h2 className="text-xl font-semibold mb-2">{email.subject}</h2>
-          <div className="text-sm text-muted-foreground">
-            From: <span className="font-medium text-foreground">{email.sender_name || email.sender_email}</span>
-            {email.sender_name && <span> ({email.sender_email})</span>}
+          <h2 className="text-2xl font-bold mb-3">{email.subject}</h2>
+          <div className="text-base text-muted-foreground">
+            <span className="font-semibold text-foreground">From:</span>{" "}
+            <span className="text-foreground">{email.sender_name || email.sender_email}</span>
+            {email.sender_name && <span className="text-sm"> ({email.sender_email})</span>}
           </div>
           {email.email_account && (
-            <div className="text-sm text-muted-foreground mt-1">
-              Via: {email.email_account.display_name}
+            <div className="text-base text-muted-foreground mt-1">
+              <span className="font-semibold">Via:</span> {email.email_account.display_name}
             </div>
           )}
         </div>
@@ -238,14 +239,14 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
             </div>
             {email.ai_summary && (
               <div className="space-y-2">
-                <Label>Summary</Label>
-                <p className="text-sm bg-muted p-3 rounded-lg">{email.ai_summary}</p>
+                <Label className="text-sm font-semibold">AI Summary</Label>
+                <p className="text-base bg-primary/5 border-2 border-primary/20 p-4 rounded-lg leading-relaxed">{email.ai_summary}</p>
               </div>
             )}
             {email.ai_suggested_title && (
               <div className="space-y-2">
-                <Label>Suggested Title</Label>
-                <p className="text-sm font-medium">{email.ai_suggested_title}</p>
+                <Label className="text-sm font-semibold">Suggested Title</Label>
+                <p className="text-base font-medium">{email.ai_suggested_title}</p>
               </div>
             )}
           </div>
@@ -336,8 +337,8 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
 
         {/* Email Body */}
         <div className="space-y-3">
-          <Label>Email Content</Label>
-          <div className="bg-muted p-4 rounded-lg text-sm whitespace-pre-wrap max-h-[400px] overflow-y-auto">
+          <Label className="text-base font-semibold">Email Content</Label>
+          <div className="bg-muted/50 p-6 rounded-lg text-base whitespace-pre-wrap leading-relaxed">
             {email.body}
           </div>
         </div>

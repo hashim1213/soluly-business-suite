@@ -1196,6 +1196,7 @@ export type Database = {
           description: string | null
           display_id: string
           id: string
+          organization_id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
           project_id: string | null
           status: Database["public"]["Enums"]["ticket_status"]
@@ -1209,6 +1210,7 @@ export type Database = {
           description?: string | null
           display_id: string
           id?: string
+          organization_id: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           project_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
@@ -1222,6 +1224,7 @@ export type Database = {
           description?: string | null
           display_id?: string
           id?: string
+          organization_id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           project_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
@@ -1234,6 +1237,13 @@ export type Database = {
             columns: ["assignee_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {

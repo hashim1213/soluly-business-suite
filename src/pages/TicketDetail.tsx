@@ -424,6 +424,7 @@ export default function TicketDetail() {
                       <SelectItem value="feature">Feature Request</SelectItem>
                       <SelectItem value="quote">Customer Quote</SelectItem>
                       <SelectItem value="feedback">Feedback</SelectItem>
+                      <SelectItem value="issue">Issue</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
