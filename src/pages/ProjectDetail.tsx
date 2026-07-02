@@ -11,6 +11,7 @@ import { useTimeEntriesByProject, useCreateTimeEntry, useDeleteTimeEntry } from 
 import { useProjectInvoices, useCreateProjectInvoice, useUpdateProjectInvoice, useDeleteProjectInvoice, INVOICE_STATUSES, ProjectInvoice } from "@/hooks/useProjectInvoices";
 import { useProjectTasks, useCreateProjectTask, useUpdateProjectTask, useToggleProjectTask, useDeleteProjectTask } from "@/hooks/useProjectTasks";
 import { useProjectMilestones, useCreateProjectMilestone, useUpdateProjectMilestone, useToggleProjectMilestone, useDeleteProjectMilestone } from "@/hooks/useProjectMilestones";
+import { ProjectGantt } from "@/components/projects/ProjectGantt";
 import { useProjectCosts, useCreateProjectCost, useUpdateProjectCost, useDeleteProjectCost, COST_CATEGORIES } from "@/hooks/useProjectCosts";
 import { useProjectContracts, useCreateProjectContract, useUpdateProjectContract, useDeleteProjectContract } from "@/hooks/useProjectContracts";
 import { useProjectExternalMembers, useAddProjectExternalMember, useRemoveProjectExternalMember, useCreateContactAndAddToProject } from "@/hooks/useProjectExternalMembers";
@@ -2477,6 +2478,9 @@ export default function ProjectDetail() {
 
         {/* Timeline Tab */}
         <TabsContent value="timeline" className="space-y-6">
+          {dbProject && (
+            <ProjectGantt project={dbProject} milestones={milestones || []} tasks={tasks || []} />
+          )}
           <Card className="border border-border shadow-sm">
             <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">

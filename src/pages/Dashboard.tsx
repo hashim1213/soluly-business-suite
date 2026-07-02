@@ -8,6 +8,7 @@ import { TeamWorkload } from "@/components/dashboard/TeamWorkload";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { TasksList } from "@/components/dashboard/TasksList";
+import { SprintOverview } from "@/components/dashboard/SprintOverview";
 import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer";
 import { useProjects } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
@@ -278,6 +279,7 @@ export default function Dashboard() {
     quickActions: { component: QuickActions, permission: true },
     recentActivity: { component: RecentActivity, permission: true },
     tasksList: { component: TasksList, permission: canViewProjects },
+    sprintOverview: { component: SprintOverview, permission: canViewTickets },
   };
 
   if (isLoading) {

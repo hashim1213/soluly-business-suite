@@ -235,6 +235,7 @@ export default function CRM() {
   const [dealsView, setDealsViewState] = useState<string>(() => savedView("soluly-crm-deals-view", "board"));
   const [leadsView, setLeadsViewState] = useState<string>(() => savedView("soluly-crm-leads-view", "table"));
   const [dealSort, setDealSort] = useState<SortState>({ key: "", dir: "asc" });
+  const [hoveredStage, setHoveredStage] = useState<string | null>(null);
   const [leadSort, setLeadSort] = useState<SortState>({ key: "", dir: "asc" });
   const [clientSort, setClientSort] = useState<SortState>({ key: "", dir: "asc" });
   const [contactSort, setContactSort] = useState<SortState>({ key: "", dir: "asc" });
@@ -1075,7 +1076,25 @@ export default function CRM() {
                     {formatValue(stage.totalValue)}
                   </div>
                 </CardHeader>
-                <CardContent className="p-2 space-y-2 min-h-[200px]">
+                <CardContent
+                  className={cn(
+                    "p-2 space-y-2 min-h-[200px] transition-colors",
+                    hoveredStage === stage.id && "ring-2 ring-primary/40 bg-accent/50"
+                  )}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setHoveredStage(stage.id);
+                  }}
+                  onDragLeave={() => setHoveredStage(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setHoveredStage(null);
+                    const draggedId = e.dataTransfer.getData("text/plain");
+                    if (!draggedId) return;
+                    handleMoveStage(draggedId, stage.id as QuoteStatus);
+                    toast.success(`Deal moved to ${stage.name}`);
+                  }}
+                >
                   {stage.deals.length === 0 ? (
                     <div className="text-center text-muted-foreground text-sm py-8">
                       No deals
@@ -1084,7 +1103,9 @@ export default function CRM() {
                     stage.deals.map((deal) => (
                       <Card
                         key={deal.id}
-                        className="border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        draggable
+                        onDragStart={(e) => e.dataTransfer.setData("text/plain", deal.id)}
+                        className="border border-border shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
                         onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}
                       >
                         <CardContent className="p-3">

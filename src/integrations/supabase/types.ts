@@ -1194,6 +1194,42 @@ export type Database = {
           }
         ]
       }
+      sprints: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          goal: string | null
+          id: string
+          name: string
+          organization_id: string
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tickets: {
         Row: {
           assignee_id: string | null
@@ -1203,14 +1239,18 @@ export type Database = {
           display_id: string
           id: string
           organization_id: string
+          board_rank: number
           priority: Database["public"]["Enums"]["ticket_priority"]
           project_id: string | null
+          sprint_id: string | null
           status: Database["public"]["Enums"]["ticket_status"]
+          story_points: number | null
           title: string
           updated_at: string
         }
         Insert: {
           assignee_id?: string | null
+          board_rank?: number
           category?: Database["public"]["Enums"]["ticket_category"]
           created_at?: string
           description?: string | null
@@ -1219,12 +1259,15 @@ export type Database = {
           organization_id: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           project_id?: string | null
+          sprint_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          story_points?: number | null
           title: string
           updated_at?: string
         }
         Update: {
           assignee_id?: string | null
+          board_rank?: number
           category?: Database["public"]["Enums"]["ticket_category"]
           created_at?: string
           description?: string | null
@@ -1233,7 +1276,9 @@ export type Database = {
           organization_id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           project_id?: string | null
+          sprint_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          story_points?: number | null
           title?: string
           updated_at?: string
         }
@@ -1263,6 +1308,7 @@ export type Database = {
       }
       project_tasks: {
         Row: {
+          start_date: string | null
           id: string
           organization_id: string
           project_id: string
@@ -1283,6 +1329,7 @@ export type Database = {
           priority?: "high" | "medium" | "low"
           assignee_id?: string | null
           due_date?: string | null
+          start_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1295,6 +1342,7 @@ export type Database = {
           priority?: "high" | "medium" | "low"
           assignee_id?: string | null
           due_date?: string | null
+          start_date?: string | null
           created_at?: string
           updated_at?: string
         }

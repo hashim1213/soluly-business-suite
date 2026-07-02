@@ -28,7 +28,8 @@ export type WidgetType =
   | "teamWorkload"
   | "quickActions"
   | "recentActivity"
-  | "tasksList";
+  | "tasksList"
+  | "sprintOverview";
 
 export interface DashboardLayout {
   statsCards: StatCardType[];
@@ -78,6 +79,7 @@ export const AVAILABLE_WIDGETS: WidgetConfig[] = [
   { id: "quickActions", title: "Quick Actions", description: "Common actions shortcuts", category: "projects" },
   { id: "recentActivity", title: "Recent Activity", description: "Latest activity across the system", category: "projects" },
   { id: "tasksList", title: "My Tasks", description: "Your assigned tasks", category: "tasks" },
+  { id: "sprintOverview", title: "Active Sprint", description: "Current sprint progress", category: "tickets" },
 ];
 
 const DEFAULT_LAYOUT: DashboardLayout = {
