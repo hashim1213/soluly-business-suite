@@ -216,6 +216,7 @@ export default function Tickets() {
     priority: "medium" as TicketPriority,
     assignee_id: "",
     story_points: "",
+    sprint_id: "",
   });
 
   const [editForm, setEditForm] = useState({
@@ -225,6 +226,7 @@ export default function Tickets() {
     status: "open" as TicketStatus,
     assignee_id: "",
     story_points: "",
+    sprint_id: "",
   });
 
   // Sync URL with active tab
@@ -478,6 +480,7 @@ export default function Tickets() {
         priority: newTicket.priority,
         assignee_id: newTicket.assignee_id || null,
         story_points: newTicket.story_points === "" ? null : parseFloat(newTicket.story_points),
+        sprint_id: newTicket.sprint_id || null,
       });
 
       setNewTicket({
@@ -488,6 +491,7 @@ export default function Tickets() {
         priority: "medium",
         assignee_id: "",
         story_points: "",
+        sprint_id: "",
       });
       setIsDialogOpen(false);
     } catch (error) {
@@ -507,6 +511,7 @@ export default function Tickets() {
         status: editForm.status,
         assignee_id: editForm.assignee_id || null,
         story_points: editForm.story_points === "" ? null : parseFloat(editForm.story_points),
+        sprint_id: editForm.sprint_id || null,
       });
 
       toast.success("Ticket updated successfully");
@@ -686,6 +691,7 @@ export default function Tickets() {
       status: ticket.status,
       assignee_id: ticket.assignee_id || "",
       story_points: ticket.story_points != null ? String(ticket.story_points) : "",
+      sprint_id: ticket.sprint_id || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -841,6 +847,26 @@ export default function Tickets() {
                     onChange={(e) => setNewTicket({ ...newTicket, story_points: e.target.value })}
                     className="border"
                   />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="new-sprint">Sprint</Label>
+                  <Select
+                    value={newTicket.sprint_id || "backlog"}
+                    onValueChange={(v) => setNewTicket({ ...newTicket, sprint_id: v === "backlog" ? "" : v })}
+                  >
+                    <SelectTrigger id="new-sprint" className="border">
+                      <SelectValue placeholder="Backlog" />
+                    </SelectTrigger>
+                    <SelectContent className="border">
+                      <SelectItem value="backlog">Backlog</SelectItem>
+                      {sprints?.filter((s) => s.status !== "completed").map((sprint) => (
+                        <SelectItem key={sprint.id} value={sprint.id}>
+                          {sprint.name}
+                          {sprint.status === "active" ? " · Active" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -1596,6 +1622,26 @@ export default function Tickets() {
                   onChange={(e) => setEditForm({ ...editForm, story_points: e.target.value })}
                   className="border"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-sprint">Sprint</Label>
+                <Select
+                  value={editForm.sprint_id || "backlog"}
+                  onValueChange={(v) => setEditForm({ ...editForm, sprint_id: v === "backlog" ? "" : v })}
+                >
+                  <SelectTrigger id="edit-sprint" className="border">
+                    <SelectValue placeholder="Backlog" />
+                  </SelectTrigger>
+                  <SelectContent className="border">
+                    <SelectItem value="backlog">Backlog</SelectItem>
+                    {sprints?.filter((s) => s.status !== "completed" || s.id === editForm.sprint_id).map((sprint) => (
+                      <SelectItem key={sprint.id} value={sprint.id}>
+                        {sprint.name}
+                        {sprint.status === "active" ? " · Active" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
