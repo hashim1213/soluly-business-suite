@@ -1281,6 +1281,54 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_charges: {
+        Row: {
+          active: boolean
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          end_date: string | null
+          frequency: string
+          id: string
+          name: string
+          organization_id: string
+          project_id: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          name: string
+          organization_id: string
+          project_id: string
+          start_date?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          project_id?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sprints: {
         Row: {
           created_at: string
