@@ -444,6 +444,12 @@ export default function Settings() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {[
                     {
+                      value: "fluent" as ThemeStyle,
+                      label: "Fluent",
+                      description: "Microsoft Fluent design (default)",
+                      colors: ["#0F6CBD", "#479EF5", "#B4D6FA"],
+                    },
+                    {
                       value: "default" as ThemeStyle,
                       label: "Neobrutalist",
                       description: "Bold black borders, sharp edges",
