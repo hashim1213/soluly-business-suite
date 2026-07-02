@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import {
@@ -85,7 +85,8 @@ import { useSprints, useCreateSprint, useUpdateSprint, useDeleteSprint, Sprint }
 import { useProjects } from "@/hooks/useProjects";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Database } from "@/integrations/supabase/types";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow, format, differenceInCalendarDays } from "date-fns";
+import { Progress } from "@/components/ui/progress";
 import TicketsBoard from "@/components/tickets/TicketsBoard";
 
 type TicketCategory = Database["public"]["Enums"]["ticket_category"];
@@ -177,6 +178,18 @@ export default function Tickets() {
   // Sprint filtering + management
   const [sprintFilter, setSprintFilter] = useState<string>("all");
   const [isSprintDialogOpen, setIsSprintDialogOpen] = useState(false);
+  const [completingSprint, setCompletingSprint] = useState<Sprint | null>(null);
+  const [rolloverTarget, setRolloverTarget] = useState<string>("backlog");
+  const sprintDefaultApplied = useRef(false);
+
+  // Focus the board on the running sprint by default so the page opens as
+  // a sprint board rather than an unfiltered list
+  useEffect(() => {
+    if (sprintDefaultApplied.current || !sprints) return;
+    sprintDefaultApplied.current = true;
+    const active = sprints.find((s) => s.status === "active");
+    if (active) setSprintFilter(active.id);
+  }, [sprints]);
   const [newSprint, setNewSprint] = useState({
     name: "",
     goal: "",
@@ -585,10 +598,60 @@ export default function Tickets() {
     }
   };
 
+  // Completing a sprint rolls unfinished tickets somewhere useful instead of
+  // stranding them in a completed sprint
+  const unfinishedInSprint = (sprint: Sprint) =>
+    tickets?.filter((t) => t.sprint_id === sprint.id && t.status !== "closed") || [];
+
   const handleCompleteSprint = async (sprint: Sprint) => {
+    if (unfinishedInSprint(sprint).length > 0) {
+      setRolloverTarget("backlog");
+      setCompletingSprint(sprint);
+      return;
+    }
     try {
       await updateSprint.mutateAsync({ id: sprint.id, status: "completed" });
       toast.success(`Sprint "${sprint.name}" completed`);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const finalizeCompleteSprint = async () => {
+    if (!completingSprint) return;
+    const unfinished = unfinishedInSprint(completingSprint);
+    const targetSprintId = rolloverTarget === "backlog" ? null : rolloverTarget;
+    try {
+      await Promise.all(
+        unfinished.map((t) => updateTicket.mutateAsync({ id: t.id, sprint_id: targetSprintId }))
+      );
+      await updateSprint.mutateAsync({ id: completingSprint.id, status: "completed" });
+      const destination =
+        targetSprintId === null
+          ? "the backlog"
+          : `"${sprints?.find((s) => s.id === targetSprintId)?.name}"`;
+      toast.success(
+        `Sprint "${completingSprint.name}" completed — ${unfinished.length} unfinished ticket(s) moved to ${destination}`
+      );
+      if (sprintFilter === completingSprint.id) {
+        setSprintFilter(targetSprintId ?? "backlog");
+      }
+      setCompletingSprint(null);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleBulkMoveToSprint = async (sprintId: string | null) => {
+    if (selectedTickets.size === 0) return;
+
+    try {
+      const promises = Array.from(selectedTickets).map(id =>
+        updateTicket.mutateAsync({ id, sprint_id: sprintId })
+      );
+      await Promise.all(promises);
+      toast.success(`Moved ${selectedTickets.size} ticket(s)`);
+      setSelectedTickets(new Set());
     } catch (error) {
       // Error handled by hook
     }
@@ -861,6 +924,78 @@ export default function Tickets() {
               </Button>
             </div>
 
+            {/* Sprint context band — goal, dates, progress, and actions for
+                the sprint currently in focus */}
+            {(() => {
+              const sprint = sprints?.find((s) => s.id === sprintFilter);
+              if (!sprint) return null;
+              const sprintTickets = tickets?.filter((t) => t.sprint_id === sprint.id) || [];
+              const done = sprintTickets.filter((t) => t.status === "closed").length;
+              const totalPoints = sprintTickets.reduce((sum, t) => sum + (t.story_points || 0), 0);
+              const donePoints = sprintTickets
+                .filter((t) => t.status === "closed")
+                .reduce((sum, t) => sum + (t.story_points || 0), 0);
+              const pct = sprintTickets.length > 0 ? Math.round((done / sprintTickets.length) * 100) : 0;
+              const daysLeft = sprint.end_date
+                ? differenceInCalendarDays(new Date(sprint.end_date), new Date())
+                : null;
+              return (
+                <div className="rounded-sm border border-border bg-primary/5 p-3 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2 min-w-0">
+                      <span className="font-semibold">{sprint.name}</span>
+                      <Badge
+                        className={
+                          sprint.status === "active"
+                            ? "bg-emerald-600 text-white"
+                            : sprint.status === "completed"
+                              ? "bg-slate-600 text-white"
+                              : "bg-amber-500 text-black"
+                        }
+                      >
+                        {sprint.status}
+                      </Badge>
+                      {sprint.goal && (
+                        <span className="text-sm text-muted-foreground truncate">— {sprint.goal}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {sprint.status === "active" && daysLeft !== null && (
+                        <span
+                          className={`text-xs font-medium ${daysLeft < 0 ? "text-destructive" : "text-muted-foreground"}`}
+                        >
+                          {daysLeft < 0
+                            ? `${Math.abs(daysLeft)} day(s) overdue`
+                            : daysLeft === 0
+                              ? "Ends today"
+                              : `${daysLeft} day(s) left`}
+                        </span>
+                      )}
+                      {sprint.status === "planned" && (
+                        <Button size="sm" variant="outline" className="h-7" onClick={() => handleStartSprint(sprint)}>
+                          <Play className="h-3.5 w-3.5 mr-1.5" />
+                          Start Sprint
+                        </Button>
+                      )}
+                      {sprint.status === "active" && (
+                        <Button size="sm" variant="outline" className="h-7" onClick={() => handleCompleteSprint(sprint)}>
+                          <Check className="h-3.5 w-3.5 mr-1.5" />
+                          Complete Sprint
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Progress value={pct} className="h-2 flex-1" />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {done} of {sprintTickets.length} done
+                      {totalPoints > 0 ? ` · ${donePoints}/${totalPoints} pts` : ""}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Search and Filters */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
@@ -1046,6 +1181,26 @@ export default function Tickets() {
                       {teamMembers?.filter(m => m.status === "active").map((member) => (
                         <DropdownMenuItem key={member.id} onClick={() => handleBulkAssign(member.id)}>
                           {member.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="border">
+                        Move to Sprint
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleBulkMoveToSprint(null)}>
+                        Backlog
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {sprints?.filter((s) => s.status !== "completed").map((sprint) => (
+                        <DropdownMenuItem key={sprint.id} onClick={() => handleBulkMoveToSprint(sprint.id)}>
+                          {sprint.name}
+                          {sprint.status === "active" ? " · Active" : ""}
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
@@ -1459,6 +1614,46 @@ export default function Tickets() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Complete Sprint Dialog — decide where unfinished tickets go */}
+      <Dialog open={!!completingSprint} onOpenChange={(open) => !open && setCompletingSprint(null)}>
+        <DialogContent className="border sm:max-w-[440px]">
+          <DialogHeader className="border-b border-border pb-4">
+            <DialogTitle>Complete "{completingSprint?.name}"</DialogTitle>
+          </DialogHeader>
+          {completingSprint && (
+            <div className="py-2 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {unfinishedInSprint(completingSprint).length} ticket(s) in this sprint aren't
+                closed yet. Where should they go?
+              </p>
+              <Select value={rolloverTarget} onValueChange={setRolloverTarget}>
+                <SelectTrigger className="border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="border">
+                  <SelectItem value="backlog">Backlog</SelectItem>
+                  {sprints
+                    ?.filter((s) => s.id !== completingSprint.id && s.status !== "completed")
+                    .map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        Sprint: {s.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setCompletingSprint(null)}>
+              Cancel
+            </Button>
+            <Button onClick={finalizeCompleteSprint} disabled={updateSprint.isPending || updateTicket.isPending}>
+              Complete Sprint
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Manage Sprints Dialog */}
       <Dialog open={isSprintDialogOpen} onOpenChange={setIsSprintDialogOpen}>
