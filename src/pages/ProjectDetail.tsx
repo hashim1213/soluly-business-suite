@@ -13,6 +13,7 @@ import { useProjectTasks, useCreateProjectTask, useUpdateProjectTask, useToggleP
 import { useProjectMilestones, useCreateProjectMilestone, useUpdateProjectMilestone, useToggleProjectMilestone, useDeleteProjectMilestone } from "@/hooks/useProjectMilestones";
 import { ProjectGantt } from "@/components/projects/ProjectGantt";
 import { MaintenancePanel } from "@/components/projects/MaintenancePanel";
+import { ProjectCalendar } from "@/components/projects/ProjectCalendar";
 import { RecurringChargesCard } from "@/components/projects/RecurringChargesCard";
 import { useProjectCosts, useCreateProjectCost, useUpdateProjectCost, useDeleteProjectCost, COST_CATEGORIES } from "@/hooks/useProjectCosts";
 import { useProjectContracts, useCreateProjectContract, useUpdateProjectContract, useDeleteProjectContract } from "@/hooks/useProjectContracts";
@@ -320,7 +321,6 @@ export default function ProjectDetail() {
     fileUrl: string;
     fileName: string;
   } | null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [isCostDialogOpen, setIsCostDialogOpen] = useState(false);
   const [newContract, setNewContract] = useState({
@@ -336,8 +336,6 @@ export default function ProjectDetail() {
   });
   const [isMilestoneDialogOpen, setIsMilestoneDialogOpen] = useState(false);
   const [isEditMilestoneDialogOpen, setIsEditMilestoneDialogOpen] = useState(false);
-  const [isCalendarDetailOpen, setIsCalendarDetailOpen] = useState(false);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
   const [isTimeEntryDialogOpen, setIsTimeEntryDialogOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<{
     id: string;
@@ -1074,24 +1072,6 @@ export default function ProjectDetail() {
 
 
   // Get milestones for a specific date
-  const getMilestonesForDate = (date: Date) => {
-    if (!milestones) return [];
-    return milestones.filter(event => {
-      const eventDate = new Date(event.due_date);
-      return eventDate.toDateString() === date.toDateString();
-    });
-  };
-
-  // Handle calendar day click
-  const handleCalendarDayClick = (day: number) => {
-    const clickedDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
-    const dayMilestones = getMilestonesForDate(clickedDate);
-    if (dayMilestones.length > 0 || isDateInProjectRange(day)) {
-      setSelectedCalendarDate(clickedDate);
-      setIsCalendarDetailOpen(true);
-    }
-  };
-
   // Calculate invoice totals - Project value is total invoiced
   const totalInvoiced = invoices?.reduce((sum, inv) => sum + inv.amount, 0) || 0;
   const totalPaid = invoices?.filter(inv => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0) || 0;
@@ -1110,108 +1090,6 @@ export default function ProjectDetail() {
 
   // Total team members
   const totalTeamMembers = internalTeam.length + externalTeam.length;
-
-  // Calendar helpers
-  const getDaysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
-
-  const prevMonth = () => {
-    setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1));
-  };
-
-  const nextMonth = () => {
-    setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1));
-  };
-
-  const isDateInProjectRange = (day: number) => {
-    // Return false if no valid dates
-    if (!project.startDate) return false;
-
-    const checkDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
-
-    // Parse date - handle both ISO format (2024-01-15) and text format (Jan 15, 2024)
-    const parseDate = (dateStr: string): Date | null => {
-      if (!dateStr) return null;
-      // Try ISO format first
-      if (dateStr.includes("-")) {
-        return new Date(dateStr);
-      }
-      // Try text format (Jan 15, 2024)
-      const parts = dateStr.split(" ");
-      if (parts.length < 3) return null;
-      const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
-      return new Date(parseInt(parts[2]), months[parts[0]], parseInt(parts[1].replace(",", "")));
-    };
-
-    const startDate = parseDate(project.startDate);
-    const endDate = parseDate(project.endDate);
-
-    if (!startDate) return false;
-
-    // If no end date, just check if on or after start date
-    if (!endDate) {
-      return checkDate >= startDate;
-    }
-
-    return checkDate >= startDate && checkDate <= endDate;
-  };
-
-  const getMilestoneForDay = (day: number) => {
-    const checkDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
-    return milestones?.find(event => {
-      const eventDate = new Date(event.due_date);
-      return eventDate.toDateString() === checkDate.toDateString();
-    });
-  };
-
-  const hasMilestone = (day: number) => {
-    return getMilestoneForDay(day) !== undefined;
-  };
-
-  const renderCalendar = () => {
-    const daysInMonth = getDaysInMonth(calendarMonth);
-    const firstDay = getFirstDayOfMonth(calendarMonth);
-    const days = [];
-
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-10" />);
-    }
-
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const inRange = isDateInProjectRange(day);
-      const milestone = getMilestoneForDay(day);
-      const hasMilestoneOnDay = milestone !== undefined;
-      days.push(
-        <div
-          key={day}
-          onClick={() => handleCalendarDayClick(day)}
-          className={`h-10 flex items-center justify-center text-sm relative cursor-pointer hover:bg-accent/50 transition-colors ${
-            inRange ? "bg-chart-2/20 font-medium" : ""
-          } ${hasMilestoneOnDay ? (
-            milestone.completed ? "ring-2 ring-chart-2" :
-            milestone.missed ? "ring-2 ring-destructive" : "ring-2 ring-primary"
-          ) : ""}`}
-        >
-          {day}
-          {hasMilestoneOnDay && (
-            <div className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
-              milestone.completed ? "bg-chart-2" :
-              milestone.missed ? "bg-destructive" : "bg-primary"
-            }`} />
-          )}
-        </div>
-      );
-    }
-
-    return days;
-  };
 
   const completedTodos = tasks?.filter(t => t.completed).length || 0;
   const totalTodos = tasks?.length || 0;
@@ -2676,116 +2554,9 @@ export default function ProjectDetail() {
 
         {/* Calendar Tab */}
         <TabsContent value="calendar" className="space-y-6">
-          <Card className="border border-border shadow-sm">
-            <CardHeader className="border-b border-border">
-              <div className="flex items-center justify-between">
-                <CardTitle>Project Calendar</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={prevMonth} className="border">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="font-medium min-w-[140px] text-center">
-                    {calendarMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                  </span>
-                  <Button variant="outline" size="icon" onClick={nextMonth} className="border">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-7 gap-1 mb-2">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <div key={day} className="h-10 flex items-center justify-center text-sm font-semibold text-muted-foreground">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1 border border-border">
-                {renderCalendar()}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6 mt-4 pt-4 border-t border-border">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-chart-2/20" />
-                  <span className="text-sm text-muted-foreground">Project Duration</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 ring-2 ring-primary" />
-                  <span className="text-sm text-muted-foreground">Pending Milestone</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 ring-2 ring-chart-2" />
-                  <span className="text-sm text-muted-foreground">Completed</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 ring-2 ring-destructive" />
-                  <span className="text-sm text-muted-foreground">Missed Deadline</span>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <h4 className="font-semibold">Project Duration</h4>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <div className="text-sm text-muted-foreground">Start Date</div>
-                    <div className="font-medium">{project.startDate}</div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm text-muted-foreground">End Date</div>
-                    <div className="font-medium">{project.endDate}</div>
-                  </div>
-                </div>
-                <Progress value={project.progress} className="h-3" />
-                <div className="text-sm text-muted-foreground text-right">{project.progress}% complete</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Calendar Day Detail Dialog */}
-          <Dialog open={isCalendarDetailOpen} onOpenChange={setIsCalendarDetailOpen}>
-            <DialogContent className="border sm:max-w-[425px]">
-              <DialogHeader className="border-b border-border pb-4">
-                <DialogTitle>
-                  {selectedCalendarDate?.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="py-4">
-                {selectedCalendarDate && getMilestonesForDate(selectedCalendarDate).length > 0 ? (
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-muted-foreground uppercase">Milestones</h4>
-                    {getMilestonesForDate(selectedCalendarDate).map((milestone) => (
-                      <div key={milestone.id} className="p-3 border border-border">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h5 className="font-semibold">{milestone.title}</h5>
-                          {milestone.completed && (
-                            <Badge className="bg-emerald-600 text-white text-xs">Completed</Badge>
-                          )}
-                          {milestone.missed && (
-                            <Badge className="bg-red-600 text-white text-xs">Missed</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{milestone.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    {selectedCalendarDate && isDateInProjectRange(selectedCalendarDate.getDate()) ? (
-                      <p>No milestones scheduled for this date. This day is within the project duration.</p>
-                    ) : (
-                      <p>No events on this date.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-end border-t border-border pt-4">
-                <Button variant="outline" onClick={() => setIsCalendarDetailOpen(false)} className="border">
-                  Close
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {dbProject && (
+            <ProjectCalendar project={dbProject} milestones={milestones || []} tasks={tasks || []} />
+          )}
         </TabsContent>
 
         {/* Contracts Tab */}
