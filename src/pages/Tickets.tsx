@@ -34,7 +34,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -833,37 +832,7 @@ export default function Tickets() {
       <Card className="border border-border shadow-sm">
         <CardHeader className="border-b border-border p-3 sm:p-6">
           <div className="flex flex-col gap-3 sm:gap-4">
-            <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-max sm:w-auto">
-                <TabsList className="border border-border p-1">
-                  <TabsTrigger value="all" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    All
-                  </TabsTrigger>
-                  <TabsTrigger value="uncategorized" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    <FolderOpen className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    <span className="hidden sm:inline">Uncategorized</span>
-                    <span className="sm:hidden">Other</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="feature" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    <Lightbulb className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    <span className="hidden sm:inline">Features</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="quote" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    <span className="hidden sm:inline">Quotes</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="feedback" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    <span className="hidden sm:inline">Feedback</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="issue" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    <span className="hidden sm:inline">Issues</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
+            {/* Category filtering lives in the clickable stat cards above */}
             {/* Sprint Bar */}
             <div className="flex flex-wrap items-center gap-3">
               <Select value={sprintFilter} onValueChange={setSprintFilter}>

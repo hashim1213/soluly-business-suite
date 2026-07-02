@@ -12,6 +12,7 @@ import { useProjectInvoices, useCreateProjectInvoice, useUpdateProjectInvoice, u
 import { useProjectTasks, useCreateProjectTask, useUpdateProjectTask, useToggleProjectTask, useDeleteProjectTask } from "@/hooks/useProjectTasks";
 import { useProjectMilestones, useCreateProjectMilestone, useUpdateProjectMilestone, useToggleProjectMilestone, useDeleteProjectMilestone } from "@/hooks/useProjectMilestones";
 import { ProjectGantt } from "@/components/projects/ProjectGantt";
+import { MaintenancePanel } from "@/components/projects/MaintenancePanel";
 import { useProjectCosts, useCreateProjectCost, useUpdateProjectCost, useDeleteProjectCost, COST_CATEGORIES } from "@/hooks/useProjectCosts";
 import { useProjectContracts, useCreateProjectContract, useUpdateProjectContract, useDeleteProjectContract } from "@/hooks/useProjectContracts";
 import { useProjectExternalMembers, useAddProjectExternalMember, useRemoveProjectExternalMember, useCreateContactAndAddToProject } from "@/hooks/useProjectExternalMembers";
@@ -1671,6 +1672,7 @@ export default function ProjectDetail() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
+          {dbProject && <MaintenancePanel project={dbProject} />}
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <Card className="border border-border shadow-sm">

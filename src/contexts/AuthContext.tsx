@@ -18,12 +18,17 @@ const defaultPermissions: Permissions = {
   quotes: { view: false, create: false, edit: false, delete: false },
   features: { view: false, create: false, edit: false, delete: false },
   feedback: { view: false, create: false, edit: false, delete: false },
+  issues: { view: false, create: false, edit: false, delete: false },
   forms: { view: false, create: false, edit: false, delete: false },
   emails: { view: false, create: false, edit: false, delete: false },
   financials: { view: false, create: false, edit: false, delete: false },
   expenses: { view: false, create: false, edit: false, delete: false },
   settings: { view: false, manage_org: false, manage_users: false, manage_roles: false },
+  sensitive_data: { view_amounts: false },
 };
+
+// Remembers the last organization the user worked in
+const ACTIVE_ORG_KEY = "soluly-active-org-id";
 
 // Auth timeout constants
 const AUTH_TIMEOUT = {
@@ -63,15 +68,20 @@ interface AuthContextType {
 
   // Refresh data
   refreshUserData: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
   clearAuthError: () => void;
+
+  // Multi-organization
+  switchOrganization: (slug: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Timeout wrapper for async operations
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+// Timeout wrapper for async operations. Accepts any thenable so Supabase
+// query builders type-check without losing their result types.
+function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
-    promise,
+    Promise.resolve(promise),
     new Promise<T>((_, reject) =>
       setTimeout(() => reject(new Error("Operation timed out")), timeoutMs)
     ),
@@ -114,6 +124,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [allowedProjectIds, setAllowedProjectIds] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  // All memberships/organizations this user belongs to (multi-org support)
+  const membershipsRef = useRef<TeamMember[]>([]);
+  const orgsRef = useRef<Organization[]>([]);
 
   // Refs to prevent duplicate operations
   const isInitialized = useRef(false);
@@ -125,8 +138,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthError(null);
   }, []);
 
-  // Fetch user's team member, organization, and role data
-  const fetchUserData = useCallback(async (userId: string): Promise<boolean> => {
+  // Make a membership + organization the active workspace, loading its
+  // role and permissions. Used on initial load and when switching orgs.
+  const applyMembership = useCallback(async (memberData: TeamMember, orgData: Organization | null) => {
+    setMember(memberData);
+    setOrganization(orgData);
+    if (orgData) {
+      safeStorage.setItem(ACTIVE_ORG_KEY, orgData.id);
+    }
+
+    if (memberData.role_id) {
+      const { data: roleData, error: roleError } = await withTimeout(
+        supabase
+          .from("roles")
+          .select("*")
+          .eq("id", memberData.role_id)
+          .maybeSingle(),
+        AUTH_TIMEOUT.DEFAULT
+      );
+
+      if (!roleError && roleData) {
+        setRole(roleData);
+        setPermissions(roleData.permissions as Permissions);
+
+        // Determine allowed project IDs
+        // Priority: member's allowed_project_ids > role's project_scope
+        if (memberData.allowed_project_ids !== null) {
+          setAllowedProjectIds(memberData.allowed_project_ids);
+        } else if (roleData.project_scope !== null) {
+          setAllowedProjectIds(roleData.project_scope);
+        } else {
+          setAllowedProjectIds(null); // null = access to all projects
+        }
+        return;
+      }
+    }
+
+    // No role assigned - reset so permissions never carry over between orgs
+    setRole(null);
+    setPermissions(defaultPermissions);
+    setAllowedProjectIds(null);
+  }, []);
+
+  // Fetch the user's memberships across all organizations and activate one.
+  // The active org is chosen by: URL slug > last-used org > first membership.
+  const fetchUserData = useCallback(async (userId: string, desiredSlug?: string | null): Promise<boolean> => {
     // Prevent duplicate fetches for the same user
     if (isFetchingUserData.current && lastFetchedUserId.current === userId) {
       return false;
@@ -136,13 +192,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastFetchedUserId.current = userId;
 
     try {
-      // Get team member linked to this auth user with timeout
-      const { data: memberData, error: memberError } = await withTimeout(
+      const { data: memberRows, error: memberError } = await withTimeout(
         supabase
           .from("team_members")
           .select("*")
-          .eq("auth_user_id", userId)
-          .maybeSingle(),
+          .eq("auth_user_id", userId),
         AUTH_TIMEOUT.DEFAULT
       );
 
@@ -151,59 +205,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      if (!memberData) {
+      // Prefer active memberships but fall back to whatever exists so a
+      // legacy row without a status doesn't lock the user out
+      const allRows = (memberRows || []) as TeamMember[];
+      const activeRows = allRows.filter((m) => (m as { status?: string }).status === "active");
+      const usableRows = activeRows.length > 0 ? activeRows : allRows;
+
+      if (usableRows.length === 0) {
         // This is not an error - user might need to create an org
         return false;
       }
 
-      setMember(memberData);
+      const orgIds = [...new Set(usableRows.map((m) => m.organization_id).filter(Boolean))];
+      const { data: orgRows, error: orgError } = await withTimeout(
+        supabase
+          .from("organizations")
+          .select("*")
+          .in("id", orgIds as string[]),
+        AUTH_TIMEOUT.DEFAULT
+      );
 
-      // Get organization
-      if (memberData.organization_id) {
-        const { data: orgData, error: orgError } = await withTimeout(
-          supabase
-            .from("organizations")
-            .select("*")
-            .eq("id", memberData.organization_id)
-            .maybeSingle(),
-          AUTH_TIMEOUT.DEFAULT
-        );
-
-        if (!orgError && orgData) {
-          setOrganization(orgData);
-        }
+      if (orgError) {
+        setAuthError("Failed to load organization data. Please try again.");
+        return false;
       }
 
-      // Get role and permissions
-      if (memberData.role_id) {
-        const { data: roleData, error: roleError } = await withTimeout(
-          supabase
-            .from("roles")
-            .select("*")
-            .eq("id", memberData.role_id)
-            .maybeSingle(),
-          AUTH_TIMEOUT.DEFAULT
-        );
+      const orgs = (orgRows || []) as Organization[];
+      membershipsRef.current = usableRows;
+      orgsRef.current = orgs;
 
-        if (!roleError && roleData) {
-          setRole(roleData);
-          setPermissions(roleData.permissions as Permissions);
+      // Pick the active organization
+      const urlSlug =
+        desiredSlug ?? window.location.pathname.match(/^\/org\/([^/]+)/)?.[1] ?? null;
+      const persistedOrgId = safeStorage.getItem(ACTIVE_ORG_KEY);
+      const activeOrg =
+        (urlSlug ? orgs.find((o) => o.slug === urlSlug) : undefined) ??
+        (persistedOrgId ? orgs.find((o) => o.id === persistedOrgId) : undefined) ??
+        orgs[0] ??
+        null;
+      const activeMembership =
+        usableRows.find((m) => m.organization_id === activeOrg?.id) ?? usableRows[0];
 
-          // Determine allowed project IDs
-          // Priority: member's allowed_project_ids > role's project_scope
-          if (memberData.allowed_project_ids !== null) {
-            setAllowedProjectIds(memberData.allowed_project_ids);
-          } else if (roleData.project_scope !== null) {
-            setAllowedProjectIds(roleData.project_scope);
-          } else {
-            setAllowedProjectIds(null); // null = access to all projects
-          }
-        }
-      } else {
-        // No role assigned - default to no project restrictions
-        setAllowedProjectIds(null);
-      }
-
+      await applyMembership(activeMembership, activeOrg);
       return true;
     } catch (error) {
       if (error instanceof Error && error.message === "Operation timed out") {
@@ -215,7 +258,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       isFetchingUserData.current = false;
     }
-  }, []);
+  }, [applyMembership]);
+
+  // Switch the active workspace to another organization the user belongs to
+  const switchOrganization = useCallback(async (slug: string): Promise<boolean> => {
+    const org = orgsRef.current.find((o) => o.slug === slug);
+    const membership = org
+      ? membershipsRef.current.find((m) => m.organization_id === org.id)
+      : undefined;
+    if (!org || !membership) return false;
+    await applyMembership(membership, org);
+    return true;
+  }, [applyMembership]);
 
   // Complete pending signup after email confirmation
   const completePendingSignup = useCallback(async (userId: string): Promise<boolean> => {
@@ -412,6 +466,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setPermissions(defaultPermissions);
           setAllowedProjectIds(null);
           lastFetchedUserId.current = null;
+          membershipsRef.current = [];
+          orgsRef.current = [];
         }
 
         setIsLoading(false);
@@ -770,6 +826,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Force a full auth refresh (e.g. right after creating an organization)
+  const refreshAuth = async () => {
+    if (!user) return;
+    lastFetchedUserId.current = null;
+    isFetchingUserData.current = false;
+    await fetchUserData(user.id);
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -793,7 +857,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     hasFullProjectAccess,
     canViewAmounts,
     refreshUserData,
+    refreshAuth,
     clearAuthError,
+    switchOrganization,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

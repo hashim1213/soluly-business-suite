@@ -828,6 +828,7 @@ export type Database = {
           has_maintenance: boolean
           id: string
           maintenance_amount: number
+          maintenance_end_date: string | null
           maintenance_frequency: string
           maintenance_notes: string | null
           maintenance_start_date: string | null
@@ -849,6 +850,7 @@ export type Database = {
           has_maintenance?: boolean
           id?: string
           maintenance_amount?: number
+          maintenance_end_date?: string | null
           maintenance_frequency?: string
           maintenance_notes?: string | null
           maintenance_start_date?: string | null
@@ -870,6 +872,7 @@ export type Database = {
           has_maintenance?: boolean
           id?: string
           maintenance_amount?: number
+          maintenance_end_date?: string | null
           maintenance_frequency?: string
           maintenance_notes?: string | null
           maintenance_start_date?: string | null
@@ -2132,6 +2135,12 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_pending_invitation: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Json
+      }
       create_default_roles_for_org: {
         Args: {
           org_id: string
@@ -2199,7 +2208,7 @@ export type Database = {
       feedback_status: "acknowledged" | "under-review" | "investigating" | "in-progress" | "resolved"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
       member_status: "active" | "inactive"
-      project_status: "active" | "pending" | "completed" | "on_hold" | "cancelled"
+      project_status: "active" | "pending" | "completed" | "on_hold" | "cancelled" | "maintenance"
       quote_status: "draft" | "sent" | "negotiating" | "accepted" | "rejected"
       task_priority: "high" | "medium" | "low"
       ticket_category: "feature" | "quote" | "feedback" | "issue"
@@ -2353,7 +2362,7 @@ export const Constants = {
       feedback_status: ["acknowledged", "under-review", "investigating", "in-progress", "resolved"],
       lead_status: ["new", "contacted", "qualified", "converted", "lost"],
       member_status: ["active", "inactive"],
-      project_status: ["active", "pending", "completed", "on_hold", "cancelled"],
+      project_status: ["active", "pending", "completed", "on_hold", "cancelled", "maintenance"],
       quote_status: ["draft", "sent", "negotiating", "accepted", "rejected"],
       task_priority: ["high", "medium", "low"],
       ticket_category: ["feature", "quote", "feedback", "issue"],

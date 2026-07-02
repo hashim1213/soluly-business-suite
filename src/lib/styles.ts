@@ -9,6 +9,8 @@ export const projectStatusStyles = {
   pending: "bg-amber-500 text-black",
   completed: "bg-slate-800 text-white",
   on_hold: "bg-slate-400 text-black",
+  cancelled: "bg-red-600 text-white",
+  maintenance: "bg-cyan-600 text-white",
 } as const;
 
 // Ticket status styles

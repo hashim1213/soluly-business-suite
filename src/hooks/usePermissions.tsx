@@ -5,7 +5,7 @@ export type PermissionAction = "view" | "create" | "edit" | "delete";
 export type SettingsAction = "view" | "manage_org" | "manage_users" | "manage_roles";
 
 export function usePermissions() {
-  const { teamMember, permissions } = useAuth();
+  const { member: teamMember, permissions } = useAuth();
 
   /**
    * Check if user can perform an action on a resource
