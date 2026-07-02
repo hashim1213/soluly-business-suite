@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { orgPath } from "@/lib/tenant";
 
 /**
  * Issues page - Redirects to unified Tickets page with issue filter
@@ -14,7 +15,7 @@ export default function Issues() {
   useEffect(() => {
     if (organization?.slug) {
       // Redirect to unified Tickets page with issue category filter
-      navigate(`/org/${organization.slug}/tickets?category=issue`, { replace: true });
+      navigate(orgPath(organization.slug, "/tickets?category=issue"), { replace: true });
     }
   }, [organization, navigate]);
 

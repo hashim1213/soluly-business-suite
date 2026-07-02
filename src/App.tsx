@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -57,6 +57,15 @@ import NotFound from "./pages/NotFound";
 
 // Tenant slug is fixed per page load (it comes from the hostname)
 const tenantSlug = getTenantSlug();
+
+// On tenant hosts, old-style /org/<slug>/... links (bookmarks, emails)
+// redirect to the same page at the subdomain root
+function StripOrgPrefix() {
+  const params = useParams();
+  const location = useLocation();
+  const rest = params["*"] ?? "";
+  return <Navigate to={`/${rest}${location.search}${location.hash}`} replace />;
+}
 
 // Configure QueryClient with enterprise-grade defaults
 const queryClient = new QueryClient({
@@ -125,6 +134,10 @@ const App = () => (
                 own "/"; on the apex domain OrgRedirect routes guests and
                 signed-in users appropriately */}
             {!tenantSlug && <Route path="/" element={<OrgRedirect />} />}
+
+            {/* Old path-style URLs keep working on tenant hosts */}
+            {tenantSlug && <Route path="/org/:slug/*" element={<StripOrgPrefix />} />}
+            {tenantSlug && <Route path="/org/:slug" element={<StripOrgPrefix />} />}
 
             {/* Organization-scoped protected routes */}
             <Route path={tenantSlug ? "/" : "/org/:slug"} element={<OrgGuard />}>

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { orgPath } from "@/lib/tenant";
 
 /**
  * Feedback page - Redirects to unified Tickets page with feedback filter
@@ -14,7 +15,7 @@ export default function Feedback() {
   useEffect(() => {
     if (organization?.slug) {
       // Redirect to unified Tickets page with feedback category filter
-      navigate(`/org/${organization.slug}/tickets?category=feedback`, { replace: true });
+      navigate(orgPath(organization.slug, "/tickets?category=feedback"), { replace: true });
     }
   }, [organization, navigate]);
 

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { validateEmail } from "@/lib/validation";
+import { orgPath } from "@/lib/tenant";
 
 export default function Login() {
   useDocumentTitle("Login");
@@ -24,7 +25,7 @@ export default function Login() {
   useEffect(() => {
     if (!authLoading) {
       if (isAuthenticated && organization?.slug) {
-        navigate(`/org/${organization.slug}`, { replace: true });
+        navigate(orgPath(organization.slug), { replace: true });
       } else if (user && !organization) {
         // User is logged in but has no organization - redirect to root
         // OrgRedirect will show the org creation form

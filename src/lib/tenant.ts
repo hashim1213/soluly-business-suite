@@ -75,3 +75,15 @@ export function workspaceAddress(slug: string): string {
   const base = getBaseDomain();
   return base ? `${slug}.${base}` : `/org/${slug}`;
 }
+
+/**
+ * Router path into an org's workspace for navigate()/Link callers.
+ * On a tenant host the org owns the origin, so paths are unprefixed;
+ * in path mode they get the /org/<slug> prefix.
+ */
+export function orgPath(slug: string | null | undefined, path: string = ""): string {
+  const cleanPath = !path || path === "/" ? "" : path.startsWith("/") ? path : `/${path}`;
+  if (getTenantSlug()) return cleanPath || "/";
+  if (!slug) return cleanPath || "/";
+  return `/org/${slug}${cleanPath}`;
+}

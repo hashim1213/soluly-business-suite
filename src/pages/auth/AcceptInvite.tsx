@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Building2, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { orgPath } from "@/lib/tenant";
 
 interface Invitation {
   id: string;
@@ -154,7 +155,7 @@ export default function AcceptInvite() {
       // Redirect to settings page after delay (all users have access to settings)
       setTimeout(() => {
         if (result.organization_slug) {
-          navigate(`/org/${result.organization_slug}/settings`);
+          navigate(orgPath(result.organization_slug, "/settings"));
         } else {
           navigate("/");
         }
@@ -193,7 +194,7 @@ export default function AcceptInvite() {
       // Auto-redirect to settings page after success (all users have access to settings)
       setTimeout(() => {
         if (invitation?.organization?.slug) {
-          navigate(`/org/${invitation.organization.slug}/settings`);
+          navigate(orgPath(invitation.organization.slug, "/settings"));
         } else {
           navigate("/");
         }

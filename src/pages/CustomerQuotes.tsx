@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { orgPath } from "@/lib/tenant";
 
 /**
  * Customer Quotes page - Redirects to unified Tickets page with quote filter
@@ -14,7 +15,7 @@ export default function CustomerQuotes() {
   useEffect(() => {
     if (organization?.slug) {
       // Redirect to unified Tickets page with quote category filter
-      navigate(`/org/${organization.slug}/tickets?category=quote`, { replace: true });
+      navigate(orgPath(organization.slug, "/tickets?category=quote"), { replace: true });
     }
   }, [organization, navigate]);
 
