@@ -522,6 +522,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await new Promise(resolve => setTimeout(resolve, AUTH_TIMEOUT.RETRY_DELAY));
       }
 
+      // Record the login in the security audit trail (fire-and-forget)
+      supabase
+        .rpc("log_security_event", { p_event_type: "login_success" })
+        .then(undefined, () => { /* audit logging must never block sign-in */ });
+
       setIsLoading(false);
       return { error: null };
     } catch (error) {
@@ -706,6 +711,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sign out
   const signOut = async () => {
+    // Record the logout while the session still exists (fire-and-forget)
+    try {
+      await supabase.rpc("log_security_event", { p_event_type: "logout" });
+    } catch {
+      // Audit logging must never block sign-out
+    }
+
     try {
       await supabase.auth.signOut();
     } catch {

@@ -93,12 +93,20 @@ export default function AuditLog() {
 
   const { data: teamMembers } = useTeamMembers();
   const { data: stats, isLoading: statsLoading } = useAuditLogStats();
-  const { data: auditData, isLoading: logsLoading } = useAuditLog(filters, {
+  const {
+    data: auditData,
+    isLoading: logsLoading,
+    error: securityError,
+  } = useAuditLog(filters, {
     page,
     pageSize: PAGE_SIZE,
   });
-  const { data: dataAuditLogs, isLoading: dataLogsLoading } =
-    useDataAuditLogs(dataFilters);
+  const {
+    data: dataAuditLogs,
+    isLoading: dataLogsLoading,
+    error: dataError,
+  } = useDataAuditLogs(dataFilters);
+  const auditQueryError = securityError || dataError;
 
   // Resource type options accumulate from loaded data so the select
   // stays populated even while a resource filter is applied
@@ -196,6 +204,14 @@ export default function AuditLog() {
           </Button>
         )}
       </div>
+
+      {auditQueryError && (
+        <div className="rounded-sm border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          Failed to load audit data: {auditQueryError.message}. If this persists, make sure the
+          latest database migrations have been applied and your role has the "Manage Organization"
+          permission.
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="border">
