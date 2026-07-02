@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { getTenantSlug, orgHref } from "@/lib/tenant";
 import { Loader2, AlertTriangle, RefreshCw, Home } from "lucide-react";
 
 /**
@@ -9,7 +10,9 @@ import { Loader2, AlertTriangle, RefreshCw, Home } from "lucide-react";
  * workspace; slugs you don't belong to redirect back to your own org.
  */
 export function OrgGuard() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  // In subdomain tenancy the org comes from the hostname, not the path
+  const slug = paramSlug ?? getTenantSlug() ?? undefined;
   const { organization, isLoading, isAuthenticated, authError, clearAuthError, switchOrganization } = useAuth();
   const [failedSlug, setFailedSlug] = useState<string | null>(null);
   const switchingSlug = useRef<string | null>(null);
@@ -22,9 +25,17 @@ export function OrgGuard() {
     switchingSlug.current = slug;
     switchOrganization(slug).then((ok) => {
       switchingSlug.current = null;
-      if (!ok) setFailedSlug(slug);
+      if (!ok) {
+        if (getTenantSlug() && organization?.slug) {
+          // Not a member of this subdomain's org: leave for the user's own
+          // workspace origin (client routing can't cross subdomains)
+          window.location.replace(orgHref(organization.slug, "/"));
+          return;
+        }
+        setFailedSlug(slug);
+      }
     });
-  }, [needsSwitch, slug, failedSlug, switchOrganization]);
+  }, [needsSwitch, slug, failedSlug, switchOrganization, organization?.slug]);
 
   if (isLoading) {
     return (

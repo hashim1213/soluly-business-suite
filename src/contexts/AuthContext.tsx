@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, Permissions, Permission } from "@/integrations/supabase/types";
 import { clearCsrfToken } from "@/lib/csrf";
+import { getTenantSlug } from "@/lib/tenant";
 
 type Organization = Tables<"organizations">;
 type Role = Tables<"roles">;
@@ -234,9 +235,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       membershipsRef.current = usableRows;
       orgsRef.current = orgs;
 
-      // Pick the active organization
+      // Pick the active organization: hostname subdomain wins, then path slug
       const urlSlug =
-        desiredSlug ?? window.location.pathname.match(/^\/org\/([^/]+)/)?.[1] ?? null;
+        desiredSlug ??
+        getTenantSlug() ??
+        window.location.pathname.match(/^\/org\/([^/]+)/)?.[1] ??
+        null;
       const persistedOrgId = safeStorage.getItem(ACTIVE_ORG_KEY);
       const activeOrg =
         (urlSlug ? orgs.find((o) => o.slug === urlSlug) : undefined) ??

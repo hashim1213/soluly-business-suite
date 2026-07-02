@@ -1,18 +1,21 @@
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { getTenantSlug } from "@/lib/tenant";
 
 /**
- * Hook to get organization-aware navigation helpers
- * All internal app navigation should use these to ensure proper /org/{slug}/ prefix
+ * Hook to get organization-aware navigation helpers.
+ * In subdomain tenancy (acme.soluly.com) org routes live at the root, so
+ * paths need no prefix; in path mode they're prefixed with /org/{slug}.
  */
 export function useOrgNavigation() {
   const navigate = useNavigate();
   const { slug: urlSlug } = useParams<{ slug: string }>();
   const { organization } = useAuth();
+  const tenantSlug = getTenantSlug();
 
-  // Use URL slug if available (for consistency), fallback to auth org
-  const orgSlug = urlSlug || organization?.slug;
+  // Hostname wins, then URL slug, then the auth org
+  const orgSlug = tenantSlug || urlSlug || organization?.slug;
 
   /**
    * Get the full path with org prefix
@@ -20,18 +23,22 @@ export function useOrgNavigation() {
    */
   const getOrgPath = useCallback(
     (path: string = "") => {
+      // Remove leading slash if present for consistent handling
+      const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+      if (tenantSlug) {
+        // The whole origin belongs to the org; routes mount at "/"
+        return `/${cleanPath}`;
+      }
       if (!orgSlug) {
         // Return the path as-is if no org is available (fallback)
         return path || "/";
       }
-      // Remove leading slash if present for consistent handling
-      const cleanPath = path.startsWith("/") ? path.slice(1) : path;
       if (!cleanPath) {
         return `/org/${orgSlug}`;
       }
       return `/org/${orgSlug}/${cleanPath}`;
     },
-    [orgSlug]
+    [orgSlug, tenantSlug]
   );
 
   /**
@@ -92,5 +99,5 @@ export function useOrgNavigation() {
 export function useOrgSlug(): string | undefined {
   const { slug: urlSlug } = useParams<{ slug: string }>();
   const { organization } = useAuth();
-  return urlSlug || organization?.slug;
+  return getTenantSlug() || urlSlug || organization?.slug;
 }

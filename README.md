@@ -179,3 +179,19 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Support
 
 For issues and feature requests, please use the [GitHub Issues](https://github.com/hashim1213/soluly-business-suite/issues) page.
+
+## Subdomain tenancy (company.soluly.com)
+
+Each organization can live on its own subdomain (Harvest/Atlassian style)
+instead of `/org/<slug>` paths. To enable it in a deployment:
+
+1. Set `VITE_APP_BASE_DOMAIN=soluly.com` at build time.
+2. Point a wildcard DNS record (`*.soluly.com`) at the app and add both
+   `soluly.com` and `*.soluly.com` as domains in your host (Vercel:
+   Project → Settings → Domains supports wildcard domains).
+3. Add `https://*.soluly.com/**` to the Supabase Auth redirect allowlist.
+
+Sessions are stored in cookies scoped to `.soluly.com` so signing in on the
+apex domain carries across every workspace subdomain. When the variable is
+unset (local dev, Electron, preview deploys) the app falls back to
+path-based `/org/<slug>` routing automatically.

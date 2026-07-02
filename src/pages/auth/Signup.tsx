@@ -26,6 +26,10 @@ import {
 } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { getBaseDomain } from "@/lib/tenant";
+
+// When set, workspaces live at <slug>.<domain> (Harvest/Atlassian style)
+const subdomainBase = getBaseDomain();
 
 type FieldErrors = {
   name?: string;
@@ -455,11 +459,13 @@ export default function Signup() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="orgSlug">Workspace URL</Label>
+              <Label htmlFor="orgSlug">Workspace address</Label>
               <div className="flex items-center">
-                <span className="text-sm text-muted-foreground bg-muted px-3 h-12 flex items-center rounded-l-xl border border-r-0">
-                  soluly.com/org/
-                </span>
+                {!subdomainBase && (
+                  <span className="text-sm text-muted-foreground bg-muted px-3 h-12 flex items-center rounded-l-xl border border-r-0">
+                    soluly.com/org/
+                  </span>
+                )}
                 <div className="relative flex-1">
                   <Input
                     id="orgSlug"
@@ -469,7 +475,8 @@ export default function Signup() {
                     onChange={(e) => handleSlugChange(e.target.value)}
                     disabled={isLoading}
                     className={cn(
-                      "h-12 rounded-l-none rounded-r-xl pr-10",
+                      "h-12 pr-10",
+                      subdomainBase ? "rounded-r-none rounded-l-xl" : "rounded-l-none rounded-r-xl",
                       (slugStatus === "taken" || fieldErrors.orgSlug) &&
                         "border-destructive focus-visible:ring-destructive",
                       slugStatus === "available" &&
@@ -487,6 +494,11 @@ export default function Signup() {
                     </div>
                   )}
                 </div>
+                {subdomainBase && (
+                  <span className="text-sm text-muted-foreground bg-muted px-3 h-12 flex items-center rounded-r-xl border border-l-0">
+                    .{subdomainBase}
+                  </span>
+                )}
               </div>
               {fieldErrors.orgSlug ? (
                 <p className="text-xs text-destructive">{fieldErrors.orgSlug}</p>

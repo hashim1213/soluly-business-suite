@@ -12,6 +12,7 @@ import { OrgGuard } from "@/components/auth/OrgGuard";
 import { OrgRedirect } from "@/components/auth/OrgRedirect";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { getTenantSlug } from "@/lib/tenant";
 
 // Auth pages
 import Landing from "./pages/Landing";
@@ -53,6 +54,9 @@ import Projections from "./pages/Projections";
 import MyHours from "./pages/MyHours";
 import AuditLog from "./pages/AuditLog";
 import NotFound from "./pages/NotFound";
+
+// Tenant slug is fixed per page load (it comes from the hostname)
+const tenantSlug = getTenantSlug();
 
 // Configure QueryClient with enterprise-grade defaults
 const queryClient = new QueryClient({
@@ -117,11 +121,13 @@ const App = () => (
             {/* Public form submission */}
             <Route path="/f/:token" element={<FormSubmit />} />
 
-            {/* Root - Landing for guests, workspace for authenticated */}
-            <Route path="/" element={<OrgRedirect />} />
+            {/* Root: on a tenant subdomain (acme.soluly.com) the org routes
+                own "/"; on the apex domain OrgRedirect routes guests and
+                signed-in users appropriately */}
+            {!tenantSlug && <Route path="/" element={<OrgRedirect />} />}
 
             {/* Organization-scoped protected routes */}
-            <Route path="/org/:slug" element={<OrgGuard />}>
+            <Route path={tenantSlug ? "/" : "/org/:slug"} element={<OrgGuard />}>
               <Route element={<AuthGuard />}>
                 <Route
                   index
@@ -350,14 +356,17 @@ const App = () => (
               </Route>
             </Route>
 
-            {/* Legacy routes - redirect to org-scoped routes */}
-            <Route element={<AuthGuard />}>
-              <Route path="/projects" element={<OrgRedirect />} />
-              <Route path="/tickets" element={<OrgRedirect />} />
-              <Route path="/team" element={<OrgRedirect />} />
-              <Route path="/crm" element={<OrgRedirect />} />
-              <Route path="/settings" element={<OrgRedirect />} />
-            </Route>
+            {/* Legacy routes - redirect to org-scoped routes (path mode only;
+                in tenant mode these paths belong to the org tree above) */}
+            {!tenantSlug && (
+              <Route element={<AuthGuard />}>
+                <Route path="/projects" element={<OrgRedirect />} />
+                <Route path="/tickets" element={<OrgRedirect />} />
+                <Route path="/team" element={<OrgRedirect />} />
+                <Route path="/crm" element={<OrgRedirect />} />
+                <Route path="/settings" element={<OrgRedirect />} />
+              </Route>
+            )}
 
               {/* 404 */}
               <Route path="*" element={<NotFound />} />

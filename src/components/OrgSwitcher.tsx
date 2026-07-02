@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserOrganizations, UserOrganization } from "@/hooks/useUserOrganizations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { isSubdomainCapable, orgHref } from "@/lib/tenant";
 
 interface OrgSwitcherProps {
   collapsed?: boolean;
@@ -34,8 +35,13 @@ export function OrgSwitcher({ collapsed = false }: OrgSwitcherProps) {
   const handleOrgSelect = (org: UserOrganization) => {
     setOpen(false);
     if (org.slug !== currentOrg?.slug) {
-      // Navigate to the new org's dashboard
-      navigate(`/org/${org.slug}`);
+      if (isSubdomainCapable()) {
+        // Each workspace lives on its own subdomain — full navigation
+        window.location.assign(orgHref(org.slug, "/"));
+      } else {
+        // Navigate to the new org's dashboard
+        navigate(`/org/${org.slug}`);
+      }
     }
   };
 
