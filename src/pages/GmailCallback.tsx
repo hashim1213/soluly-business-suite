@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { orgPath } from "@/lib/tenant";
 
 export default function GmailCallback() {
   const [searchParams] = useSearchParams();
@@ -59,7 +60,7 @@ export default function GmailCallback() {
 
         // Redirect back to settings after a short delay
         setTimeout(() => {
-          navigate(`/org/${organization?.slug}/settings`, {
+          navigate(orgPath(organization?.slug, "/settings"), {
             state: { gmailConnected: true }
           });
         }, 2000);
@@ -99,7 +100,7 @@ export default function GmailCallback() {
               <XCircle className="h-12 w-12 text-destructive" />
               <h2 className="text-xl font-semibold">Connection Failed</h2>
               <p className="text-muted-foreground">{error}</p>
-              <Button onClick={() => navigate(`/org/${organization?.slug}/settings`)}>
+              <Button onClick={() => navigate(orgPath(organization?.slug, "/settings"))}>
                 Back to Settings
               </Button>
             </div>

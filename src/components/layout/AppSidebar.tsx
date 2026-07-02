@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { getTenantSlug } from "@/lib/tenant";
 
 type NavItem = {
   title: string;
@@ -75,8 +76,9 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { hasPermission, organization, member } = useAuth();
 
-  // Build the base URL for the organization
-  const orgBase = organization?.slug ? `/org/${organization.slug}` : "";
+  // Build the base URL for the organization (empty on tenant subdomains,
+  // where the org owns the whole origin)
+  const orgBase = getTenantSlug() ? "" : organization?.slug ? `/org/${organization.slug}` : "";
 
   // Filter items based on permissions and member status
   const filterByPermission = (items: NavItem[]) => {
@@ -91,7 +93,7 @@ export function AppSidebar() {
   };
 
   // Convert relative paths to full URLs
-  const getFullUrl = (path: string) => `${orgBase}${path ? `/${path}` : ""}`;
+  const getFullUrl = (path: string) => `${orgBase}${path ? `/${path}` : ""}` || "/";
 
   const visibleMainItems = filterByPermission(mainNavItems);
   // Ticket categories removed - now handled via tabs in the unified Tickets page

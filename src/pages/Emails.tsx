@@ -52,6 +52,7 @@ import { EmailList } from "@/components/emails/EmailList";
 import { EmailDetailPanel } from "@/components/emails/EmailDetailPanel";
 import { EmailFilterBar } from "@/components/emails/EmailFilterBar";
 import { subYears, subMonths, subWeeks } from "date-fns";
+import { orgPath } from "@/lib/tenant";
 
 export default function Emails() {
   const { organization } = useAuth();
@@ -120,7 +121,7 @@ export default function Emails() {
             <p className="text-muted-foreground mb-8 max-w-md text-base">
               Connect your Gmail account to automatically sync, categorize, and manage incoming emails with AI-powered processing.
             </p>
-            <Button size="lg" onClick={() => navigate(`/org/${organization?.slug}/settings`)} className="border">
+            <Button size="lg" onClick={() => navigate(orgPath(organization?.slug, "/settings"))} className="border">
               <Settings className="h-5 w-5 mr-2" />
               Connect Gmail in Settings
             </Button>
@@ -187,7 +188,7 @@ export default function Emails() {
                 <Calendar className="h-4 w-4 mr-2" />
                 Sync Older Emails
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/org/${organization?.slug}/settings`)}>
+              <DropdownMenuItem onClick={() => navigate(orgPath(organization?.slug, "/settings"))}>
                 <Settings className="h-4 w-4 mr-2" />
                 Email Settings
               </DropdownMenuItem>

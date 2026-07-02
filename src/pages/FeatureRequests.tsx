@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { orgPath } from "@/lib/tenant";
 
 /**
  * Feature Requests page - Redirects to unified Tickets page with feature filter
@@ -14,7 +15,7 @@ export default function FeatureRequests() {
   useEffect(() => {
     if (organization?.slug) {
       // Redirect to unified Tickets page with feature category filter
-      navigate(`/org/${organization.slug}/tickets?category=feature`, { replace: true });
+      navigate(orgPath(organization.slug, "/tickets?category=feature"), { replace: true });
     }
   }, [organization, navigate]);
 
