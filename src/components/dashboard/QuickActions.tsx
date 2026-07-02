@@ -1,4 +1,4 @@
-import { Plus, FolderPlus, Ticket, Mail, Users, FileText, Lightbulb } from "lucide-react";
+import { Plus, FolderPlus, Ticket, Mail, Users, FileText, Lightbulb, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
@@ -17,6 +17,7 @@ const actions: QuickAction[] = [
   { label: "Add Contact", icon: Users, href: "/crm?tab=contacts&new=true", color: "text-green-600" },
   { label: "New Quote", icon: FileText, href: "/crm?tab=quotes&new=true", color: "text-orange-600" },
   { label: "Feature Request", icon: Lightbulb, href: "/feature-requests?new=true", color: "text-yellow-600" },
+  { label: "Log Time", icon: Clock, href: "/my-hours?new=true", color: "text-teal-600" },
 ];
 
 export function QuickActions() {

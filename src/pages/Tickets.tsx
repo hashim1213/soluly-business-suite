@@ -21,6 +21,9 @@ import {
   X,
   CheckSquare,
   Square,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -100,6 +103,13 @@ const categoryLabels: Record<TicketCategory, string> = {
 
 import { ticketStatusStyles, ticketPriorityStyles } from "@/lib/styles";
 
+// Semantic sort orders (not alphabetical)
+const ticketStatusOrder: Record<string, number> = { "open": 0, "in-progress": 1, "pending": 2, "closed": 3 };
+const ticketPriorityOrder: Record<string, number> = { "high": 0, "medium": 1, "low": 2 };
+
+type SortKey = "title" | "category" | "project" | "priority" | "status" | "created";
+type SortDir = "asc" | "desc";
+
 export default function Tickets() {
   const { navigateOrg } = useOrgNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -121,6 +131,10 @@ export default function Tickets() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<TicketWithProject | null>(null);
   const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set());
+
+  // Column sorting (null = default "smart" ordering)
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   // Advanced filters
   const [filterAssignee, setFilterAssignee] = useState<string>("all");
@@ -202,24 +216,56 @@ export default function Tickets() {
       return matchesSearch && matchesCategory && matchesAssignee && matchesStatus && matchesPriority && matchesProject;
     }) || [];
 
-    // Sort tickets: open tickets first, then by priority (high to low), then by created date (newest first)
-    filtered.sort((a, b) => {
-      // First sort by status - closed tickets go to the bottom
-      const statusOrder = { 'open': 0, 'in-progress': 1, 'pending': 2, 'closed': 3 };
-      const statusDiff = statusOrder[a.status] - statusOrder[b.status];
-      if (statusDiff !== 0) return statusDiff;
+    if (sortKey) {
+      // User-selected column sort
+      const dir = sortDir === "asc" ? 1 : -1;
+      filtered.sort((a, b) => {
+        let cmp = 0;
+        switch (sortKey) {
+          case "title":
+            cmp = a.title.localeCompare(b.title);
+            break;
+          case "category":
+            cmp = categoryLabels[a.category].localeCompare(categoryLabels[b.category]);
+            break;
+          case "project":
+            cmp = (a.project?.name || "").localeCompare(b.project?.name || "");
+            break;
+          case "priority":
+            // Semantic: high > medium > low
+            cmp = ticketPriorityOrder[a.priority] - ticketPriorityOrder[b.priority];
+            break;
+          case "status":
+            // Semantic: open > in-progress > pending > closed
+            cmp = ticketStatusOrder[a.status] - ticketStatusOrder[b.status];
+            break;
+          case "created":
+            cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+            break;
+        }
+        if (cmp !== 0) return cmp * dir;
 
-      // Then by priority
-      const priorityOrder = { 'high': 0, 'medium': 1, 'low': 2 };
-      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-      if (priorityDiff !== 0) return priorityDiff;
+        // Tie-break by created date (newest first)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    } else {
+      // Default "smart" sort: open tickets first, then by priority (high to low), then by created date (newest first)
+      filtered.sort((a, b) => {
+        // First sort by status - closed tickets go to the bottom
+        const statusDiff = ticketStatusOrder[a.status] - ticketStatusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
 
-      // Finally by created date (newest first)
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+        // Then by priority
+        const priorityDiff = ticketPriorityOrder[a.priority] - ticketPriorityOrder[b.priority];
+        if (priorityDiff !== 0) return priorityDiff;
+
+        // Finally by created date (newest first)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }
 
     return filtered;
-  }, [tickets, searchQuery, activeTab, filterAssignee, filterStatus, filterPriority, filterProject, showClosedTickets]);
+  }, [tickets, searchQuery, activeTab, filterAssignee, filterStatus, filterPriority, filterProject, showClosedTickets, sortKey, sortDir]);
 
   // Count tickets per category (excluding closed tickets unless showClosedTickets is true)
   const categoryCounts = useMemo(() => {
@@ -243,6 +289,30 @@ export default function Tickets() {
     setFilterStatus("all");
     setFilterPriority("all");
     setFilterProject("all");
+  };
+
+  // Column sorting: asc -> desc -> back to default smart ordering
+  const handleSort = (key: SortKey) => {
+    if (sortKey !== key) {
+      setSortKey(key);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortKey(null);
+      setSortDir("asc");
+    }
+  };
+
+  const renderSortIcon = (key: SortKey) => {
+    if (sortKey !== key) {
+      return <ArrowUpDown className="h-3 w-3 ml-1 text-muted-foreground/50" />;
+    }
+    return sortDir === "asc" ? (
+      <ArrowUp className="h-3 w-3 ml-1 text-foreground" />
+    ) : (
+      <ArrowDown className="h-3 w-3 ml-1 text-foreground" />
+    );
   };
 
   // Batch operations
@@ -357,6 +427,24 @@ export default function Tickets() {
       toast.success("Ticket updated successfully");
       setIsEditDialogOpen(false);
       setSelectedTicket(null);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleInlineStatusChange = async (ticketId: string, status: TicketStatus) => {
+    try {
+      await updateTicket.mutateAsync({ id: ticketId, status });
+      toast.success("Status updated");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleInlinePriorityChange = async (ticketId: string, priority: TicketPriority) => {
+    try {
+      await updateTicket.mutateAsync({ id: ticketId, priority });
+      toast.success("Priority updated");
     } catch (error) {
       // Error handled by hook
     }
@@ -829,12 +917,42 @@ export default function Tickets() {
                       />
                     </TableHead>
                     <TableHead className="font-semibold uppercase text-xs w-[80px] sm:w-[100px]">ID</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs min-w-[200px]">Title</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs w-[120px] hidden md:table-cell">Category</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs hidden lg:table-cell">Project</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs w-[80px]">Priority</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs w-[100px]">Status</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs w-[100px] hidden sm:table-cell">Created</TableHead>
+                    <TableHead
+                      className="font-semibold uppercase text-xs min-w-[200px] cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("title")}
+                    >
+                      <span className="flex items-center">Title{renderSortIcon("title")}</span>
+                    </TableHead>
+                    <TableHead
+                      className="font-semibold uppercase text-xs w-[120px] hidden md:table-cell cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("category")}
+                    >
+                      <span className="flex items-center">Category{renderSortIcon("category")}</span>
+                    </TableHead>
+                    <TableHead
+                      className="font-semibold uppercase text-xs hidden lg:table-cell cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("project")}
+                    >
+                      <span className="flex items-center">Project{renderSortIcon("project")}</span>
+                    </TableHead>
+                    <TableHead
+                      className="font-semibold uppercase text-xs w-[80px] cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("priority")}
+                    >
+                      <span className="flex items-center">Priority{renderSortIcon("priority")}</span>
+                    </TableHead>
+                    <TableHead
+                      className="font-semibold uppercase text-xs w-[100px] cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("status")}
+                    >
+                      <span className="flex items-center">Status{renderSortIcon("status")}</span>
+                    </TableHead>
+                    <TableHead
+                      className="font-semibold uppercase text-xs w-[100px] hidden sm:table-cell cursor-pointer select-none hover:text-foreground"
+                      onClick={() => handleSort("created")}
+                    >
+                      <span className="flex items-center">Created{renderSortIcon("created")}</span>
+                    </TableHead>
                     <TableHead className="font-semibold uppercase text-xs w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -887,15 +1005,36 @@ export default function Tickets() {
                             <span className="text-muted-foreground italic">Unassigned</span>
                           )}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Badge className={ticketPriorityStyles[ticket.priority]}>
-                            {ticket.priority}
-                          </Badge>
+                        <TableCell className="hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={ticket.priority}
+                            onValueChange={(value: TicketPriority) => handleInlinePriorityChange(ticket.id, value)}
+                          >
+                            <SelectTrigger className={`h-7 w-auto gap-1 px-2.5 text-xs font-semibold border-transparent focus:ring-1 ${ticketPriorityStyles[ticket.priority]}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border">
+                              <SelectItem value="high">High</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="low">Low</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
-                        <TableCell>
-                          <Badge className={`${ticketStatusStyles[ticket.status as keyof typeof ticketStatusStyles] || "bg-slate-400 text-black"} text-xs`}>
-                            {ticket.status.replace("-", " ")}
-                          </Badge>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={ticket.status}
+                            onValueChange={(value: TicketStatus) => handleInlineStatusChange(ticket.id, value)}
+                          >
+                            <SelectTrigger className={`h-7 w-auto gap-1 px-2.5 text-xs font-semibold border-transparent focus:ring-1 ${ticketStatusStyles[ticket.status as keyof typeof ticketStatusStyles] || "bg-slate-400 text-black"}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border">
+                              <SelectItem value="open">Open</SelectItem>
+                              <SelectItem value="in-progress">In Progress</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="closed">Closed</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm hidden sm:table-cell">
                           {formatDate(ticket.created_at)}

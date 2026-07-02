@@ -63,7 +63,16 @@ import { useBulkAddClientContacts } from "@/hooks/useClientContacts";
 import { useTags } from "@/hooks/useTags";
 import { useExportContacts, useImportContacts, parseCSV } from "@/hooks/useContactImportExport";
 import { Database } from "@/integrations/supabase/types";
-import { X, PlusCircle, Upload, Download, Tags, Filter } from "lucide-react";
+import { X, PlusCircle, Upload, Download, Tags, Filter, LayoutGrid, List, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 type ActivityType = Database["public"]["Enums"]["activity_type"];
@@ -85,6 +94,108 @@ const leadStatusStyles: Record<LeadStatus, string> = {
   converted: "bg-emerald-600 text-white",
   lost: "bg-red-600 text-white",
 };
+
+const leadStatusOptions: { value: LeadStatus; label: string }[] = [
+  { value: "new", label: "New" },
+  { value: "contacted", label: "Contacted" },
+  { value: "qualified", label: "Qualified" },
+  { value: "converted", label: "Converted" },
+  { value: "lost", label: "Lost" },
+];
+
+// Generic client-side column sorting shared by the CRM tables
+type SortState = { key: string; dir: "asc" | "desc" };
+
+function sortRows<T>(
+  list: T[],
+  sort: SortState,
+  getters: Record<string, (item: T) => string | number | null | undefined>
+): T[] {
+  const get = getters[sort.key];
+  if (!get) return list;
+  const dir = sort.dir === "asc" ? 1 : -1;
+  return [...list].sort((a, b) => {
+    const av = get(a);
+    const bv = get(b);
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+    return String(av).localeCompare(String(bv)) * dir;
+  });
+}
+
+function SortableTh({
+  sort,
+  onSort,
+  id,
+  label,
+  className,
+}: {
+  sort: SortState;
+  onSort: (id: string) => void;
+  id: string;
+  label: string;
+  className?: string;
+}) {
+  const active = sort.key === id;
+  return (
+    <TableHead
+      className={cn("cursor-pointer select-none whitespace-nowrap", className)}
+      onClick={() => onSort(id)}
+      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {active ? (
+          sort.dir === "asc" ? (
+            <ArrowUp className="h-3 w-3" />
+          ) : (
+            <ArrowDown className="h-3 w-3" />
+          )
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </span>
+    </TableHead>
+  );
+}
+
+function ViewToggle({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; icon: React.ComponentType<{ className?: string }>; label: string }[];
+}) {
+  return (
+    <div className="flex items-center rounded-sm border border-input overflow-hidden shrink-0">
+      {options.map((opt) => (
+        <Button
+          key={opt.value}
+          variant="ghost"
+          size="sm"
+          onClick={() => onChange(opt.value)}
+          className={cn("rounded-none h-8 px-2.5", value === opt.value && "bg-accent text-accent-foreground")}
+          aria-label={opt.label}
+          title={opt.label}
+        >
+          <opt.icon className="h-4 w-4" />
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+function savedView(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export default function CRM() {
   const { navigateOrg } = useOrgNavigation();
@@ -121,6 +232,27 @@ export default function CRM() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("pipeline");
+  const [dealsView, setDealsViewState] = useState<string>(() => savedView("soluly-crm-deals-view", "board"));
+  const [leadsView, setLeadsViewState] = useState<string>(() => savedView("soluly-crm-leads-view", "table"));
+  const [dealSort, setDealSort] = useState<SortState>({ key: "", dir: "asc" });
+  const [leadSort, setLeadSort] = useState<SortState>({ key: "", dir: "asc" });
+  const [clientSort, setClientSort] = useState<SortState>({ key: "", dir: "asc" });
+  const [contactSort, setContactSort] = useState<SortState>({ key: "", dir: "asc" });
+
+  const setDealsView = (v: string) => {
+    setDealsViewState(v);
+    try { localStorage.setItem("soluly-crm-deals-view", v); } catch { /* ignore */ }
+  };
+  const setLeadsView = (v: string) => {
+    setLeadsViewState(v);
+    try { localStorage.setItem("soluly-crm-leads-view", v); } catch { /* ignore */ }
+  };
+  const makeSortToggle = (sort: SortState, set: (s: SortState) => void) => (key: string) =>
+    set(sort.key === key ? { key, dir: sort.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" });
+  const toggleDealSort = makeSortToggle(dealSort, setDealSort);
+  const toggleLeadSort = makeSortToggle(leadSort, setLeadSort);
+  const toggleClientSort = makeSortToggle(clientSort, setClientSort);
+  const toggleContactSort = makeSortToggle(contactSort, setContactSort);
   const [isNewDealOpen, setIsNewDealOpen] = useState(false);
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
@@ -267,6 +399,41 @@ export default function CRM() {
       contact.company?.name?.toLowerCase().includes(query)
     );
   }) || [];
+
+  // Column-sorted lists for the table views
+  const sortedDeals = sortRows(filteredQuotes, dealSort, {
+    title: (q) => q.title,
+    company_name: (q) => q.company_name,
+    status: (q) => pipelineStages.findIndex((s) => s.id === q.status),
+    value: (q) => q.value,
+    valid_until: (q) => q.valid_until,
+    last_activity: (q) => q.last_activity,
+  });
+  const sortedLeads = sortRows(filteredLeads, leadSort, {
+    name: (l) => l.name,
+    status: (l) => l.status,
+    contact_name: (l) => l.contact_name,
+    contact_email: (l) => l.contact_email,
+    source: (l) => l.source,
+    created_at: (l) => l.created_at,
+  });
+  const sortedClients = sortRows(filteredClients, clientSort, {
+    name: (c) => c.name,
+    status: (c) => c.status,
+    contact_name: (c) => c.contact_name,
+    contact_email: (c) => c.contact_email,
+    contact_phone: (c) => c.contact_phone,
+    industry: (c) => c.industry,
+    total_revenue: (c) => c.total_revenue,
+  });
+  const sortedContacts = sortRows(filteredContacts, contactSort, {
+    name: (c) => c.name,
+    job_title: (c) => c.job_title,
+    company: (c) => c.company?.name,
+    email: (c) => c.email,
+    phone: (c) => c.phone,
+    created_at: (c) => c.created_at,
+  });
 
   const handleCreateDeal = async () => {
     if (!newDeal.title || !newDeal.company_name) {
@@ -736,7 +903,15 @@ export default function CRM() {
 
         {/* Pipeline Tab */}
         <TabsContent value="pipeline" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <ViewToggle
+              value={dealsView}
+              onChange={setDealsView}
+              options={[
+                { value: "board", icon: LayoutGrid, label: "Board view" },
+                { value: "table", icon: List, label: "Table view" },
+              ]}
+            />
             <Dialog open={isNewDealOpen} onOpenChange={setIsNewDealOpen}>
               <DialogTrigger asChild>
                 <Button className="border">
@@ -885,6 +1060,7 @@ export default function CRM() {
           </div>
 
           {/* Pipeline View */}
+          {dealsView === "board" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {dealsByStage.map((stage) => (
               <Card key={stage.id} className="border border-border shadow-sm">
@@ -921,6 +1097,12 @@ export default function CRM() {
                               <p className="text-sm font-mono font-semibold mt-1">
                                 {formatValue(deal.value)}
                               </p>
+                              {deal.valid_until && (
+                                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  Close {formatDate(deal.valid_until)}
+                                </p>
+                              )}
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -995,11 +1177,114 @@ export default function CRM() {
               </Card>
             ))}
           </div>
+          ) : (
+            <Card className="border border-border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="title" label="Deal" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="company_name" label="Company" className="hidden md:table-cell" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="status" label="Stage" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="value" label="Value" className="text-right" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="valid_until" label="Close Date" className="hidden lg:table-cell" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="last_activity" label="Last Activity" className="hidden xl:table-cell" />
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedDeals.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No deals yet
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedDeals.map((deal) => (
+                      <TableRow
+                        key={deal.id}
+                        className="cursor-pointer"
+                        onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}
+                      >
+                        <TableCell>
+                          <div className="font-medium leading-tight">{deal.title}</div>
+                          <div className="font-mono text-xs text-muted-foreground">{deal.display_id}</div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{deal.company_name}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={deal.status}
+                            onValueChange={(v) => handleMoveStage(deal.id, v as QuoteStatus)}
+                          >
+                            <SelectTrigger className="h-7 w-[130px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {pipelineStages.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-right font-mono">{formatValue(deal.value)}</TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground whitespace-nowrap">
+                          {formatDate(deal.valid_until)}
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell text-muted-foreground whitespace-nowrap">
+                          {deal.last_activity ? formatDate(deal.last_activity) : "—"}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="border">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedQuoteId(deal.id);
+                                  setIsActivityDialogOpen(true);
+                                }}
+                              >
+                                <Phone className="h-4 w-4 mr-2" />
+                                Log Activity
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}>
+                                <ChevronRight className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteQuote.mutate(deal.id)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Deal
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Leads Tab */}
         <TabsContent value="leads" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <ViewToggle
+              value={leadsView}
+              onChange={setLeadsView}
+              options={[
+                { value: "table", icon: List, label: "Table view" },
+                { value: "cards", icon: LayoutGrid, label: "Card view" },
+              ]}
+            />
             <Dialog open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
               <DialogTrigger asChild>
                 <Button className="border">
@@ -1097,9 +1382,9 @@ export default function CRM() {
                 </Button>
               </CardContent>
             </Card>
-          ) : (
+          ) : leadsView === "cards" ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredLeads.map((lead) => (
+              {sortedLeads.map((lead) => (
                 <Card key={lead.id} className="border border-border shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2">
@@ -1151,6 +1436,97 @@ export default function CRM() {
                 </Card>
               ))}
             </div>
+          ) : (
+            <Card className="border border-border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="name" label="Lead" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="status" label="Status" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="contact_name" label="Contact" className="hidden md:table-cell" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="contact_email" label="Email" className="hidden lg:table-cell" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="source" label="Source" className="hidden xl:table-cell" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="created_at" label="Created" className="hidden lg:table-cell" />
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedLeads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell>
+                        <div className="font-medium leading-tight">{lead.name}</div>
+                        <div className="font-mono text-xs text-muted-foreground">{lead.display_id}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={lead.status}
+                          onValueChange={(v) => updateLead.mutate({ id: lead.id, status: v as LeadStatus })}
+                        >
+                          <SelectTrigger
+                            className={cn(
+                              "h-7 w-[120px] border-transparent px-2 text-xs font-semibold shadow-none",
+                              leadStatusStyles[lead.status]
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {leadStatusOptions.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{lead.contact_name || "—"}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {lead.contact_email || "—"}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell text-muted-foreground">
+                        {lead.source || "—"}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground whitespace-nowrap">
+                        {formatDate(lead.created_at)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs hidden sm:inline-flex"
+                            onClick={() => convertLead.mutate(lead.id)}
+                          >
+                            <UserPlus className="h-3.5 w-3.5 mr-1" />
+                            Convert
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="border">
+                              <DropdownMenuItem onClick={() => convertLead.mutate(lead.id)}>
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Convert to Client
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => deleteLead.mutate(lead.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Lead
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
           )}
         </TabsContent>
 
@@ -1375,92 +1751,105 @@ export default function CRM() {
 
               {/* Desktop Table View */}
               <div className="hidden md:block">
-                <Card className="border border-border">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/50">
-                          <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Client Name</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Contact</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Email</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Phone</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Industry</th>
-                          <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredClients.map((client) => (
-                          <tr
-                            key={client.id}
-                            className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                            onClick={() => navigateOrg(`/clients/${client.display_id}`)}
-                          >
-                            <td className="py-3 px-4">
-                              <Badge className="bg-emerald-600 text-white text-xs">
-                                {client.status}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="font-mono text-xs text-muted-foreground">{client.display_id}</span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <Building className="h-4 w-4 text-primary" />
-                                </div>
-                                <span className="font-medium truncate max-w-[200px]" title={client.name}>{client.name}</span>
+                <Card className="border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="name" label="Client" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="status" label="Status" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="contact_name" label="Contact" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="contact_email" label="Email" className="hidden lg:table-cell" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="contact_phone" label="Phone" className="hidden xl:table-cell" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="industry" label="Industry" className="hidden xl:table-cell" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="total_revenue" label="Revenue" className="text-right" />
+                        <TableHead className="w-10" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedClients.map((client) => (
+                        <TableRow
+                          key={client.id}
+                          className="cursor-pointer"
+                          onClick={() => navigateOrg(`/clients/${client.display_id}`)}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <Building className="h-4 w-4 text-primary" />
                               </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[150px] block" title={client.contact_name || ""}>
-                                {client.contact_name || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={client.contact_email || ""}>
-                                {client.contact_email || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground">
-                                {client.contact_phone || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={client.industry || ""}>
-                                {client.industry || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="border">
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
-                                    <ChevronRight className="h-4 w-4 mr-2" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingClient(client); }}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Quick Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteClient.mutate(client.id); }} className="text-destructive">
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete Client
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                              <div className="min-w-0">
+                                <div className="font-medium truncate max-w-[200px]" title={client.name}>{client.name}</div>
+                                <div className="font-mono text-xs text-muted-foreground">{client.display_id}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Select
+                              value={client.status}
+                              onValueChange={(v) =>
+                                updateClient.mutate({ id: client.id, status: v as CrmClient["status"] })
+                              }
+                            >
+                              <SelectTrigger
+                                className={cn(
+                                  "h-7 w-[110px] border-transparent px-2 text-xs font-semibold shadow-none",
+                                  client.status === "active" ? "bg-emerald-600 text-white" : "bg-slate-400 text-black"
+                                )}
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground truncate max-w-[150px] block" title={client.contact_name || ""}>
+                              {client.contact_name || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={client.contact_email || ""}>
+                              {client.contact_email || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
+                            {client.contact_phone || "—"}
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell">
+                            <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={client.industry || ""}>
+                              {client.industry || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right font-mono">{formatValue(client.total_revenue)}</TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="border">
+                                <DropdownMenuItem onClick={() => navigateOrg(`/clients/${client.display_id}`)}>
+                                  <ChevronRight className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditingClient(client)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Quick Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => deleteClient.mutate(client.id)} className="text-destructive">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Client
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </Card>
               </div>
             </>
@@ -1924,113 +2313,112 @@ export default function CRM() {
 
               {/* Desktop Table View */}
               <div className="hidden md:block">
-                <Card className="border border-border">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/50">
-                          <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Job Title</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Company</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Email</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Phone</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Tags</th>
-                          <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredContacts.map((contact) => (
-                          <tr
-                            key={contact.id}
-                            className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                            onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
-                          >
-                            <td className="py-3 px-4">
-                              <span className="font-mono text-xs text-muted-foreground">{contact.display_id}</span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <User className="h-4 w-4 text-primary" />
-                                </div>
-                                <span className="font-medium truncate max-w-[150px]" title={contact.name}>{contact.name}</span>
+                <Card className="border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="name" label="Name" />
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="job_title" label="Job Title" className="hidden lg:table-cell" />
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="company" label="Company" />
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="email" label="Email" />
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="phone" label="Phone" className="hidden xl:table-cell" />
+                        <TableHead>Tags</TableHead>
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="created_at" label="Created" className="hidden xl:table-cell" />
+                        <TableHead className="w-10" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedContacts.map((contact) => (
+                        <TableRow
+                          key={contact.id}
+                          className="cursor-pointer"
+                          onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <User className="h-4 w-4 text-primary" />
                               </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={contact.job_title || ""}>
-                                {contact.job_title || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={contact.company?.name || ""}>
-                                {contact.company?.name || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={contact.email || ""}>
-                                {contact.email || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground">
-                                {contact.phone || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              {contact.tags && contact.tags.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {contact.tags.slice(0, 2).map((ct) => {
-                                    const tag = tags?.find((t) => t.id === ct.tag_id);
-                                    return tag ? (
-                                      <Badge
-                                        key={ct.tag_id}
-                                        variant="secondary"
-                                        className="text-xs px-1.5 py-0"
-                                        style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
-                                      >
-                                        {tag.name}
-                                      </Badge>
-                                    ) : null;
-                                  })}
-                                  {contact.tags.length > 2 && (
-                                    <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                      +{contact.tags.length - 2}
+                              <div className="min-w-0">
+                                <div className="font-medium truncate max-w-[160px]" title={contact.name}>{contact.name}</div>
+                                <div className="font-mono text-xs text-muted-foreground">{contact.display_id}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={contact.job_title || ""}>
+                              {contact.job_title || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground truncate max-w-[140px] block" title={contact.company?.name || ""}>
+                              {contact.company?.name || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={contact.email || ""}>
+                              {contact.email || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
+                            {contact.phone || "—"}
+                          </TableCell>
+                          <TableCell>
+                            {contact.tags && contact.tags.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {contact.tags.slice(0, 2).map((ct) => {
+                                  const tag = tags?.find((t) => t.id === ct.tag_id);
+                                  return tag ? (
+                                    <Badge
+                                      key={ct.tag_id}
+                                      variant="secondary"
+                                      className="text-xs px-1.5 py-0"
+                                      style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
+                                    >
+                                      {tag.name}
                                     </Badge>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">-</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="border">
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
-                                    <ChevronRight className="h-4 w-4 mr-2" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingContact(contact); }}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Quick Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteContact.mutate(contact.id); }} className="text-destructive">
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete Contact
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                                  ) : null;
+                                })}
+                                {contact.tags.length > 2 && (
+                                  <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                    +{contact.tags.length - 2}
+                                  </Badge>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell text-sm text-muted-foreground whitespace-nowrap">
+                            {formatDate(contact.created_at)}
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="border">
+                                <DropdownMenuItem onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}>
+                                  <ChevronRight className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditingContact(contact)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Quick Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => deleteContact.mutate(contact.id)} className="text-destructive">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Contact
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </Card>
               </div>
             </>

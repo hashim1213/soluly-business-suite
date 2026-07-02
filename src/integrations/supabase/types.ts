@@ -254,7 +254,7 @@ export type Database = {
       crm_clients: {
         Row: {
           address: string | null
-          contact_email: string
+          contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
           created_at: string
@@ -268,7 +268,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          contact_email: string
+          contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -282,7 +282,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          contact_email?: string
+          contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -306,6 +306,7 @@ export type Database = {
           id: string
           industry: string | null
           name: string
+          notes: string | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
@@ -319,6 +320,7 @@ export type Database = {
           id?: string
           industry?: string | null
           name: string
+          notes?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -332,6 +334,7 @@ export type Database = {
           id?: string
           industry?: string | null
           name?: string
+          notes?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -342,6 +345,7 @@ export type Database = {
         Row: {
           completed: boolean
           created_at: string
+          description: string | null
           display_id: string
           due_date: string
           id: string
@@ -353,6 +357,7 @@ export type Database = {
         Insert: {
           completed?: boolean
           created_at?: string
+          description?: string | null
           display_id: string
           due_date: string
           id?: string
@@ -364,6 +369,7 @@ export type Database = {
         Update: {
           completed?: boolean
           created_at?: string
+          description?: string | null
           display_id?: string
           due_date?: string
           id?: string
@@ -2059,9 +2065,9 @@ export type Database = {
       feedback_sentiment: "positive" | "neutral" | "negative"
       feedback_source: "email" | "call" | "support"
       feedback_status: "acknowledged" | "under-review" | "investigating" | "in-progress" | "resolved"
-      lead_status: "cold" | "warm" | "hot"
+      lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
       member_status: "active" | "inactive"
-      project_status: "active" | "pending" | "completed"
+      project_status: "active" | "pending" | "completed" | "on_hold" | "cancelled"
       quote_status: "draft" | "sent" | "negotiating" | "accepted" | "rejected"
       task_priority: "high" | "medium" | "low"
       ticket_category: "feature" | "quote" | "feedback" | "issue"
@@ -2213,9 +2219,9 @@ export const Constants = {
       feedback_sentiment: ["positive", "neutral", "negative"],
       feedback_source: ["email", "call", "support"],
       feedback_status: ["acknowledged", "under-review", "investigating", "in-progress", "resolved"],
-      lead_status: ["cold", "warm", "hot"],
+      lead_status: ["new", "contacted", "qualified", "converted", "lost"],
       member_status: ["active", "inactive"],
-      project_status: ["active", "pending", "completed"],
+      project_status: ["active", "pending", "completed", "on_hold", "cancelled"],
       quote_status: ["draft", "sent", "negotiating", "accepted", "rejected"],
       task_priority: ["high", "medium", "low"],
       ticket_category: ["feature", "quote", "feedback", "issue"],

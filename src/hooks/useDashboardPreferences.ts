@@ -16,7 +16,8 @@ export type StatCardType =
   | "closedTicketsWeek"
   | "completedTasksWeek"
   | "totalClients"
-  | "activeQuotes";
+  | "activeQuotes"
+  | "hoursThisWeek";
 
 // Available widget types
 export type WidgetType =
@@ -64,6 +65,7 @@ export const AVAILABLE_STAT_CARDS: StatCardConfig[] = [
   { id: "completedTasksWeek", title: "Tasks Completed", description: "Tasks completed this week", category: "tasks" },
   { id: "totalClients", title: "Total Clients", description: "All clients in CRM", category: "crm" },
   { id: "activeQuotes", title: "Active Quotes", description: "Quotes in progress", category: "crm" },
+  { id: "hoursThisWeek", title: "My Hours This Week", description: "Your hours logged this week", category: "team" },
 ];
 
 // All available widgets
