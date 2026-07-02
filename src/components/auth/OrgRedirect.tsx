@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { isElectron } from "@/lib/platform";
+import { getBaseDomain, isSubdomainCapable, orgHref } from "@/lib/tenant";
 import Landing from "@/pages/Landing";
 
 /**
@@ -219,6 +220,16 @@ export function OrgRedirect() {
 
   // Have user and org - redirect to workspace
   if (organization?.slug) {
+    if (isSubdomainCapable()) {
+      // Workspaces live on their own subdomain (acme.soluly.com)
+      window.location.replace(orgHref(organization.slug, "/"));
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Opening your workspace...</p>
+        </div>
+      );
+    }
     return <Navigate to={`/org/${organization.slug}`} replace />;
   }
 
@@ -275,7 +286,9 @@ export function OrgRedirect() {
               Organization URL
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground shrink-0">/org/</span>
+              {!getBaseDomain() && (
+                <span className="text-sm text-muted-foreground shrink-0">/org/</span>
+              )}
               <input
                 id="orgSlug"
                 type="text"
@@ -286,6 +299,9 @@ export function OrgRedirect() {
                 minLength={3}
                 className="flex-1 px-3 py-2 border rounded-md bg-background"
               />
+              {getBaseDomain() && (
+                <span className="text-sm text-muted-foreground shrink-0">.{getBaseDomain()}</span>
+              )}
             </div>
           </div>
 
