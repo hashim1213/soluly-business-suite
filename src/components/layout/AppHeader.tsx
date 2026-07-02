@@ -140,9 +140,9 @@ export function AppHeader() {
     .slice(0, 2) || "??";
 
   return (
-    <header className="h-14 border-b-2 border-border bg-background flex items-center justify-between px-2 sm:px-4">
+    <header className="h-14 border-b border-border bg-background flex items-center justify-between px-2 sm:px-4">
       {/* Page Title */}
-      <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
+      <h1 className="text-lg sm:text-xl font-semibold text-foreground truncate">
         {pageTitle}
       </h1>
 
@@ -150,7 +150,7 @@ export function AppHeader() {
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative border-2 border-transparent hover:border-border">
+            <Button variant="ghost" size="icon" className="relative border border-transparent hover:border-border">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-medium">
@@ -159,7 +159,7 @@ export function AppHeader() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 p-0 border-2">
+          <PopoverContent align="end" className="w-80 p-0 border">
             <div className="flex items-center justify-between p-4 border-b">
               <h4 className="font-semibold">Notifications</h4>
               {unreadCount > 0 && (
@@ -234,7 +234,7 @@ export function AppHeader() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="border-2 border-transparent hover:border-border gap-2 px-2">
+            <Button variant="ghost" className="border border-transparent hover:border-border gap-2 px-2">
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {initials}
@@ -249,7 +249,7 @@ export function AppHeader() {
               <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 border-2">
+          <DropdownMenuContent align="end" className="w-56 border">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{member?.name}</p>

@@ -539,7 +539,7 @@ export default function ProjectDetail() {
   if (projectLoading) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Projects
         </Button>
@@ -554,13 +554,13 @@ export default function ProjectDetail() {
   if (!dbProject) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Projects
         </Button>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-bold mb-2">Project Not Found</h2>
+            <h2 className="text-xl font-semibold mb-2">Project Not Found</h2>
             <p className="text-muted-foreground">The project you're looking for doesn't exist.</p>
           </CardContent>
         </Card>
@@ -1217,7 +1217,7 @@ export default function ProjectDetail() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center gap-2 sm:gap-4">
-        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 sm:mr-2" />
           <span className="hidden sm:inline">Back</span>
         </Button>
@@ -1231,21 +1231,21 @@ export default function ProjectDetail() {
               {project.status}
             </Badge>
           </div>
-          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">{project.name}</h1>
+          <h1 className="text-xl sm:text-3xl font-semibold tracking-tight">{project.name}</h1>
           <p className="text-muted-foreground mt-2 text-sm sm:text-base">{project.description}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" className="border-2" onClick={handleStartEditProject} disabled={!dbProject}>
+          <Button variant="outline" className="border" onClick={handleStartEditProject} disabled={!dbProject}>
             <Edit className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Edit Project</span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="border-2 border-transparent hover:border-border">
+              <Button variant="ghost" size="icon" className="border border-transparent hover:border-border">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="border-2">
+            <DropdownMenuContent align="end" className="border">
               <DropdownMenuItem>Duplicate Project</DropdownMenuItem>
               <DropdownMenuItem>Export Data</DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={openDeleteDialog}>Delete Project</DropdownMenuItem>
@@ -1255,56 +1255,56 @@ export default function ProjectDetail() {
       </div>
 
       <div className="grid gap-2 sm:gap-4 grid-cols-2 md:grid-cols-4">
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                 <DollarSign className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">{projectValue}</div>
+                <div className="text-2xl font-semibold font-mono">{projectValue}</div>
                 <div className="text-sm text-muted-foreground">Project Value</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                 <Ticket className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{project.tickets}</div>
+                <div className="text-2xl font-semibold">{project.tickets}</div>
                 <div className="text-sm text-muted-foreground">Open Tickets</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card
-          className="border-2 border-border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          className="border border-border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setIsTeamDialogOpen(true)}
         >
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{totalTeamMembers}</div>
+                <div className="text-2xl font-semibold">{totalTeamMembers}</div>
                 <div className="text-sm text-muted-foreground">Team Members</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-emerald-600" : "bg-red-600"}`}>
+              <div className={`h-10 w-10 border border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-emerald-600" : "bg-red-600"}`}>
                 <TrendingUp className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className={`text-2xl font-bold font-mono ${projectProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                <div className={`text-2xl font-semibold font-mono ${projectProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                   ${projectProfit.toLocaleString()}
                 </div>
                 <div className="text-sm text-muted-foreground">Profit ({profitMargin}%)</div>
@@ -1323,21 +1323,21 @@ export default function ProjectDetail() {
 
         if (isOverBudget) {
           return (
-            <Card className="border-2 border-destructive bg-destructive/10">
+            <Card className="border border-destructive bg-destructive/10">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-destructive flex items-center justify-center bg-destructive rounded-full">
+                  <div className="h-10 w-10 border border-destructive flex items-center justify-center bg-destructive rounded-full">
                     <AlertTriangle className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-destructive">Budget Exceeded</div>
+                    <div className="font-semibold text-destructive">Budget Exceeded</div>
                     <div className="text-sm text-muted-foreground">
-                      This project is <span className="font-mono font-bold text-destructive">${Math.abs(budgetRemaining).toLocaleString()}</span> over budget ({budgetUsedPercent.toFixed(1)}% used)
+                      This project is <span className="font-mono font-semibold text-destructive">${Math.abs(budgetRemaining).toLocaleString()}</span> over budget ({budgetUsedPercent.toFixed(1)}% used)
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-muted-foreground">Budget</div>
-                    <div className="font-mono font-bold">${(dbProject.budget || 0).toLocaleString()}</div>
+                    <div className="font-mono font-semibold">${(dbProject.budget || 0).toLocaleString()}</div>
                   </div>
                 </div>
               </CardContent>
@@ -1347,21 +1347,21 @@ export default function ProjectDetail() {
 
         if (isNearBudget) {
           return (
-            <Card className="border-2 border-yellow-500 bg-yellow-500/10">
+            <Card className="border border-yellow-500 bg-yellow-500/10">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-yellow-500 flex items-center justify-center bg-yellow-500 rounded-full">
+                  <div className="h-10 w-10 border border-yellow-500 flex items-center justify-center bg-yellow-500 rounded-full">
                     <AlertCircle className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-yellow-700 dark:text-yellow-400">Budget Warning</div>
+                    <div className="font-semibold text-yellow-700 dark:text-yellow-400">Budget Warning</div>
                     <div className="text-sm text-muted-foreground">
-                      <span className="font-mono font-bold">${budgetRemaining.toLocaleString()}</span> remaining ({budgetUsedPercent.toFixed(1)}% used)
+                      <span className="font-mono font-semibold">${budgetRemaining.toLocaleString()}</span> remaining ({budgetUsedPercent.toFixed(1)}% used)
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-muted-foreground">Budget</div>
-                    <div className="font-mono font-bold">${(dbProject.budget || 0).toLocaleString()}</div>
+                    <div className="font-mono font-semibold">${(dbProject.budget || 0).toLocaleString()}</div>
                   </div>
                 </div>
               </CardContent>
@@ -1374,8 +1374,8 @@ export default function ProjectDetail() {
 
       {/* Team Members Dialog */}
       <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Project Team</DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-6">
@@ -1385,17 +1385,17 @@ export default function ProjectDetail() {
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4 text-muted-foreground" />
                   <h4 className="font-semibold">Company Team</h4>
-                  <Badge variant="secondary" className="border-2 border-border">{internalTeam.length}</Badge>
+                  <Badge variant="secondary" className="border border-border">{internalTeam.length}</Badge>
                 </div>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="border-2" onClick={() => setAddMemberType("internal")}>
+                    <Button size="sm" variant="outline" className="border" onClick={() => setAddMemberType("internal")}>
                       <UserPlus className="h-4 w-4 mr-1" />
                       Add
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[400px]">
-                    <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogContent className="border sm:max-w-[400px]">
+                    <DialogHeader className="border-b border-border pb-4">
                       <DialogTitle>Add Company Team Member</DialogTitle>
                     </DialogHeader>
                     <div className="py-4 space-y-2 max-h-[300px] overflow-y-auto">
@@ -1405,11 +1405,11 @@ export default function ProjectDetail() {
                         availableTeamMembers.map((member) => (
                           <div
                             key={member.id}
-                            className="flex items-center justify-between p-3 border-2 border-border hover:bg-accent/50 cursor-pointer"
+                            className="flex items-center justify-between p-3 border border-border hover:bg-accent/50 cursor-pointer"
                             onClick={() => addInternalMember(member)}
                           >
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8 border-2 border-border">
+                              <Avatar className="h-8 w-8 border border-border">
                                 <AvatarFallback className="bg-secondary text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               <div>
@@ -1427,9 +1427,9 @@ export default function ProjectDetail() {
               </div>
               <div className="space-y-2">
                 {internalTeam.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-3 border-2 border-border">
+                  <div key={member.id} className="flex items-center justify-between p-3 border border-border">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8 border-2 border-border">
+                      <Avatar className="h-8 w-8 border border-border">
                         <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar}</AvatarFallback>
                       </Avatar>
                       <div>
@@ -1441,7 +1441,7 @@ export default function ProjectDetail() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                        className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
                         onClick={() => removeInternalMember(member.id)}
                       >
                         <X className="h-4 w-4" />
@@ -1458,7 +1458,7 @@ export default function ProjectDetail() {
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <h4 className="font-semibold">Client Team ({project.name})</h4>
-                  <Badge variant="secondary" className="border-2 border-border">{externalTeam.length}</Badge>
+                  <Badge variant="secondary" className="border border-border">{externalTeam.length}</Badge>
                 </div>
                 <Dialog open={isAddMemberDialogOpen} onOpenChange={(open) => {
                     setIsAddMemberDialogOpen(open);
@@ -1470,13 +1470,13 @@ export default function ProjectDetail() {
                     }
                   }}>
                   <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="border-2">
+                    <Button size="sm" variant="outline" className="border">
                       <UserPlus className="h-4 w-4 mr-1" />
                       Add
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[450px]">
-                    <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogContent className="border sm:max-w-[450px]">
+                    <DialogHeader className="border-b border-border pb-4">
                       <DialogTitle>Add External Team Member</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -1485,7 +1485,7 @@ export default function ProjectDetail() {
                         <Button
                           variant={externalMemberMode === "select" ? "default" : "outline"}
                           size="sm"
-                          className="flex-1 border-2"
+                          className="flex-1 border"
                           onClick={() => setExternalMemberMode("select")}
                         >
                           Select from Contacts
@@ -1493,7 +1493,7 @@ export default function ProjectDetail() {
                         <Button
                           variant={externalMemberMode === "create" ? "default" : "outline"}
                           size="sm"
-                          className="flex-1 border-2"
+                          className="flex-1 border"
                           onClick={() => setExternalMemberMode("create")}
                         >
                           Create New Contact
@@ -1505,10 +1505,10 @@ export default function ProjectDetail() {
                           <div className="grid gap-2">
                             <Label>Select Contact *</Label>
                             <Select value={selectedContactId} onValueChange={setSelectedContactId}>
-                              <SelectTrigger className="border-2">
+                              <SelectTrigger className="border">
                                 <SelectValue placeholder="Choose a contact..." />
                               </SelectTrigger>
-                              <SelectContent className="border-2">
+                              <SelectContent className="border">
                                 {availableContacts.length === 0 ? (
                                   <div className="p-2 text-sm text-muted-foreground text-center">
                                     No contacts available
@@ -1533,7 +1533,7 @@ export default function ProjectDetail() {
                               placeholder="e.g., Product Owner, Technical Lead"
                               value={selectedContactRole}
                               onChange={(e) => setSelectedContactRole(e.target.value)}
-                              className="border-2"
+                              className="border"
                             />
                           </div>
                         </>
@@ -1546,7 +1546,7 @@ export default function ProjectDetail() {
                               placeholder="Full name"
                               value={newExternalMember.name}
                               onChange={(e) => setNewExternalMember({ ...newExternalMember, name: e.target.value })}
-                              className="border-2"
+                              className="border"
                             />
                           </div>
                           <div className="grid gap-2">
@@ -1557,7 +1557,7 @@ export default function ProjectDetail() {
                               placeholder="email@company.com"
                               value={newExternalMember.email}
                               onChange={(e) => setNewExternalMember({ ...newExternalMember, email: e.target.value })}
-                              className="border-2"
+                              className="border"
                             />
                           </div>
                           <div className="grid gap-2">
@@ -1567,7 +1567,7 @@ export default function ProjectDetail() {
                               placeholder="e.g., Product Owner, Technical Lead"
                               value={newExternalMember.role}
                               onChange={(e) => setNewExternalMember({ ...newExternalMember, role: e.target.value })}
-                              className="border-2"
+                              className="border"
                             />
                           </div>
                           <p className="text-xs text-muted-foreground">
@@ -1576,14 +1576,14 @@ export default function ProjectDetail() {
                         </>
                       )}
                     </div>
-                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                      <Button variant="outline" onClick={() => setIsAddMemberDialogOpen(false)} className="border-2">
+                    <div className="flex justify-end gap-3 border-t border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsAddMemberDialogOpen(false)} className="border">
                         Cancel
                       </Button>
                       {externalMemberMode === "select" ? (
                         <Button
                           onClick={handleAddExternalFromContact}
-                          className="border-2"
+                          className="border"
                           disabled={!selectedContactId || addExternalMemberMutation.isPending}
                         >
                           {addExternalMemberMutation.isPending ? "Adding..." : "Add Member"}
@@ -1591,7 +1591,7 @@ export default function ProjectDetail() {
                       ) : (
                         <Button
                           onClick={handleAddExternalNewContact}
-                          className="border-2"
+                          className="border"
                           disabled={!newExternalMember.name || createContactAndAdd.isPending}
                         >
                           {createContactAndAdd.isPending ? "Creating..." : "Create & Add"}
@@ -1603,12 +1603,12 @@ export default function ProjectDetail() {
               </div>
               <div className="space-y-2">
                 {externalTeam.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4 border-2 border-dashed border-border">No external team members</p>
+                  <p className="text-muted-foreground text-center py-4 border border-dashed border-border">No external team members</p>
                 ) : (
                   externalTeam.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-3 border-2 border-border">
+                    <div key={member.id} className="flex items-center justify-between p-3 border border-border">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8 border-2 border-border">
+                        <Avatar className="h-8 w-8 border border-border">
                           <AvatarFallback className="bg-chart-1 text-background text-xs">{member.avatar}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -1619,7 +1619,7 @@ export default function ProjectDetail() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                        className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
                         onClick={() => handleRemoveExternalMember(member.id)}
                       >
                         <X className="h-4 w-4" />
@@ -1634,7 +1634,7 @@ export default function ProjectDetail() {
       </Dialog>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="border-2 border-border p-1">
+        <TabsList className="border border-border p-1">
           <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Overview
           </TabsTrigger>
@@ -1672,12 +1672,12 @@ export default function ProjectDetail() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <Card className="border-2 border-border shadow-sm">
-                <CardHeader className="border-b-2 border-border">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="border-b border-border">
                   <div className="flex items-center justify-between">
                     <CardTitle>Project Tickets</CardTitle>
                     <Link to={getOrgPath("/tickets")}>
-                      <Button size="sm" className="border-2">
+                      <Button size="sm" className="border">
                         <Plus className="h-4 w-4 mr-2" />
                         New Ticket
                       </Button>
@@ -1687,12 +1687,12 @@ export default function ProjectDetail() {
                 <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-b-2 hover:bg-transparent">
-                        <TableHead className="font-bold uppercase text-xs">ID</TableHead>
-                        <TableHead className="font-bold uppercase text-xs">Title</TableHead>
-                        <TableHead className="font-bold uppercase text-xs">Priority</TableHead>
-                        <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                        <TableHead className="font-bold uppercase text-xs">Created</TableHead>
+                      <TableRow className="border-b hover:bg-transparent">
+                        <TableHead className="font-semibold uppercase text-xs">ID</TableHead>
+                        <TableHead className="font-semibold uppercase text-xs">Title</TableHead>
+                        <TableHead className="font-semibold uppercase text-xs">Priority</TableHead>
+                        <TableHead className="font-semibold uppercase text-xs">Status</TableHead>
+                        <TableHead className="font-semibold uppercase text-xs">Created</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1712,7 +1712,7 @@ export default function ProjectDetail() {
                         projectTickets.map((ticket) => (
                           <TableRow
                             key={ticket.id}
-                            className="border-b-2 cursor-pointer hover:bg-accent/50"
+                            className="border-b cursor-pointer hover:bg-accent/50"
                             onClick={() => navigateOrg(`/tickets/${ticket.display_id}`)}
                           >
                             <TableCell className="font-mono text-sm">{ticket.display_id}</TableCell>
@@ -1740,8 +1740,8 @@ export default function ProjectDetail() {
             </div>
 
             <div className="space-y-6">
-              <Card className="border-2 border-border shadow-sm">
-                <CardHeader className="border-b-2 border-border">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="border-b border-border">
                   <CardTitle>Project Details</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
@@ -1750,15 +1750,15 @@ export default function ProjectDetail() {
                     <div className="font-medium">{project.client}</div>
                     <div className="text-sm text-muted-foreground">{project.clientEmail}</div>
                   </div>
-                  <div className="border-t-2 border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="text-sm text-muted-foreground mb-1">Contracted Value</div>
-                    <div className="font-mono font-bold text-lg">
+                    <div className="font-mono font-semibold text-lg">
                       <HiddenAmount value={Number(dbProject?.value || 0)} />
                     </div>
                   </div>
-                  <div className="border-t-2 border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="text-sm text-muted-foreground mb-1">Project Budget</div>
-                    <div className="font-mono font-bold text-lg">
+                    <div className="font-mono font-semibold text-lg">
                       <HiddenAmount value={Number(dbProject?.budget || 0)} />
                     </div>
                     {(dbProject?.budget || 0) > 0 && canViewAmounts() && (
@@ -1779,17 +1779,17 @@ export default function ProjectDetail() {
                       </div>
                     )}
                   </div>
-                  <div className="border-t-2 border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="text-sm text-muted-foreground mb-1">Timeline</div>
                     <div className="font-medium">{project.startDate} - {project.endDate}</div>
                   </div>
-                  <div className="border-t-2 border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm text-muted-foreground">Team</div>
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-6 px-2 text-xs border-2 border-transparent hover:border-border"
+                        className="h-6 px-2 text-xs border border-transparent hover:border-border"
                         onClick={() => setIsTeamDialogOpen(true)}
                       >
                         Manage
@@ -1797,23 +1797,23 @@ export default function ProjectDetail() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {internalTeam.slice(0, 3).map((member) => (
-                        <Badge key={member.id} variant="secondary" className="border-2 border-border">
+                        <Badge key={member.id} variant="secondary" className="border border-border">
                           {member.name}
                         </Badge>
                       ))}
                       {internalTeam.length > 3 && (
-                        <Badge variant="secondary" className="border-2 border-border">
+                        <Badge variant="secondary" className="border border-border">
                           +{internalTeam.length - 3} more
                         </Badge>
                       )}
                     </div>
                   </div>
-                  <div className="border-t-2 border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="text-sm text-muted-foreground mb-2">Progress</div>
                     <Progress value={project.progress} className="h-3" />
                     <div className="text-right font-mono text-sm mt-1">{project.progress}%</div>
                   </div>
-                  <div className="border-t-2 border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm text-muted-foreground flex items-center gap-2">
                         <Wrench className="h-4 w-4" />
@@ -1822,7 +1822,7 @@ export default function ProjectDetail() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-6 px-2 text-xs border-2 border-transparent hover:border-border"
+                        className="h-6 px-2 text-xs border border-transparent hover:border-border"
                         onClick={openMaintenanceDialog}
                       >
                         Configure
@@ -1830,11 +1830,11 @@ export default function ProjectDetail() {
                     </div>
                     {dbProject?.has_maintenance ? (
                       <div className="space-y-2">
-                        <Badge variant="secondary" className="border-2 border-chart-2 bg-chart-2/10 text-chart-2">
+                        <Badge variant="secondary" className="border border-chart-2 bg-chart-2/10 text-chart-2">
                           <RefreshCw className="h-3 w-3 mr-1" />
                           {dbProject.maintenance_frequency?.charAt(0).toUpperCase() + dbProject.maintenance_frequency?.slice(1) || "Monthly"}
                         </Badge>
-                        <div className="font-mono font-bold">
+                        <div className="font-mono font-semibold">
                           <HiddenAmount value={Number(dbProject?.maintenance_amount || 0)} />
                           <span className="text-xs text-muted-foreground font-normal ml-1">
                             /{dbProject.maintenance_frequency === "yearly" ? "year" : dbProject.maintenance_frequency === "quarterly" ? "quarter" : "month"}
@@ -1859,40 +1859,40 @@ export default function ProjectDetail() {
         {/* Invoices Tab */}
         <TabsContent value="invoices" className="space-y-6">
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                     <FileText className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-mono">${totalInvoiced.toLocaleString()}</div>
+                    <div className="text-2xl font-semibold font-mono">${totalInvoiced.toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">Total Invoiced (Project Value)</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-chart-2">
                     <Check className="h-5 w-5 text-background" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-mono">${totalPaid.toLocaleString()}</div>
+                    <div className="text-2xl font-semibold font-mono">${totalPaid.toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">Paid</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-chart-1">
                     <AlertCircle className="h-5 w-5 text-background" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-mono">${totalOutstanding.toLocaleString()}</div>
+                    <div className="text-2xl font-semibold font-mono">${totalOutstanding.toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">Outstanding</div>
                   </div>
                 </div>
@@ -1902,11 +1902,11 @@ export default function ProjectDetail() {
 
           {/* Maintenance Card */}
           {dbProject?.has_maintenance && (
-            <Card className="border-2 border-chart-2/50 bg-chart-2/5 shadow-sm">
+            <Card className="border border-chart-2/50 bg-chart-2/5 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 border-2 border-chart-2 flex items-center justify-center bg-chart-2/20 rounded-lg">
+                    <div className="h-12 w-12 border border-chart-2 flex items-center justify-center bg-chart-2/20 rounded-lg">
                       <RefreshCw className="h-6 w-6 text-chart-2" />
                     </div>
                     <div>
@@ -1917,7 +1917,7 @@ export default function ProjectDetail() {
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        <span className="font-mono font-bold text-foreground">
+                        <span className="font-mono font-semibold text-foreground">
                           ${Number(dbProject.maintenance_amount || 0).toLocaleString()}
                         </span>
                         {" "}per {dbProject.maintenance_frequency === "yearly" ? "year" : dbProject.maintenance_frequency === "quarterly" ? "quarter" : "month"}
@@ -1931,7 +1931,7 @@ export default function ProjectDetail() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-2 border-chart-2 text-chart-2 hover:bg-chart-2 hover:text-background"
+                      className="border border-chart-2 text-chart-2 hover:bg-chart-2 hover:text-background"
                       onClick={handleCreateMaintenanceInvoice}
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -1940,7 +1940,7 @@ export default function ProjectDetail() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="border-2 border-transparent hover:border-border"
+                      className="border border-transparent hover:border-border"
                       onClick={openMaintenanceDialog}
                     >
                       <Pencil className="h-4 w-4" />
@@ -1951,19 +1951,19 @@ export default function ProjectDetail() {
             </Card>
           )}
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <CardTitle>Invoices</CardTitle>
                 <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" className="border-2">
+                    <Button size="sm" className="border">
                       <Plus className="h-4 w-4 mr-2" />
                       New Invoice
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[500px]">
-                    <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogContent className="border sm:max-w-[500px]">
+                    <DialogHeader className="border-b border-border pb-4">
                       <DialogTitle>Create Invoice</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
@@ -1974,7 +1974,7 @@ export default function ProjectDetail() {
                           placeholder="Invoice description"
                           value={newInvoice.description}
                           onChange={(e) => setNewInvoice({ ...newInvoice, description: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -1986,7 +1986,7 @@ export default function ProjectDetail() {
                             placeholder="0"
                             value={newInvoice.amount}
                             onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
-                            className="border-2"
+                            className="border"
                           />
                         </div>
                         <div className="grid gap-2">
@@ -1996,7 +1996,7 @@ export default function ProjectDetail() {
                             placeholder="e.g., INV-2024-001"
                             value={newInvoice.invoiceNumber}
                             onChange={(e) => setNewInvoice({ ...newInvoice, invoiceNumber: e.target.value })}
-                            className="border-2"
+                            className="border"
                           />
                         </div>
                       </div>
@@ -2008,7 +2008,7 @@ export default function ProjectDetail() {
                             type="date"
                             value={newInvoice.dueDate}
                             onChange={(e) => setNewInvoice({ ...newInvoice, dueDate: e.target.value })}
-                            className="border-2"
+                            className="border"
                           />
                         </div>
                         <div className="grid gap-2">
@@ -2019,10 +2019,10 @@ export default function ProjectDetail() {
                               setNewInvoice({ ...newInvoice, status: value })
                             }
                           >
-                            <SelectTrigger className="border-2">
+                            <SelectTrigger className="border">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="border-2">
+                            <SelectContent className="border">
                               {INVOICE_STATUSES.map((status) => (
                                 <SelectItem key={status.value} value={status.value}>
                                   {status.label}
@@ -2039,16 +2039,16 @@ export default function ProjectDetail() {
                           placeholder="Additional notes..."
                           value={newInvoice.notes}
                           onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
-                          className="border-2"
+                          className="border"
                           rows={2}
                         />
                       </div>
                     </div>
-                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                      <Button variant="outline" onClick={() => setIsInvoiceDialogOpen(false)} className="border-2">
+                    <div className="flex justify-end gap-3 border-t border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsInvoiceDialogOpen(false)} className="border">
                         Cancel
                       </Button>
-                      <Button onClick={handleCreateInvoice} className="border-2">
+                      <Button onClick={handleCreateInvoice} className="border">
                         Create Invoice
                       </Button>
                     </div>
@@ -2059,26 +2059,26 @@ export default function ProjectDetail() {
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b-2 hover:bg-transparent">
-                    <TableHead className="font-bold uppercase text-xs">ID</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Invoice #</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Description</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Amount</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Due Date</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">File</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                  <TableRow className="border-b hover:bg-transparent">
+                    <TableHead className="font-semibold uppercase text-xs">ID</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs">Invoice #</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs">Description</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs text-right">Amount</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs">Due Date</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs">Status</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs">File</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {invoices?.map((invoice) => (
-                    <TableRow key={invoice.id} className="border-b-2">
+                    <TableRow key={invoice.id} className="border-b">
                       <TableCell className="font-mono text-sm">{invoice.display_id}</TableCell>
                       <TableCell className="font-mono text-sm">{invoice.invoice_number || "-"}</TableCell>
                       <TableCell className="font-medium max-w-[200px] truncate" title={invoice.description}>
                         {invoice.description}
                       </TableCell>
-                      <TableCell className="text-right font-mono font-bold">${invoice.amount.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-mono font-semibold">${invoice.amount.toLocaleString()}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {invoice.due_date ? format(new Date(invoice.due_date), "MMM d, yyyy") : "-"}
                       </TableCell>
@@ -2108,7 +2108,7 @@ export default function ProjectDetail() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-8 px-2 border-2 border-transparent hover:border-border"
+                              className="h-8 px-2 border border-transparent hover:border-border"
                               onClick={() => sendInvoice(invoice.id)}
                             >
                               <Send className="h-3 w-3 mr-1" />
@@ -2119,7 +2119,7 @@ export default function ProjectDetail() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-8 px-2 border-2 border-transparent hover:border-border"
+                              className="h-8 px-2 border border-transparent hover:border-border"
                               onClick={() => markInvoicePaid(invoice.id)}
                             >
                               <Check className="h-3 w-3 mr-1" />
@@ -2129,7 +2129,7 @@ export default function ProjectDetail() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0 border-2 border-transparent hover:border-border"
+                            className="h-8 w-8 p-0 border border-transparent hover:border-border"
                             onClick={() => openEditInvoice(invoice)}
                           >
                             <Pencil className="h-4 w-4" />
@@ -2137,7 +2137,7 @@ export default function ProjectDetail() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                            className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
                             onClick={() => handleDeleteInvoice(invoice.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -2153,8 +2153,8 @@ export default function ProjectDetail() {
 
           {/* Edit Invoice Dialog */}
           <Dialog open={isEditInvoiceDialogOpen} onOpenChange={setIsEditInvoiceDialogOpen}>
-            <DialogContent className="border-2 sm:max-w-[500px]">
-              <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogContent className="border sm:max-w-[500px]">
+              <DialogHeader className="border-b border-border pb-4">
                 <DialogTitle>Edit Invoice</DialogTitle>
               </DialogHeader>
               {editingInvoice && (
@@ -2166,7 +2166,7 @@ export default function ProjectDetail() {
                       placeholder="Invoice description"
                       value={editingInvoice.description}
                       onChange={(e) => setEditingInvoice({ ...editingInvoice, description: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -2178,7 +2178,7 @@ export default function ProjectDetail() {
                         placeholder="0"
                         value={editingInvoice.amount}
                         onChange={(e) => setEditingInvoice({ ...editingInvoice, amount: parseFloat(e.target.value) || 0 })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -2188,7 +2188,7 @@ export default function ProjectDetail() {
                         placeholder="e.g., INV-2024-001"
                         value={editingInvoice.invoiceNumber}
                         onChange={(e) => setEditingInvoice({ ...editingInvoice, invoiceNumber: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -2200,7 +2200,7 @@ export default function ProjectDetail() {
                         type="date"
                         value={editingInvoice.dueDate}
                         onChange={(e) => setEditingInvoice({ ...editingInvoice, dueDate: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -2211,10 +2211,10 @@ export default function ProjectDetail() {
                           setEditingInvoice({ ...editingInvoice, status: value })
                         }
                       >
-                        <SelectTrigger className="border-2">
+                        <SelectTrigger className="border">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="border-2">
+                        <SelectContent className="border">
                           {INVOICE_STATUSES.map((status) => (
                             <SelectItem key={status.value} value={status.value}>
                               {status.label}
@@ -2232,7 +2232,7 @@ export default function ProjectDetail() {
                         type="date"
                         value={editingInvoice.paidDate}
                         onChange={(e) => setEditingInvoice({ ...editingInvoice, paidDate: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   )}
@@ -2243,7 +2243,7 @@ export default function ProjectDetail() {
                       placeholder="https://..."
                       value={editingInvoice.fileUrl}
                       onChange={(e) => setEditingInvoice({ ...editingInvoice, fileUrl: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -2253,7 +2253,7 @@ export default function ProjectDetail() {
                       placeholder="invoice.pdf"
                       value={editingInvoice.fileName}
                       onChange={(e) => setEditingInvoice({ ...editingInvoice, fileName: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -2263,17 +2263,17 @@ export default function ProjectDetail() {
                       placeholder="Additional notes..."
                       value={editingInvoice.notes}
                       onChange={(e) => setEditingInvoice({ ...editingInvoice, notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                       rows={2}
                     />
                   </div>
                 </div>
               )}
-              <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                <Button variant="outline" onClick={() => setIsEditInvoiceDialogOpen(false)} className="border-2">
+              <div className="flex justify-end gap-3 border-t border-border pt-4">
+                <Button variant="outline" onClick={() => setIsEditInvoiceDialogOpen(false)} className="border">
                   Cancel
                 </Button>
-                <Button onClick={handleUpdateInvoice} className="border-2">
+                <Button onClick={handleUpdateInvoice} className="border">
                   Save Changes
                 </Button>
               </div>
@@ -2285,8 +2285,8 @@ export default function ProjectDetail() {
         <TabsContent value="todos" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <Card className="border-2 border-border shadow-sm">
-                <CardHeader className="border-b-2 border-border">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="border-b border-border">
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle>Project Tasks</CardTitle>
@@ -2296,13 +2296,13 @@ export default function ProjectDetail() {
                     </div>
                     <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button size="sm" className="border-2">
+                        <Button size="sm" className="border">
                           <Plus className="h-4 w-4 mr-2" />
                           Add Task
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="border-2 sm:max-w-[425px]">
-                        <DialogHeader className="border-b-2 border-border pb-4">
+                      <DialogContent className="border sm:max-w-[425px]">
+                        <DialogHeader className="border-b border-border pb-4">
                           <DialogTitle>Add New Task</DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -2313,17 +2313,17 @@ export default function ProjectDetail() {
                               placeholder="What needs to be done?"
                               value={newTodo}
                               onChange={(e) => setNewTodo(e.target.value)}
-                              className="border-2"
+                              className="border"
                             />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
                               <Label htmlFor="task-priority">Priority</Label>
                               <Select value={newTodoPriority} onValueChange={setNewTodoPriority}>
-                                <SelectTrigger className="border-2">
+                                <SelectTrigger className="border">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="border-2">
+                                <SelectContent className="border">
                                   <SelectItem value="high">High</SelectItem>
                                   <SelectItem value="medium">Medium</SelectItem>
                                   <SelectItem value="low">Low</SelectItem>
@@ -2333,10 +2333,10 @@ export default function ProjectDetail() {
                             <div className="grid gap-2">
                               <Label htmlFor="task-assignee">Assignee</Label>
                               <Select value={newTodoAssignee} onValueChange={setNewTodoAssignee}>
-                                <SelectTrigger className="border-2">
+                                <SelectTrigger className="border">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="border-2">
+                                <SelectContent className="border">
                                   {internalTeam.map((member) => (
                                     <SelectItem key={member.id} value={member.id}>
                                       {member.name}
@@ -2353,15 +2353,15 @@ export default function ProjectDetail() {
                               type="date"
                               value={newTodoDueDate}
                               onChange={(e) => setNewTodoDueDate(e.target.value)}
-                              className="border-2"
+                              className="border"
                             />
                           </div>
                         </div>
-                        <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                          <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)} className="border-2">
+                        <div className="flex justify-end gap-3 border-t border-border pt-4">
+                          <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)} className="border">
                             Cancel
                           </Button>
-                          <Button onClick={addTodo} className="border-2">
+                          <Button onClick={addTodo} className="border">
                             Add Task
                           </Button>
                         </div>
@@ -2374,14 +2374,14 @@ export default function ProjectDetail() {
                     {tasks?.map((task) => (
                       <div
                         key={task.id}
-                        className={`flex items-center gap-3 p-3 border-2 border-border ${
+                        className={`flex items-center gap-3 p-3 border border-border ${
                           task.completed ? "bg-muted/50" : "bg-background"
                         }`}
                       >
                         <Checkbox
                           checked={task.completed}
                           onCheckedChange={() => toggleTodo(task.id, task.completed)}
-                          className="border-2"
+                          className="border"
                         />
                         <div className="flex-1">
                           <span className={`${task.completed ? "line-through text-muted-foreground" : ""}`}>
@@ -2408,7 +2408,7 @@ export default function ProjectDetail() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                          className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
                           onClick={() => deleteTodo(task.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -2416,7 +2416,7 @@ export default function ProjectDetail() {
                       </div>
                     ))}
                     {(!tasks || tasks.length === 0) && (
-                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border">
+                      <div className="text-center py-8 text-muted-foreground border border-dashed border-border">
                         No tasks yet. Add one to get started!
                       </div>
                     )}
@@ -2426,8 +2426,8 @@ export default function ProjectDetail() {
             </div>
 
             <div>
-              <Card className="border-2 border-border shadow-sm">
-                <CardHeader className="border-b-2 border-border">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="border-b border-border">
                   <CardTitle>Task Progress</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
@@ -2435,37 +2435,37 @@ export default function ProjectDetail() {
                     <div>
                       <div className="flex justify-between text-sm mb-2">
                         <span>Overall Progress</span>
-                        <span className="font-mono font-bold">{todoProgress}%</span>
+                        <span className="font-mono font-semibold">{todoProgress}%</span>
                       </div>
                       <Progress value={todoProgress} className="h-3" />
                     </div>
-                    <div className="border-t-2 border-border pt-4 space-y-3">
+                    <div className="border-t border-border pt-4 space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Total Tasks</span>
-                        <span className="font-bold">{totalTodos}</span>
+                        <span className="font-semibold">{totalTodos}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Completed</span>
-                        <span className="font-bold text-chart-2">{completedTodos}</span>
+                        <span className="font-semibold text-chart-2">{completedTodos}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Remaining</span>
-                        <span className="font-bold">{totalTodos - completedTodos}</span>
+                        <span className="font-semibold">{totalTodos - completedTodos}</span>
                       </div>
                     </div>
-                    <div className="border-t-2 border-border pt-4 space-y-3">
+                    <div className="border-t border-border pt-4 space-y-3">
                       <div className="text-sm font-medium">By Priority</div>
                       <div className="flex justify-between text-sm">
                         <span className="text-destructive">High</span>
-                        <span className="font-bold">{tasks?.filter(t => t.priority === "high" && !t.completed).length || 0} remaining</span>
+                        <span className="font-semibold">{tasks?.filter(t => t.priority === "high" && !t.completed).length || 0} remaining</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-chart-4">Medium</span>
-                        <span className="font-bold">{tasks?.filter(t => t.priority === "medium" && !t.completed).length || 0} remaining</span>
+                        <span className="font-semibold">{tasks?.filter(t => t.priority === "medium" && !t.completed).length || 0} remaining</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Low</span>
-                        <span className="font-bold">{tasks?.filter(t => t.priority === "low" && !t.completed).length || 0} remaining</span>
+                        <span className="font-semibold">{tasks?.filter(t => t.priority === "low" && !t.completed).length || 0} remaining</span>
                       </div>
                     </div>
                   </div>
@@ -2477,8 +2477,8 @@ export default function ProjectDetail() {
 
         {/* Timeline Tab */}
         <TabsContent value="timeline" className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Project Timeline</CardTitle>
@@ -2488,13 +2488,13 @@ export default function ProjectDetail() {
                 </div>
                 <Dialog open={isMilestoneDialogOpen} onOpenChange={setIsMilestoneDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" className="border-2">
+                    <Button size="sm" className="border">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Milestone
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[425px]">
-                    <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogContent className="border sm:max-w-[425px]">
+                    <DialogHeader className="border-b border-border pb-4">
                       <DialogTitle>Add Milestone</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -2505,7 +2505,7 @@ export default function ProjectDetail() {
                           placeholder="Milestone title"
                           value={newMilestone.title}
                           onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -2515,7 +2515,7 @@ export default function ProjectDetail() {
                           placeholder="Brief description"
                           value={newMilestone.description}
                           onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -2525,15 +2525,15 @@ export default function ProjectDetail() {
                           type="date"
                           value={newMilestone.date}
                           onChange={(e) => setNewMilestone({ ...newMilestone, date: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                     </div>
-                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                      <Button variant="outline" onClick={() => setIsMilestoneDialogOpen(false)} className="border-2">
+                    <div className="flex justify-end gap-3 border-t border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsMilestoneDialogOpen(false)} className="border">
                         Cancel
                       </Button>
-                      <Button onClick={handleAddMilestone} className="border-2" disabled={createMilestone.isPending}>
+                      <Button onClick={handleAddMilestone} className="border" disabled={createMilestone.isPending}>
                         {createMilestone.isPending ? "Adding..." : "Add Milestone"}
                       </Button>
                     </div>
@@ -2551,7 +2551,7 @@ export default function ProjectDetail() {
                     <div key={event.id} className="relative flex gap-4 pl-10">
                       {/* Timeline dot */}
                       <div
-                        className={`absolute left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        className={`absolute left-2 w-5 h-5 rounded-full border flex items-center justify-center ${
                           event.completed
                             ? "bg-chart-2 border-chart-2"
                             : "bg-background border-border"
@@ -2574,11 +2574,11 @@ export default function ProjectDetail() {
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border-2 border-transparent hover:border-border">
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border border-transparent hover:border-border">
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="border-2">
+                            <DropdownMenuContent align="end" className="border">
                               <DropdownMenuItem onClick={() => handleToggleMilestoneComplete(event.id, event.completed)}>
                                 <Check className="h-4 w-4 mr-2" />
                                 {event.completed ? "Mark Incomplete" : "Mark Complete"}
@@ -2603,7 +2603,7 @@ export default function ProjectDetail() {
                     </div>
                   ))}
                   {(!milestones || milestones.length === 0) && (
-                    <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border ml-10">
+                    <div className="text-center py-8 text-muted-foreground border border-dashed border-border ml-10">
                       No milestones yet. Add one to get started!
                     </div>
                   )}
@@ -2614,8 +2614,8 @@ export default function ProjectDetail() {
 
           {/* Edit Milestone Dialog */}
           <Dialog open={isEditMilestoneDialogOpen} onOpenChange={setIsEditMilestoneDialogOpen}>
-            <DialogContent className="border-2 sm:max-w-[425px]">
-              <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogContent className="border sm:max-w-[425px]">
+              <DialogHeader className="border-b border-border pb-4">
                 <DialogTitle>Edit Milestone</DialogTitle>
               </DialogHeader>
               {editingMilestone && (
@@ -2626,7 +2626,7 @@ export default function ProjectDetail() {
                       id="edit-milestone-title"
                       value={editingMilestone.title}
                       onChange={(e) => setEditingMilestone({ ...editingMilestone, title: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -2635,7 +2635,7 @@ export default function ProjectDetail() {
                       id="edit-milestone-desc"
                       value={editingMilestone.description}
                       onChange={(e) => setEditingMilestone({ ...editingMilestone, description: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -2648,17 +2648,17 @@ export default function ProjectDetail() {
                           setEditingMilestone({ ...editingMilestone, due_date: e.target.value });
                         }
                       }}
-                      className="border-2"
+                      className="border"
                     />
                     <p className="text-xs text-muted-foreground">Current: {new Date(editingMilestone.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                   </div>
                 </div>
               )}
-              <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                <Button variant="outline" onClick={() => setIsEditMilestoneDialogOpen(false)} className="border-2">
+              <div className="flex justify-end gap-3 border-t border-border pt-4">
+                <Button variant="outline" onClick={() => setIsEditMilestoneDialogOpen(false)} className="border">
                   Cancel
                 </Button>
-                <Button onClick={handleUpdateMilestone} className="border-2" disabled={updateMilestone.isPending}>
+                <Button onClick={handleUpdateMilestone} className="border" disabled={updateMilestone.isPending}>
                   {updateMilestone.isPending ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
@@ -2668,18 +2668,18 @@ export default function ProjectDetail() {
 
         {/* Calendar Tab */}
         <TabsContent value="calendar" className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <CardTitle>Project Calendar</CardTitle>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={prevMonth} className="border-2">
+                  <Button variant="outline" size="icon" onClick={prevMonth} className="border">
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="font-medium min-w-[140px] text-center">
                     {calendarMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                   </span>
-                  <Button variant="outline" size="icon" onClick={nextMonth} className="border-2">
+                  <Button variant="outline" size="icon" onClick={nextMonth} className="border">
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -2688,16 +2688,16 @@ export default function ProjectDetail() {
             <CardContent className="p-4">
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <div key={day} className="h-10 flex items-center justify-center text-sm font-bold text-muted-foreground">
+                  <div key={day} className="h-10 flex items-center justify-center text-sm font-semibold text-muted-foreground">
                     {day}
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-1 border-2 border-border">
+              <div className="grid grid-cols-7 gap-1 border border-border">
                 {renderCalendar()}
               </div>
 
-              <div className="flex flex-wrap items-center gap-6 mt-4 pt-4 border-t-2 border-border">
+              <div className="flex flex-wrap items-center gap-6 mt-4 pt-4 border-t border-border">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-chart-2/20" />
                   <span className="text-sm text-muted-foreground">Project Duration</span>
@@ -2736,8 +2736,8 @@ export default function ProjectDetail() {
 
           {/* Calendar Day Detail Dialog */}
           <Dialog open={isCalendarDetailOpen} onOpenChange={setIsCalendarDetailOpen}>
-            <DialogContent className="border-2 sm:max-w-[425px]">
-              <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogContent className="border sm:max-w-[425px]">
+              <DialogHeader className="border-b border-border pb-4">
                 <DialogTitle>
                   {selectedCalendarDate?.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
                 </DialogTitle>
@@ -2747,7 +2747,7 @@ export default function ProjectDetail() {
                   <div className="space-y-3">
                     <h4 className="font-semibold text-sm text-muted-foreground uppercase">Milestones</h4>
                     {getMilestonesForDate(selectedCalendarDate).map((milestone) => (
-                      <div key={milestone.id} className="p-3 border-2 border-border">
+                      <div key={milestone.id} className="p-3 border border-border">
                         <div className="flex items-center gap-2 mb-1">
                           <h5 className="font-semibold">{milestone.title}</h5>
                           {milestone.completed && (
@@ -2771,8 +2771,8 @@ export default function ProjectDetail() {
                   </div>
                 )}
               </div>
-              <div className="flex justify-end border-t-2 border-border pt-4">
-                <Button variant="outline" onClick={() => setIsCalendarDetailOpen(false)} className="border-2">
+              <div className="flex justify-end border-t border-border pt-4">
+                <Button variant="outline" onClick={() => setIsCalendarDetailOpen(false)} className="border">
                   Close
                 </Button>
               </div>
@@ -2782,8 +2782,8 @@ export default function ProjectDetail() {
 
         {/* Contracts Tab */}
         <TabsContent value="contracts" className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Project Contracts</CardTitle>
@@ -2793,13 +2793,13 @@ export default function ProjectDetail() {
                 </div>
                 <Dialog open={isContractDialogOpen} onOpenChange={setIsContractDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" className="border-2">
+                    <Button size="sm" className="border">
                       <Upload className="h-4 w-4 mr-2" />
                       Upload Contract
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[425px]">
-                    <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogContent className="border sm:max-w-[425px]">
+                    <DialogHeader className="border-b border-border pb-4">
                       <DialogTitle>Upload Contract</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -2810,16 +2810,16 @@ export default function ProjectDetail() {
                           placeholder="e.g., Non-Disclosure Agreement"
                           value={newContract.name}
                           onChange={(e) => setNewContract({ ...newContract, name: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="contract-type">Contract Type</Label>
                         <Select value={newContract.type} onValueChange={(value) => setNewContract({ ...newContract, type: value })}>
-                          <SelectTrigger className="border-2">
+                          <SelectTrigger className="border">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="border-2">
+                          <SelectContent className="border">
                             <SelectItem value="nda">NDA</SelectItem>
                             <SelectItem value="service">Service Agreement</SelectItem>
                             <SelectItem value="employee">Employee Contract</SelectItem>
@@ -2829,18 +2829,18 @@ export default function ProjectDetail() {
                       </div>
                       <div className="grid gap-2">
                         <Label>File</Label>
-                        <div className="border-2 border-dashed border-border p-6 text-center cursor-pointer hover:bg-accent/50 transition-colors">
+                        <div className="border border-dashed border-border p-6 text-center cursor-pointer hover:bg-accent/50 transition-colors">
                           <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                           <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
                           <p className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX up to 10MB</p>
                         </div>
                       </div>
                     </div>
-                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                      <Button variant="outline" onClick={() => setIsContractDialogOpen(false)} className="border-2">
+                    <div className="flex justify-end gap-3 border-t border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsContractDialogOpen(false)} className="border">
                         Cancel
                       </Button>
-                      <Button onClick={handleUploadContract} className="border-2" disabled={createContract.isPending}>
+                      <Button onClick={handleUploadContract} className="border" disabled={createContract.isPending}>
                         {createContract.isPending ? "Uploading..." : "Upload"}
                       </Button>
                     </div>
@@ -2856,18 +2856,18 @@ export default function ProjectDetail() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b-2 hover:bg-transparent">
-                      <TableHead className="font-bold uppercase text-xs">ID</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Name</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Type</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Created</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                    <TableRow className="border-b hover:bg-transparent">
+                      <TableHead className="font-semibold uppercase text-xs">ID</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Name</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Type</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Status</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Created</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {contracts?.map((contract) => (
-                      <TableRow key={contract.id} className="border-b-2">
+                      <TableRow key={contract.id} className="border-b">
                         <TableCell className="font-mono text-sm">{contract.display_id}</TableCell>
                         <TableCell className="font-medium">{contract.name}</TableCell>
                         <TableCell>
@@ -2889,7 +2889,7 @@ export default function ProjectDetail() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-8 px-2 border-2 border-transparent hover:border-border"
+                                className="h-8 px-2 border border-transparent hover:border-border"
                                 onClick={() => window.open(contract.file_url!, '_blank')}
                               >
                                 <Download className="h-3 w-3 mr-1" />
@@ -2899,7 +2899,7 @@ export default function ProjectDetail() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                              className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
                               onClick={() => handleDeleteContract(contract.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -2915,27 +2915,27 @@ export default function ProjectDetail() {
           </Card>
 
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{contracts?.length || 0}</div>
+                <div className="text-2xl font-semibold">{contracts?.length || 0}</div>
                 <div className="text-sm text-muted-foreground">Total Contracts</div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{contracts?.filter(c => c.type === "nda").length || 0}</div>
+                <div className="text-2xl font-semibold">{contracts?.filter(c => c.type === "nda").length || 0}</div>
                 <div className="text-sm text-muted-foreground">NDAs</div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{contracts?.filter(c => c.type === "employee" || c.type === "contractor").length || 0}</div>
+                <div className="text-2xl font-semibold">{contracts?.filter(c => c.type === "employee" || c.type === "contractor").length || 0}</div>
                 <div className="text-sm text-muted-foreground">Team Contracts</div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{contracts?.filter(c => c.status === "signed" || c.status === "active").length || 0}</div>
+                <div className="text-2xl font-semibold">{contracts?.filter(c => c.status === "signed" || c.status === "active").length || 0}</div>
                 <div className="text-sm text-muted-foreground">Active</div>
               </CardContent>
             </Card>
@@ -2945,40 +2945,40 @@ export default function ProjectDetail() {
         {/* Costs Tab */}
         <TabsContent value="costs" className="space-y-6">
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                     <Wallet className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-mono">${totalCosts.toLocaleString()}</div>
+                    <div className="text-2xl font-semibold font-mono">${totalCosts.toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">Total Costs</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-chart-1">
                     <DollarSign className="h-5 w-5 text-background" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-mono">${totalInvoiced.toLocaleString()}</div>
+                    <div className="text-2xl font-semibold font-mono">${totalInvoiced.toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">Revenue</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-emerald-600" : "bg-red-600"}`}>
+                  <div className={`h-10 w-10 border border-border flex items-center justify-center ${projectProfit >= 0 ? "bg-emerald-600" : "bg-red-600"}`}>
                     <TrendingUp className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <div className={`text-2xl font-bold font-mono ${projectProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                    <div className={`text-2xl font-semibold font-mono ${projectProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                       ${projectProfit.toLocaleString()}
                     </div>
                     <div className="text-sm text-muted-foreground">Net Profit</div>
@@ -2986,14 +2986,14 @@ export default function ProjectDetail() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${profitMargin >= 20 ? "bg-emerald-600" : profitMargin >= 0 ? "bg-amber-500" : "bg-red-600"}`}>
-                    <span className={`text-sm font-bold ${profitMargin >= 20 || profitMargin < 0 ? "text-white" : "text-black"}`}>%</span>
+                  <div className={`h-10 w-10 border border-border flex items-center justify-center ${profitMargin >= 20 ? "bg-emerald-600" : profitMargin >= 0 ? "bg-amber-500" : "bg-red-600"}`}>
+                    <span className={`text-sm font-semibold ${profitMargin >= 20 || profitMargin < 0 ? "text-white" : "text-black"}`}>%</span>
                   </div>
                   <div>
-                    <div className={`text-2xl font-bold font-mono ${profitMargin >= 20 ? "text-emerald-600" : profitMargin >= 0 ? "text-amber-600" : "text-red-600"}`}>
+                    <div className={`text-2xl font-semibold font-mono ${profitMargin >= 20 ? "text-emerald-600" : profitMargin >= 0 ? "text-amber-600" : "text-red-600"}`}>
                       {profitMargin}%
                     </div>
                     <div className="text-sm text-muted-foreground">Profit Margin</div>
@@ -3003,8 +3003,8 @@ export default function ProjectDetail() {
             </Card>
           </div>
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Project Costs</CardTitle>
@@ -3014,13 +3014,13 @@ export default function ProjectDetail() {
                 </div>
                 <Dialog open={isCostDialogOpen} onOpenChange={setIsCostDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" className="border-2">
+                    <Button size="sm" className="border">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Cost
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[425px]">
-                    <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogContent className="border sm:max-w-[425px]">
+                    <DialogHeader className="border-b border-border pb-4">
                       <DialogTitle>Add Project Cost</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -3031,17 +3031,17 @@ export default function ProjectDetail() {
                           placeholder="e.g., Development Labor"
                           value={newCost.description}
                           onChange={(e) => setNewCost({ ...newCost, description: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="cost-category">Category</Label>
                           <Select value={newCost.category} onValueChange={(value) => setNewCost({ ...newCost, category: value })}>
-                            <SelectTrigger className="border-2">
+                            <SelectTrigger className="border">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="border-2">
+                            <SelectContent className="border">
                               <SelectItem value="labor">Labor</SelectItem>
                               <SelectItem value="infrastructure">Infrastructure</SelectItem>
                               <SelectItem value="software">Software</SelectItem>
@@ -3058,7 +3058,7 @@ export default function ProjectDetail() {
                             placeholder="0"
                             value={newCost.amount}
                             onChange={(e) => setNewCost({ ...newCost, amount: e.target.value })}
-                            className="border-2"
+                            className="border"
                           />
                         </div>
                       </div>
@@ -3067,18 +3067,18 @@ export default function ProjectDetail() {
                           id="cost-recurring"
                           checked={newCost.recurring}
                           onCheckedChange={(checked) => setNewCost({ ...newCost, recurring: checked as boolean })}
-                          className="border-2"
+                          className="border"
                         />
                         <Label htmlFor="cost-recurring" className="text-sm cursor-pointer">
                           Recurring monthly cost
                         </Label>
                       </div>
                     </div>
-                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                      <Button variant="outline" onClick={() => setIsCostDialogOpen(false)} className="border-2">
+                    <div className="flex justify-end gap-3 border-t border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsCostDialogOpen(false)} className="border">
                         Cancel
                       </Button>
-                      <Button onClick={handleAddCost} className="border-2">
+                      <Button onClick={handleAddCost} className="border">
                         Add Cost
                       </Button>
                     </div>
@@ -3094,19 +3094,19 @@ export default function ProjectDetail() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b-2 hover:bg-transparent">
-                      <TableHead className="font-bold uppercase text-xs">ID</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Description</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Category</TableHead>
-                      <TableHead className="font-bold uppercase text-xs text-right">Amount</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Date</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Type</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                    <TableRow className="border-b hover:bg-transparent">
+                      <TableHead className="font-semibold uppercase text-xs">ID</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Description</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Category</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs text-right">Amount</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Date</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Type</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {costs?.map((cost) => (
-                      <TableRow key={cost.id} className="border-b-2">
+                      <TableRow key={cost.id} className="border-b">
                         <TableCell className="font-mono text-sm">{cost.id}</TableCell>
                         <TableCell className="font-medium">{cost.description}</TableCell>
                         <TableCell>
@@ -3114,20 +3114,20 @@ export default function ProjectDetail() {
                             {costCategoryLabels[cost.category as keyof typeof costCategoryLabels]}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-mono font-bold">${cost.amount.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-mono font-semibold">${cost.amount.toLocaleString()}</TableCell>
                         <TableCell className="text-muted-foreground">{cost.date}</TableCell>
                         <TableCell>
                           {cost.recurring ? (
-                            <Badge variant="secondary" className="border-2 border-border">Recurring</Badge>
+                            <Badge variant="secondary" className="border border-border">Recurring</Badge>
                           ) : (
-                            <Badge variant="outline" className="border-2">One-time</Badge>
+                            <Badge variant="outline" className="border">One-time</Badge>
                           )}
                         </TableCell>
                         <TableCell>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                            className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
                             onClick={() => handleDeleteCost(cost.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -3142,8 +3142,8 @@ export default function ProjectDetail() {
           </Card>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Cost Breakdown by Category</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
@@ -3153,9 +3153,9 @@ export default function ProjectDetail() {
                     <div className="flex justify-between text-sm">
                       <span className="flex items-center gap-2">
                         Labor
-                        <Badge variant="secondary" className="text-xs border-2 border-border">Auto-calculated</Badge>
+                        <Badge variant="secondary" className="text-xs border border-border">Auto-calculated</Badge>
                       </span>
-                      <span className="font-mono font-bold">${laborCosts.toLocaleString()} ({totalCosts > 0 ? Math.round((laborCosts / totalCosts) * 100) : 0}%)</span>
+                      <span className="font-mono font-semibold">${laborCosts.toLocaleString()} ({totalCosts > 0 ? Math.round((laborCosts / totalCosts) * 100) : 0}%)</span>
                     </div>
                     <Progress value={totalCosts > 0 ? Math.round((laborCosts / totalCosts) * 100) : 0} className="h-2" />
                   </div>
@@ -3168,7 +3168,7 @@ export default function ProjectDetail() {
                     <div key={key} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>{label}</span>
-                        <span className="font-mono font-bold">${categoryTotal.toLocaleString()} ({percentage}%)</span>
+                        <span className="font-mono font-semibold">${categoryTotal.toLocaleString()} ({percentage}%)</span>
                       </div>
                       <Progress value={percentage} className="h-2" />
                     </div>
@@ -3177,36 +3177,36 @@ export default function ProjectDetail() {
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Profit Summary</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total Revenue</span>
-                    <span className="font-mono font-bold">${totalInvoiced.toLocaleString()}</span>
+                    <span className="font-mono font-semibold">${totalInvoiced.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Labor Costs (from time entries)</span>
-                    <span className="font-mono font-bold text-destructive">-${laborCosts.toLocaleString()}</span>
+                    <span className="font-mono font-semibold text-destructive">-${laborCosts.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Other Costs</span>
-                    <span className="font-mono font-bold text-destructive">-${nonLaborCosts.toLocaleString()}</span>
+                    <span className="font-mono font-semibold text-destructive">-${nonLaborCosts.toLocaleString()}</span>
                   </div>
-                  <div className="border-t-2 border-border pt-3 flex justify-between">
+                  <div className="border-t border-border pt-3 flex justify-between">
                     <span className="font-semibold">Net Profit</span>
-                    <span className={`font-mono font-bold text-lg ${projectProfit >= 0 ? "text-chart-2" : "text-destructive"}`}>
+                    <span className={`font-mono font-semibold text-lg ${projectProfit >= 0 ? "text-chart-2" : "text-destructive"}`}>
                       ${projectProfit.toLocaleString()}
                     </span>
                   </div>
                 </div>
-                <div className="border-t-2 border-border pt-4">
+                <div className="border-t border-border pt-4">
                   <div className="text-sm text-muted-foreground mb-2">Profit Margin</div>
                   <div className="flex items-center gap-4">
                     <Progress value={Math.max(0, profitMargin)} className="h-3 flex-1" />
-                    <span className={`font-mono font-bold ${profitMargin >= 20 ? "text-chart-2" : profitMargin >= 0 ? "" : "text-destructive"}`}>
+                    <span className={`font-mono font-semibold ${profitMargin >= 20 ? "text-chart-2" : profitMargin >= 0 ? "" : "text-destructive"}`}>
                       {profitMargin}%
                     </span>
                   </div>
@@ -3225,53 +3225,53 @@ export default function ProjectDetail() {
         {/* Team Tab */}
         <TabsContent value="team" className="space-y-6">
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                     <Timer className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-mono">{totalHours}</div>
+                    <div className="text-2xl font-semibold font-mono">{totalHours}</div>
                     <div className="text-sm text-muted-foreground">Total Hours</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-chart-2">
                     <Clock className="h-5 w-5 text-background" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-mono">{billableHours}</div>
+                    <div className="text-2xl font-semibold font-mono">{billableHours}</div>
                     <div className="text-sm text-muted-foreground">Billable Hours</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-1">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-chart-1">
                     <Users className="h-5 w-5 text-background" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{internalTeam.length}</div>
+                    <div className="text-2xl font-semibold">{internalTeam.length}</div>
                     <div className="text-sm text-muted-foreground">Team Members</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-primary">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-primary">
                     <DollarSign className="h-5 w-5 text-primary-foreground" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-mono">
+                    <div className="text-2xl font-semibold font-mono">
                       ${hoursByMember.reduce((sum, m) => sum + m.totalPaid, 0).toLocaleString()}
                     </div>
                     <div className="text-sm text-muted-foreground">Total Paid</div>
@@ -3282,8 +3282,8 @@ export default function ProjectDetail() {
           </div>
 
           {/* Team Members Breakdown */}
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Team Members</CardTitle>
@@ -3291,7 +3291,7 @@ export default function ProjectDetail() {
                     Hours worked, rates, and payment breakdown
                   </p>
                 </div>
-                <Button size="sm" variant="outline" className="border-2" onClick={() => setIsTeamDialogOpen(true)}>
+                <Button size="sm" variant="outline" className="border" onClick={() => setIsTeamDialogOpen(true)}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Manage Team
                 </Button>
@@ -3300,22 +3300,22 @@ export default function ProjectDetail() {
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b-2 hover:bg-transparent">
-                    <TableHead className="font-bold uppercase text-xs">Member</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Role</TableHead>
-                    <TableHead className="font-bold uppercase text-xs">Contract</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Rate/Hr</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Salary</TableHead>
-                    <TableHead className="font-bold uppercase text-xs text-right">Paid</TableHead>
+                  <TableRow className="border-b hover:bg-transparent">
+                    <TableHead className="font-semibold uppercase text-xs">Member</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs">Role</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs">Contract</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs text-right">Hours</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs text-right">Rate/Hr</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs text-right">Salary</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs text-right">Paid</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {hoursByMember.map((member) => (
-                    <TableRow key={member.id} className="border-b-2">
+                    <TableRow key={member.id} className="border-b">
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8 border-2 border-border">
+                          <Avatar className="h-8 w-8 border border-border">
                             <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar}</AvatarFallback>
                           </Avatar>
                           <div>
@@ -3335,7 +3335,7 @@ export default function ProjectDetail() {
                       <TableCell className="text-right font-mono">
                         {member.salary > 0 ? `$${member.salary.toLocaleString()}` : "-"}
                       </TableCell>
-                      <TableCell className="text-right font-mono font-bold">${member.totalPaid.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-mono font-semibold">${member.totalPaid.toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -3349,8 +3349,8 @@ export default function ProjectDetail() {
           )}
 
           {/* Time Entries */}
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Time Entries</CardTitle>
@@ -3360,23 +3360,23 @@ export default function ProjectDetail() {
                 </div>
                 <Dialog open={isTimeEntryDialogOpen} onOpenChange={setIsTimeEntryDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" className="border-2">
+                    <Button size="sm" className="border">
                       <Plus className="h-4 w-4 mr-2" />
                       Log Time
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[425px]">
-                    <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogContent className="border sm:max-w-[425px]">
+                    <DialogHeader className="border-b border-border pb-4">
                       <DialogTitle>Log Time Entry</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid gap-2">
                         <Label htmlFor="time-member">Team Member *</Label>
                         <Select value={newTimeEntry.memberId} onValueChange={(value) => setNewTimeEntry({ ...newTimeEntry, memberId: value })}>
-                          <SelectTrigger className="border-2">
+                          <SelectTrigger className="border">
                             <SelectValue placeholder="Select member" />
                           </SelectTrigger>
-                          <SelectContent className="border-2">
+                          <SelectContent className="border">
                             {internalTeam.map((member) => (
                               <SelectItem key={member.id} value={member.id}>
                                 {member.name}
@@ -3394,7 +3394,7 @@ export default function ProjectDetail() {
                           placeholder="8"
                           value={newTimeEntry.hours}
                           onChange={(e) => setNewTimeEntry({ ...newTimeEntry, hours: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -3404,7 +3404,7 @@ export default function ProjectDetail() {
                           placeholder="What did you work on?"
                           value={newTimeEntry.description}
                           onChange={(e) => setNewTimeEntry({ ...newTimeEntry, description: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="flex items-center gap-2">
@@ -3412,18 +3412,18 @@ export default function ProjectDetail() {
                           id="time-billable"
                           checked={newTimeEntry.billable}
                           onCheckedChange={(checked) => setNewTimeEntry({ ...newTimeEntry, billable: checked as boolean })}
-                          className="border-2"
+                          className="border"
                         />
                         <Label htmlFor="time-billable" className="text-sm cursor-pointer">
                           Billable hours
                         </Label>
                       </div>
                     </div>
-                    <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                      <Button variant="outline" onClick={() => setIsTimeEntryDialogOpen(false)} className="border-2">
+                    <div className="flex justify-end gap-3 border-t border-border pt-4">
+                      <Button variant="outline" onClick={() => setIsTimeEntryDialogOpen(false)} className="border">
                         Cancel
                       </Button>
-                      <Button onClick={addTimeEntry} className="border-2">
+                      <Button onClick={addTimeEntry} className="border">
                         Log Time
                       </Button>
                     </div>
@@ -3443,34 +3443,34 @@ export default function ProjectDetail() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b-2 hover:bg-transparent">
-                      <TableHead className="font-bold uppercase text-xs">Date</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Member</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Description</TableHead>
-                      <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Type</TableHead>
-                      <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                    <TableRow className="border-b hover:bg-transparent">
+                      <TableHead className="font-semibold uppercase text-xs">Date</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Member</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Description</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs text-right">Hours</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Type</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {dbTimeEntries?.map((entry) => (
-                      <TableRow key={entry.id} className="border-b-2">
+                      <TableRow key={entry.id} className="border-b">
                         <TableCell className="text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy")}</TableCell>
                         <TableCell className="font-medium">{entry.team_member?.name || "Unknown"}</TableCell>
                         <TableCell className="max-w-[200px] truncate">{entry.description || "-"}</TableCell>
-                        <TableCell className="text-right font-mono font-bold">{entry.hours}h</TableCell>
+                        <TableCell className="text-right font-mono font-semibold">{entry.hours}h</TableCell>
                         <TableCell>
                           {entry.billable ? (
                             <Badge className="bg-emerald-600 text-white">Billable</Badge>
                           ) : (
-                            <Badge variant="secondary" className="border-2 border-border">Non-billable</Badge>
+                            <Badge variant="secondary" className="border border-border">Non-billable</Badge>
                           )}
                         </TableCell>
                         <TableCell>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0 border-2 border-transparent hover:border-destructive hover:text-destructive"
+                            className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
                             onClick={() => handleDeleteTimeEntry(entry.id, entry.team_member_id, entry.hours)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -3488,8 +3488,8 @@ export default function ProjectDetail() {
 
       {/* Edit Project Dialog */}
       <Dialog open={isEditProjectDialogOpen} onOpenChange={setIsEditProjectDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Project</DialogTitle>
           </DialogHeader>
           {editProjectData && (
@@ -3500,7 +3500,7 @@ export default function ProjectDetail() {
                   id="edit-project-name"
                   value={editProjectData.name}
                   onChange={(e) => setEditProjectData({ ...editProjectData, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -3509,7 +3509,7 @@ export default function ProjectDetail() {
                   id="edit-project-description"
                   value={editProjectData.description}
                   onChange={(e) => setEditProjectData({ ...editProjectData, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={3}
                 />
               </div>
@@ -3520,10 +3520,10 @@ export default function ProjectDetail() {
                     value={editProjectData.status}
                     onValueChange={(v) => setEditProjectData({ ...editProjectData, status: v })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
@@ -3539,7 +3539,7 @@ export default function ProjectDetail() {
                     max="100"
                     value={editProjectData.progress}
                     onChange={(e) => setEditProjectData({ ...editProjectData, progress: parseInt(e.target.value) || 0 })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -3551,7 +3551,7 @@ export default function ProjectDetail() {
                     type="number"
                     value={editProjectData.value}
                     onChange={(e) => setEditProjectData({ ...editProjectData, value: parseFloat(e.target.value) || 0 })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -3561,7 +3561,7 @@ export default function ProjectDetail() {
                     type="number"
                     value={editProjectData.budget}
                     onChange={(e) => setEditProjectData({ ...editProjectData, budget: parseFloat(e.target.value) || 0 })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -3573,7 +3573,7 @@ export default function ProjectDetail() {
                     type="date"
                     value={editProjectData.start_date}
                     onChange={(e) => setEditProjectData({ ...editProjectData, start_date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -3583,11 +3583,11 @@ export default function ProjectDetail() {
                     type="date"
                     value={editProjectData.end_date}
                     onChange={(e) => setEditProjectData({ ...editProjectData, end_date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
-              <div className="border-t-2 border-border pt-4">
+              <div className="border-t border-border pt-4">
                 <h4 className="font-semibold mb-3">Client Information</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
@@ -3596,7 +3596,7 @@ export default function ProjectDetail() {
                       id="edit-project-client-name"
                       value={editProjectData.client_name}
                       onChange={(e) => setEditProjectData({ ...editProjectData, client_name: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -3606,18 +3606,18 @@ export default function ProjectDetail() {
                       type="email"
                       value={editProjectData.client_email}
                       onChange={(e) => setEditProjectData({ ...editProjectData, client_email: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                 </div>
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsEditProjectDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditProjectDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleSaveProject} className="border-2" disabled={updateProject.isPending}>
+            <Button onClick={handleSaveProject} className="border" disabled={updateProject.isPending}>
               {updateProject.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
             </Button>
@@ -3627,8 +3627,8 @@ export default function ProjectDetail() {
 
       {/* Maintenance Settings Dialog */}
       <Dialog open={isMaintenanceDialogOpen} onOpenChange={setIsMaintenanceDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[500px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle className="flex items-center gap-2">
               <Wrench className="h-5 w-5" />
               Maintenance Settings
@@ -3649,7 +3649,7 @@ export default function ProjectDetail() {
 
             {maintenanceSettings.has_maintenance && (
               <>
-                <div className="border-t-2 border-border pt-4 grid gap-4">
+                <div className="border-t border-border pt-4 grid gap-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="maintenance-amount">Amount ($) *</Label>
@@ -3659,7 +3659,7 @@ export default function ProjectDetail() {
                         placeholder="0"
                         value={maintenanceSettings.maintenance_amount}
                         onChange={(e) => setMaintenanceSettings({ ...maintenanceSettings, maintenance_amount: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -3668,7 +3668,7 @@ export default function ProjectDetail() {
                         value={maintenanceSettings.maintenance_frequency}
                         onValueChange={(value) => setMaintenanceSettings({ ...maintenanceSettings, maintenance_frequency: value })}
                       >
-                        <SelectTrigger className="border-2">
+                        <SelectTrigger className="border">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -3686,7 +3686,7 @@ export default function ProjectDetail() {
                       type="date"
                       value={maintenanceSettings.maintenance_start_date}
                       onChange={(e) => setMaintenanceSettings({ ...maintenanceSettings, maintenance_start_date: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -3696,7 +3696,7 @@ export default function ProjectDetail() {
                       placeholder="e.g., Includes hosting, updates, and support"
                       value={maintenanceSettings.maintenance_notes}
                       onChange={(e) => setMaintenanceSettings({ ...maintenanceSettings, maintenance_notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                       rows={2}
                     />
                   </div>
@@ -3704,11 +3704,11 @@ export default function ProjectDetail() {
               </>
             )}
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleSaveMaintenance} className="border-2" disabled={updateProject.isPending}>
+            <Button onClick={handleSaveMaintenance} className="border" disabled={updateProject.isPending}>
               {updateProject.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save
             </Button>
@@ -3718,15 +3718,15 @@ export default function ProjectDetail() {
 
       {/* Delete Project Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[450px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[450px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
               Delete Project
             </DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-4">
-            <div className="bg-destructive/10 border-2 border-destructive/20 p-4 rounded-lg">
+            <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                 <div className="space-y-2">
@@ -3747,23 +3747,23 @@ export default function ProjectDetail() {
 
             <div className="space-y-2">
               <Label htmlFor="delete-confirm">
-                To confirm, type <span className="font-mono font-bold text-destructive">"{dbProject?.name}"</span> below:
+                To confirm, type <span className="font-mono font-semibold text-destructive">"{dbProject?.name}"</span> below:
               </Label>
               <Input
                 id="delete-confirm"
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                 placeholder="Enter project name"
-                className="border-2"
+                className="border"
                 autoComplete="off"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
-              className="border-2"
+              className="border"
             >
               Cancel
             </Button>
@@ -3771,7 +3771,7 @@ export default function ProjectDetail() {
               variant="destructive"
               onClick={handleDeleteProject}
               disabled={deleteConfirmText !== dbProject?.name || deleteProject.isPending}
-              className="border-2"
+              className="border"
             >
               {deleteProject.isPending ? (
                 <>

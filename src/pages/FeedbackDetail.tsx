@@ -196,7 +196,7 @@ export default function FeedbackDetail() {
           <ArrowLeft className="h-4 w-4" />
           Back to Feedback
         </Button>
-        <Card className="border-2 border-destructive/50">
+        <Card className="border border-destructive/50">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-destructive mb-4">Feedback not found</p>
             <Button variant="outline" onClick={() => navigateOrg("/tickets/feedback")}>
@@ -227,19 +227,19 @@ export default function FeedbackDetail() {
                 {feedback.status.replace("-", " ")}
               </Badge>
             </div>
-            <h1 className="text-lg sm:text-2xl font-bold tracking-tight mt-1 truncate">{feedback.title}</h1>
+            <h1 className="text-lg sm:text-2xl font-semibold tracking-tight mt-1 truncate">{feedback.title}</h1>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Button variant="outline" className="border-2" onClick={handleStartEdit}>
+          <Button variant="outline" className="border" onClick={handleStartEdit}>
             <Edit className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Edit</span>
           </Button>
           <Select value={feedback.status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[130px] sm:w-[160px] border-2">
+            <SelectTrigger className="w-[130px] sm:w-[160px] border">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-2">
+            <SelectContent className="border">
               <SelectItem value="acknowledged">Acknowledged</SelectItem>
               <SelectItem value="under-review">Under Review</SelectItem>
               <SelectItem value="investigating">Investigating</SelectItem>
@@ -249,11 +249,11 @@ export default function FeedbackDetail() {
           </Select>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon" className="border-2 text-destructive hover:text-destructive">
+              <Button variant="outline" size="icon" className="border text-destructive hover:text-destructive">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="border-2">
+            <AlertDialogContent className="border">
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Feedback</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -261,7 +261,7 @@ export default function FeedbackDetail() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                   Delete
                 </AlertDialogAction>
@@ -275,9 +275,9 @@ export default function FeedbackDetail() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
-              <CardTitle className="text-lg font-bold uppercase tracking-wider">Description</CardTitle>
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-lg font-semibold uppercase tracking-wider">Description</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               {feedback.description ? (
@@ -290,9 +290,9 @@ export default function FeedbackDetail() {
 
           {/* Internal Notes */}
           {feedback.notes && (
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
-                <CardTitle className="text-lg font-bold uppercase tracking-wider">Internal Notes</CardTitle>
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
+                <CardTitle className="text-lg font-semibold uppercase tracking-wider">Internal Notes</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <p className="text-foreground whitespace-pre-wrap">{feedback.notes}</p>
@@ -307,9 +307,9 @@ export default function FeedbackDetail() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Sentiment */}
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
-              <CardTitle className="text-lg font-bold uppercase tracking-wider">Sentiment</CardTitle>
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-lg font-semibold uppercase tracking-wider">Sentiment</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -325,14 +325,14 @@ export default function FeedbackDetail() {
           </Card>
 
           {/* Details */}
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
-              <CardTitle className="text-lg font-bold uppercase tracking-wider">Details</CardTitle>
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-lg font-semibold uppercase tracking-wider">Details</CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground">Category</p>
-                <Badge variant="outline" className="mt-1 border-2">
+                <Badge variant="outline" className="mt-1 border">
                   {categoryLabels[feedback.category] || feedback.category}
                 </Badge>
               </div>
@@ -383,8 +383,8 @@ export default function FeedbackDetail() {
 
       {/* Edit Feedback Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="border-2 sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Feedback</DialogTitle>
           </DialogHeader>
           {editData && (
@@ -395,7 +395,7 @@ export default function FeedbackDetail() {
                   id="edit-title"
                   value={editData.title}
                   onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -404,7 +404,7 @@ export default function FeedbackDetail() {
                   id="edit-description"
                   value={editData.description}
                   onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={4}
                 />
               </div>
@@ -414,7 +414,7 @@ export default function FeedbackDetail() {
                   id="edit-notes"
                   value={editData.notes}
                   onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={3}
                 />
               </div>
@@ -422,10 +422,10 @@ export default function FeedbackDetail() {
                 <div className="grid gap-2">
                   <Label>Status</Label>
                   <Select value={editData.status} onValueChange={(v) => setEditData({ ...editData, status: v as FeedbackStatus })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="acknowledged">Acknowledged</SelectItem>
                       <SelectItem value="under-review">Under Review</SelectItem>
                       <SelectItem value="investigating">Investigating</SelectItem>
@@ -437,10 +437,10 @@ export default function FeedbackDetail() {
                 <div className="grid gap-2">
                   <Label>Sentiment</Label>
                   <Select value={editData.sentiment} onValueChange={(v) => setEditData({ ...editData, sentiment: v as FeedbackSentiment })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="positive">Positive</SelectItem>
                       <SelectItem value="neutral">Neutral</SelectItem>
                       <SelectItem value="negative">Negative</SelectItem>
@@ -452,10 +452,10 @@ export default function FeedbackDetail() {
                 <div className="grid gap-2">
                   <Label>Category</Label>
                   <Select value={editData.category} onValueChange={(v) => setEditData({ ...editData, category: v as FeedbackCategory })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="general">General</SelectItem>
                       <SelectItem value="performance">Performance</SelectItem>
                       <SelectItem value="ui-ux">UI/UX</SelectItem>
@@ -468,10 +468,10 @@ export default function FeedbackDetail() {
                 <div className="grid gap-2">
                   <Label>Source</Label>
                   <Select value={editData.source} onValueChange={(v) => setEditData({ ...editData, source: v as FeedbackSource })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="email">Email</SelectItem>
                       <SelectItem value="call">Phone Call</SelectItem>
                       <SelectItem value="support">Support Ticket</SelectItem>
@@ -486,7 +486,7 @@ export default function FeedbackDetail() {
                     id="edit-from"
                     value={editData.from_contact}
                     onChange={(e) => setEditData({ ...editData, from_contact: e.target.value })}
-                    className="border-2"
+                    className="border"
                     placeholder="Contact name or email"
                   />
                 </div>
@@ -496,10 +496,10 @@ export default function FeedbackDetail() {
                     value={editData.project_id || "none"}
                     onValueChange={(v) => setEditData({ ...editData, project_id: v === "none" ? null : v })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="none">No project</SelectItem>
                       {projects?.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
@@ -512,12 +512,12 @@ export default function FeedbackDetail() {
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsEditing(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditing(false)} className="border">
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit} className="border-2" disabled={updateFeedback.isPending}>
+            <Button onClick={handleSaveEdit} className="border" disabled={updateFeedback.isPending}>
               {updateFeedback.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
             </Button>

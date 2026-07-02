@@ -35,7 +35,7 @@ export default function ForgotPassword() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-2">
+        <Card className="w-full max-w-md border">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="flex justify-center">
@@ -43,7 +43,7 @@ export default function ForgotPassword() {
                   <Mail className="h-6 w-6 text-chart-2" />
                 </div>
               </div>
-              <h2 className="text-xl font-bold">Check your email</h2>
+              <h2 className="text-xl font-semibold">Check your email</h2>
               <p className="text-muted-foreground">
                 We've sent a password reset link to <strong>{email}</strong>
               </p>
@@ -53,7 +53,7 @@ export default function ForgotPassword() {
               <div className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full border-2"
+                  className="w-full border"
                   onClick={() => setSuccess(false)}
                 >
                   Try another email
@@ -74,14 +74,14 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-2">
+      <Card className="w-full max-w-md border">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="h-12 w-12 bg-primary flex items-center justify-center">
               <Building2 className="h-6 w-6 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Reset your password</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Reset your password</CardTitle>
           <CardDescription>
             Enter your email and we'll send you a reset link
           </CardDescription>
@@ -103,11 +103,11 @@ export default function ForgotPassword() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="border-2"
+                className="border"
               />
             </div>
 
-            <Button type="submit" className="w-full border-2" disabled={isLoading}>
+            <Button type="submit" className="w-full border" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

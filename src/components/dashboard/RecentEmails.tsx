@@ -12,8 +12,8 @@ export function RecentEmails() {
   const recentEmails = emails?.slice(0, 5) || [];
 
   return (
-    <Card className="border-2">
-      <CardHeader className="border-b-2 pb-3">
+    <Card className="border">
+      <CardHeader className="border-b pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Mail className="h-4 w-4" />
           Recent Emails

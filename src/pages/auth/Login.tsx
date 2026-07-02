@@ -57,12 +57,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-2">
+      <Card className="w-full max-w-md border">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <img src="/logo.png" alt="Logo" className="h-32 w-auto" />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
           <CardDescription>
             Enter your credentials to access your account
           </CardDescription>
@@ -85,7 +85,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="border-2"
+                className="border"
               />
             </div>
 
@@ -107,11 +107,11 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="border-2"
+                className="border"
               />
             </div>
 
-            <Button type="submit" className="w-full border-2" disabled={isLoading}>
+            <Button type="submit" className="w-full border" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -319,7 +319,7 @@ export default function Dashboard() {
 
       {/* Empty state */}
       {visibleStatCards.length === 0 && visibleWidgets.length === 0 && (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
+        <div className="text-center py-12 border border-dashed rounded-lg">
           <p className="text-muted-foreground mb-4">
             Your dashboard is empty. Click Customize to add widgets.
           </p>

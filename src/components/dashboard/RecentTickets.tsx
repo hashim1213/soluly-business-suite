@@ -23,9 +23,9 @@ export function RecentTickets() {
 
   if (isLoading) {
     return (
-      <Card className="border-2 border-border shadow-sm">
-        <CardHeader className="border-b-2 border-border">
-          <CardTitle className="text-lg font-bold uppercase tracking-wider">Recent Tickets</CardTitle>
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="border-b border-border">
+          <CardTitle className="text-lg font-semibold uppercase tracking-wider">Recent Tickets</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -35,9 +35,9 @@ export function RecentTickets() {
   }
 
   return (
-    <Card className="border-2 border-border shadow-sm">
-      <CardHeader className="border-b-2 border-border">
-        <CardTitle className="text-lg font-bold uppercase tracking-wider">Recent Tickets</CardTitle>
+    <Card className="border border-border shadow-sm">
+      <CardHeader className="border-b border-border">
+        <CardTitle className="text-lg font-semibold uppercase tracking-wider">Recent Tickets</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {recentTickets.length === 0 ? (
@@ -54,7 +54,7 @@ export function RecentTickets() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 border-2 border-border flex items-center justify-center bg-secondary shrink-0 mt-0.5">
+                    <div className="h-8 w-8 border border-border flex items-center justify-center bg-secondary shrink-0 mt-0.5">
                       <Ticket className="h-4 w-4" />
                     </div>
                     <div>

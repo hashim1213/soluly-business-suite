@@ -111,7 +111,7 @@ export default function FeatureRequestDetail() {
           <ArrowLeft className="h-4 w-4" />
           Back to Feature Requests
         </Button>
-        <Card className="border-2 border-destructive/50">
+        <Card className="border border-destructive/50">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-destructive mb-4">Feature request not found</p>
             <Button variant="outline" onClick={() => navigateOrg("/tickets/features")}>
@@ -142,20 +142,20 @@ export default function FeatureRequestDetail() {
                 {priorityLabels[feature.priority] || feature.priority}
               </Badge>
               {feature.added_to_roadmap && (
-                <Badge variant="outline" className="border-2 gap-1">
+                <Badge variant="outline" className="border gap-1">
                   <MapPin className="h-3 w-3" />
                   <span className="hidden sm:inline">Roadmap</span>
                 </Badge>
               )}
             </div>
-            <h1 className="text-lg sm:text-2xl font-bold tracking-tight mt-1">{feature.title}</h1>
+            <h1 className="text-lg sm:text-2xl font-semibold tracking-tight mt-1">{feature.title}</h1>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button
             variant={feature.added_to_roadmap ? "default" : "outline"}
             size="sm"
-            className="border-2 gap-1"
+            className="border gap-1"
             onClick={handleRoadmapToggle}
           >
             <MapPin className="h-4 w-4" />
@@ -163,11 +163,11 @@ export default function FeatureRequestDetail() {
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon" className="border-2 text-destructive hover:text-destructive">
+              <Button variant="outline" size="icon" className="border text-destructive hover:text-destructive">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="border-2">
+            <AlertDialogContent className="border">
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Feature Request</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -175,7 +175,7 @@ export default function FeatureRequestDetail() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                   Delete
                 </AlertDialogAction>
@@ -189,9 +189,9 @@ export default function FeatureRequestDetail() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
-              <CardTitle className="text-lg font-bold uppercase tracking-wider">Description</CardTitle>
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-lg font-semibold uppercase tracking-wider">Description</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               {feature.description ? (
@@ -204,9 +204,9 @@ export default function FeatureRequestDetail() {
 
           {/* Internal Notes */}
           {feature.notes && (
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
-                <CardTitle className="text-lg font-bold uppercase tracking-wider">Internal Notes</CardTitle>
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
+                <CardTitle className="text-lg font-semibold uppercase tracking-wider">Internal Notes</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <p className="text-foreground whitespace-pre-wrap">{feature.notes}</p>
@@ -216,16 +216,16 @@ export default function FeatureRequestDetail() {
 
           {/* Associated Projects */}
           {feature.projects && feature.projects.length > 0 && (
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
-                <CardTitle className="text-lg font-bold uppercase tracking-wider">Associated Projects</CardTitle>
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
+                <CardTitle className="text-lg font-semibold uppercase tracking-wider">Associated Projects</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   {feature.projects.map((p) => (
                     <div
                       key={p.project_id}
-                      className="flex items-center gap-3 p-3 border-2 border-border rounded cursor-pointer hover:bg-accent/50 transition-colors"
+                      className="flex items-center gap-3 p-3 border border-border rounded cursor-pointer hover:bg-accent/50 transition-colors"
                       onClick={() => navigateOrg(`/projects/${p.project?.display_id}`)}
                     >
                       <FolderOpen className="h-5 w-5 text-muted-foreground" />
@@ -244,18 +244,18 @@ export default function FeatureRequestDetail() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Status & Priority */}
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
-              <CardTitle className="text-lg font-bold uppercase tracking-wider">Status</CardTitle>
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-lg font-semibold uppercase tracking-wider">Status</CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Status</p>
                 <Select value={feature.status} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="w-full border-2">
+                  <SelectTrigger className="w-full border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="backlog">Backlog</SelectItem>
                     <SelectItem value="in-review">In Review</SelectItem>
                     <SelectItem value="planned">Planned</SelectItem>
@@ -270,10 +270,10 @@ export default function FeatureRequestDetail() {
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Priority</p>
                 <Select value={feature.priority} onValueChange={handlePriorityChange}>
-                  <SelectTrigger className="w-full border-2">
+                  <SelectTrigger className="w-full border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="low">Low</SelectItem>
@@ -284,9 +284,9 @@ export default function FeatureRequestDetail() {
           </Card>
 
           {/* Details */}
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
-              <CardTitle className="text-lg font-bold uppercase tracking-wider">Details</CardTitle>
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-lg font-semibold uppercase tracking-wider">Details</CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               {feature.client_name && (

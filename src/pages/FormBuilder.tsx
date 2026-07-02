@@ -292,7 +292,7 @@ export default function FormBuilder() {
   if (formError) {
     return (
       <div className="p-8">
-        <Card className="border-2 border-red-200 bg-red-50">
+        <Card className="border border-red-200 bg-red-50">
           <CardContent className="p-6">
             <p className="text-red-600">Error loading form: {formError.message}</p>
           </CardContent>
@@ -314,7 +314,7 @@ export default function FormBuilder() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b-2 border-border">
+      <div className="sticky top-0 z-10 bg-background border-b border-border">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -322,13 +322,13 @@ export default function FormBuilder() {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigateOrg("forms")}
-                className="border-2 border-border"
+                className="border border-border"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold">{form.title}</h1>
+                  <h1 className="text-xl font-semibold">{form.title}</h1>
                   <Badge className={formStatusStyles[form.status]}>
                     {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
                   </Badge>
@@ -346,7 +346,7 @@ export default function FormBuilder() {
               <Button
                 variant="outline"
                 onClick={() => navigateOrg(`forms/${displayId}/responses`)}
-                className="border-2 border-border"
+                className="border border-border"
               >
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Responses ({form.response_count})
@@ -356,7 +356,7 @@ export default function FormBuilder() {
                 variant="outline"
                 onClick={handleSaveForm}
                 disabled={updateForm.isPending || !hasUnsavedChanges}
-                className="border-2 border-border"
+                className="border border-border"
               >
                 {updateForm.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -370,7 +370,7 @@ export default function FormBuilder() {
                 <Button
                   onClick={handlePublish}
                   disabled={publishForm.isPending}
-                  className="border-2 border-border bg-emerald-600 hover:bg-emerald-700"
+                  className="border border-border bg-emerald-600 hover:bg-emerald-700"
                 >
                   {publishForm.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -384,7 +384,7 @@ export default function FormBuilder() {
                   variant="outline"
                   onClick={handleUnpublish}
                   disabled={unpublishForm.isPending}
-                  className="border-2 border-border"
+                  className="border border-border"
                 >
                   {unpublishForm.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -402,7 +402,7 @@ export default function FormBuilder() {
       {/* Main Content */}
       <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="border-2 border-border">
+          <TabsList className="border border-border">
             <TabsTrigger value="fields" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Fields
             </TabsTrigger>
@@ -423,12 +423,12 @@ export default function FormBuilder() {
                   <h2 className="text-lg font-semibold">Form Fields</h2>
                   <Dialog open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="border-2 border-border">
+                      <Button className="border border-border">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Field
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px] border-2 border-border">
+                    <DialogContent className="sm:max-w-[500px] border border-border">
                       <DialogHeader>
                         <DialogTitle>Add New Field</DialogTitle>
                       </DialogHeader>
@@ -439,7 +439,7 @@ export default function FormBuilder() {
                           return (
                             <Card
                               key={type}
-                              className={`cursor-pointer border-2 transition-all ${
+                              className={`cursor-pointer border transition-all ${
                                 newFieldType === type
                                   ? "border-primary bg-primary/5"
                                   : "border-border hover:border-primary/50"
@@ -460,7 +460,7 @@ export default function FormBuilder() {
                         <Button
                           onClick={handleAddField}
                           disabled={createField.isPending}
-                          className="border-2 border-border"
+                          className="border border-border"
                         >
                           {createField.isPending ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -481,7 +481,7 @@ export default function FormBuilder() {
                       return (
                         <Card
                           key={field.id}
-                          className={`border-2 cursor-pointer transition-all ${
+                          className={`border cursor-pointer transition-all ${
                             editingField?.id === field.id
                               ? "border-primary"
                               : "border-border hover:border-primary/50"
@@ -540,14 +540,14 @@ export default function FormBuilder() {
                     })}
                   </div>
                 ) : (
-                  <Card className="border-2 border-dashed border-border">
+                  <Card className="border border-dashed border-border">
                     <CardContent className="py-12 text-center">
                       <Plus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-lg font-semibold">No fields yet</h3>
                       <p className="text-muted-foreground mb-4">
                         Add fields to build your form
                       </p>
-                      <Button onClick={() => setIsFieldDialogOpen(true)} className="border-2 border-border">
+                      <Button onClick={() => setIsFieldDialogOpen(true)} className="border border-border">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Your First Field
                       </Button>
@@ -565,7 +565,7 @@ export default function FormBuilder() {
                     onClose={() => setEditingField(null)}
                   />
                 ) : (
-                  <Card className="border-2 border-border">
+                  <Card className="border border-border">
                     <CardContent className="py-12 text-center">
                       <Settings className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-muted-foreground">
@@ -580,7 +580,7 @@ export default function FormBuilder() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="mt-6">
-            <Card className="border-2 border-border max-w-2xl">
+            <Card className="border border-border max-w-2xl">
               <CardHeader>
                 <CardTitle>Form Settings</CardTitle>
                 <CardDescription>
@@ -597,7 +597,7 @@ export default function FormBuilder() {
                       setFormTitle(e.target.value);
                       setHasUnsavedChanges(true);
                     }}
-                    className="border-2 border-border"
+                    className="border border-border"
                   />
                 </div>
 
@@ -610,7 +610,7 @@ export default function FormBuilder() {
                       setFormDescription(e.target.value);
                       setHasUnsavedChanges(true);
                     }}
-                    className="border-2 border-border min-h-[100px]"
+                    className="border border-border min-h-[100px]"
                     placeholder="Describe what this form is for..."
                   />
                 </div>
@@ -680,7 +680,7 @@ export default function FormBuilder() {
                       setFormSettings({ ...formSettings, thank_you_message: e.target.value });
                       setHasUnsavedChanges(true);
                     }}
-                    className="border-2 border-border"
+                    className="border border-border"
                     placeholder="Message shown after submission..."
                   />
                 </div>
@@ -688,7 +688,7 @@ export default function FormBuilder() {
                 <Button
                   onClick={handleSaveForm}
                   disabled={updateForm.isPending || !hasUnsavedChanges}
-                  className="border-2 border-border"
+                  className="border border-border"
                 >
                   {updateForm.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -713,12 +713,12 @@ export default function FormBuilder() {
                 </div>
                 <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="border-2 border-border" disabled={form.status !== "published"}>
+                    <Button className="border border-border" disabled={form.status !== "published"}>
                       <Plus className="mr-2 h-4 w-4" />
                       Generate Link
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px] border-2 border-border">
+                  <DialogContent className="sm:max-w-[500px] border border-border">
                     <DialogHeader>
                       <DialogTitle>Generate Form Link</DialogTitle>
                     </DialogHeader>
@@ -731,7 +731,7 @@ export default function FormBuilder() {
                             setNewLink({ ...newLink, link_type: value })
                           }
                         >
-                          <SelectTrigger className="border-2 border-border">
+                          <SelectTrigger className="border border-border">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -756,7 +756,7 @@ export default function FormBuilder() {
                                 setNewLink({ ...newLink, recipient_name: e.target.value })
                               }
                               placeholder="John Smith"
-                              className="border-2 border-border"
+                              className="border border-border"
                             />
                           </div>
                           <div className="space-y-2">
@@ -768,7 +768,7 @@ export default function FormBuilder() {
                                 setNewLink({ ...newLink, recipient_email: e.target.value })
                               }
                               placeholder="john@example.com"
-                              className="border-2 border-border"
+                              className="border border-border"
                             />
                           </div>
                           <div className="space-y-2">
@@ -779,7 +779,7 @@ export default function FormBuilder() {
                                 setNewLink({ ...newLink, recipient_company: e.target.value })
                               }
                               placeholder="Acme Inc."
-                              className="border-2 border-border"
+                              className="border border-border"
                             />
                           </div>
                         </>
@@ -789,7 +789,7 @@ export default function FormBuilder() {
                       <Button
                         onClick={handleCreateLink}
                         disabled={createLink.isPending}
-                        className="border-2 border-border"
+                        className="border border-border"
                       >
                         {createLink.isPending ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -804,7 +804,7 @@ export default function FormBuilder() {
               </div>
 
               {form.status !== "published" && (
-                <Card className="border-2 border-amber-200 bg-amber-50">
+                <Card className="border border-amber-200 bg-amber-50">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 text-amber-700">
                       <AlertCircle className="h-4 w-4" />
@@ -817,7 +817,7 @@ export default function FormBuilder() {
               {links && links.length > 0 ? (
                 <div className="space-y-3">
                   {links.map((link) => (
-                    <Card key={link.id} className="border-2 border-border">
+                    <Card key={link.id} className="border border-border">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -861,7 +861,7 @@ export default function FormBuilder() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleCopyLink(link.token)}
-                              className="border-2 border-border"
+                              className="border border-border"
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
@@ -869,7 +869,7 @@ export default function FormBuilder() {
                               variant="outline"
                               size="sm"
                               onClick={() => window.open(getFormPublicUrl(link.token), "_blank")}
-                              className="border-2 border-border"
+                              className="border border-border"
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
@@ -880,7 +880,7 @@ export default function FormBuilder() {
                                 onClick={() =>
                                   deactivateLink.mutate({ id: link.id, formId: form.id })
                                 }
-                                className="border-2 border-border text-red-600"
+                                className="border border-border text-red-600"
                               >
                                 Deactivate
                               </Button>
@@ -893,14 +893,14 @@ export default function FormBuilder() {
                 </div>
               ) : (
                 form.status === "published" && (
-                  <Card className="border-2 border-dashed border-border">
+                  <Card className="border border-dashed border-border">
                     <CardContent className="py-12 text-center">
                       <Link className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-lg font-semibold">No links generated yet</h3>
                       <p className="text-muted-foreground mb-4">
                         Create links to share your form with respondents
                       </p>
-                      <Button onClick={() => setIsLinkDialogOpen(true)} className="border-2 border-border">
+                      <Button onClick={() => setIsLinkDialogOpen(true)} className="border border-border">
                         <Plus className="mr-2 h-4 w-4" />
                         Generate First Link
                       </Button>
@@ -953,7 +953,7 @@ function FieldEditor({
   const hasOptions = FIELD_TYPE_CONFIG[field.field_type].hasOptions;
 
   return (
-    <Card className="border-2 border-border">
+    <Card className="border border-border">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Edit Field</CardTitle>
@@ -969,7 +969,7 @@ function FieldEditor({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             onBlur={handleSave}
-            className="border-2 border-border"
+            className="border border-border"
           />
         </div>
 
@@ -980,7 +980,7 @@ function FieldEditor({
             onChange={(e) => setDescription(e.target.value)}
             onBlur={handleSave}
             placeholder="Help text for respondents..."
-            className="border-2 border-border"
+            className="border border-border"
           />
         </div>
 
@@ -991,7 +991,7 @@ function FieldEditor({
             onChange={(e) => setPlaceholder(e.target.value)}
             onBlur={handleSave}
             placeholder="Placeholder text..."
-            className="border-2 border-border"
+            className="border border-border"
           />
         </div>
 
@@ -1024,7 +1024,7 @@ function FieldEditor({
                       setOptions(newOptions);
                     }}
                     onBlur={handleSave}
-                    className="border-2 border-border"
+                    className="border border-border"
                   />
                   <Button
                     variant="ghost"
@@ -1052,7 +1052,7 @@ function FieldEditor({
                   setOptions(newOptions);
                   onUpdate({ options: newOptions });
                 }}
-                className="border-2 border-border w-full"
+                className="border border-border w-full"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Option

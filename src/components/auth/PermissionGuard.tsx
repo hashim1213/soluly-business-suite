@@ -41,14 +41,14 @@ export function PermissionGuard({
 
     // Default fallback: access denied message
     return (
-      <Card className="border-2">
+      <Card className="border">
         <CardContent className="p-8 text-center">
           <div className="flex justify-center mb-4">
             <div className="h-12 w-12 bg-muted rounded-full flex items-center justify-center">
               <ShieldOff className="h-6 w-6 text-muted-foreground" />
             </div>
           </div>
-          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
           <p className="text-muted-foreground">
             You don't have permission to access this feature.
           </p>

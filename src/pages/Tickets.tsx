@@ -429,13 +429,13 @@ export default function Tickets() {
         <p className="text-sm text-muted-foreground">Manage incoming tickets from email and other sources</p>
         <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <SheetTrigger asChild>
-            <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
+            <Button className="border shadow-sm hover:shadow-md transition-shadow">
               <Plus className="h-4 w-4 mr-2" />
               New Ticket
             </Button>
           </SheetTrigger>
           <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-            <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+            <SheetHeader className="border-b border-border pb-4 mb-4">
               <SheetTitle>Create New Ticket</SheetTitle>
             </SheetHeader>
             <div className="grid gap-4 py-4">
@@ -446,7 +446,7 @@ export default function Tickets() {
                   placeholder="Enter ticket title"
                   value={newTicket.title}
                   onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -456,7 +456,7 @@ export default function Tickets() {
                   placeholder="Describe the ticket in detail"
                   value={newTicket.description}
                   onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={5}
                 />
               </div>
@@ -467,10 +467,10 @@ export default function Tickets() {
                     value={newTicket.category}
                     onValueChange={(value: TicketCategory) => setNewTicket({ ...newTicket, category: value })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="feature">Feature Request</SelectItem>
                       <SelectItem value="quote">Customer Quote</SelectItem>
                       <SelectItem value="feedback">Feedback</SelectItem>
@@ -484,10 +484,10 @@ export default function Tickets() {
                     value={newTicket.project_id}
                     onValueChange={(value) => setNewTicket({ ...newTicket, project_id: value })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {projects?.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.name}
@@ -504,10 +504,10 @@ export default function Tickets() {
                     value={newTicket.priority}
                     onValueChange={(value: TicketPriority) => setNewTicket({ ...newTicket, priority: value })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="high">High</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
                       <SelectItem value="low">Low</SelectItem>
@@ -520,10 +520,10 @@ export default function Tickets() {
                     value={newTicket.assignee_id}
                     onValueChange={(value) => setNewTicket({ ...newTicket, assignee_id: value })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select assignee" />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {teamMembers?.filter(m => m.status === "active").map((member) => (
                         <SelectItem key={member.id} value={member.id}>
                           {member.name}
@@ -534,11 +534,11 @@ export default function Tickets() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-2">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border">
                 Cancel
               </Button>
-              <Button onClick={handleCreateTicket} className="border-2" disabled={createTicket.isPending}>
+              <Button onClick={handleCreateTicket} className="border" disabled={createTicket.isPending}>
                 {createTicket.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -562,16 +562,16 @@ export default function Tickets() {
           return (
             <Card
               key={key}
-              className={`border-2 shadow-sm cursor-pointer transition-all ${isActive ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"}`}
+              className={`border shadow-sm cursor-pointer transition-all ${isActive ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"}`}
               onClick={() => setActiveTab(key)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 border-2 border-border flex items-center justify-center ${isActive ? config.color : "bg-secondary"}`}>
+                  <div className={`h-10 w-10 border border-border flex items-center justify-center ${isActive ? config.color : "bg-secondary"}`}>
                     <Icon className={`h-5 w-5 ${isActive ? "text-primary-foreground" : ""}`} />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{count}</div>
+                    <div className="text-2xl font-semibold">{count}</div>
                     <div className="text-xs text-muted-foreground">{config.label}</div>
                   </div>
                 </div>
@@ -582,12 +582,12 @@ export default function Tickets() {
       </div>
 
       {/* Main Content */}
-      <Card className="border-2 border-border shadow-sm">
-        <CardHeader className="border-b-2 border-border p-3 sm:p-6">
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="border-b border-border p-3 sm:p-6">
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-max sm:w-auto">
-                <TabsList className="border-2 border-border p-1">
+                <TabsList className="border border-border p-1">
                   <TabsTrigger value="all" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                     All
                   </TabsTrigger>
@@ -624,7 +624,7 @@ export default function Tickets() {
                   placeholder="Search tickets..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 border-2"
+                  className="w-full pl-10 border"
                 />
               </div>
 
@@ -632,7 +632,7 @@ export default function Tickets() {
               <Button
                 variant={showClosedTickets ? "default" : "outline"}
                 onClick={() => setShowClosedTickets(!showClosedTickets)}
-                className="border-2"
+                className="border"
               >
                 <Check className="h-4 w-4 mr-2" />
                 {showClosedTickets ? "Hide Closed" : "Show Closed"}
@@ -641,7 +641,7 @@ export default function Tickets() {
               {/* Advanced Filters */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="border-2">
+                  <Button variant="outline" className="border">
                     <Filter className="h-4 w-4 mr-2" />
                     Filters
                     {hasActiveFilters && (
@@ -667,7 +667,7 @@ export default function Tickets() {
                       <div className="space-y-2">
                         <Label>Status</Label>
                         <Select value={filterStatus} onValueChange={setFilterStatus}>
-                          <SelectTrigger className="border-2">
+                          <SelectTrigger className="border">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -683,7 +683,7 @@ export default function Tickets() {
                       <div className="space-y-2">
                         <Label>Priority</Label>
                         <Select value={filterPriority} onValueChange={setFilterPriority}>
-                          <SelectTrigger className="border-2">
+                          <SelectTrigger className="border">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -698,7 +698,7 @@ export default function Tickets() {
                       <div className="space-y-2">
                         <Label>Assignee</Label>
                         <Select value={filterAssignee} onValueChange={setFilterAssignee}>
-                          <SelectTrigger className="border-2">
+                          <SelectTrigger className="border">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -716,7 +716,7 @@ export default function Tickets() {
                       <div className="space-y-2">
                         <Label>Project</Label>
                         <Select value={filterProject} onValueChange={setFilterProject}>
-                          <SelectTrigger className="border-2">
+                          <SelectTrigger className="border">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -738,14 +738,14 @@ export default function Tickets() {
 
             {/* Batch Actions Bar */}
             {selectedTickets.size > 0 && (
-              <div className="flex items-center justify-between p-3 bg-primary/10 border-2 border-primary rounded">
+              <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary rounded">
                 <span className="text-sm font-medium">
                   {selectedTickets.size} ticket(s) selected
                 </span>
                 <div className="flex gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="border-2">
+                      <Button variant="outline" size="sm" className="border">
                         Update Status
                       </Button>
                     </DropdownMenuTrigger>
@@ -767,7 +767,7 @@ export default function Tickets() {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="border-2">
+                      <Button variant="outline" size="sm" className="border">
                         Assign
                       </Button>
                     </DropdownMenuTrigger>
@@ -821,21 +821,21 @@ export default function Tickets() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b-2 hover:bg-transparent">
+                  <TableRow className="border-b hover:bg-transparent">
                     <TableHead className="w-[40px]">
                       <Checkbox
                         checked={selectedTickets.size === filteredTickets.length && filteredTickets.length > 0}
                         onCheckedChange={toggleSelectAll}
                       />
                     </TableHead>
-                    <TableHead className="font-bold uppercase text-xs w-[80px] sm:w-[100px]">ID</TableHead>
-                    <TableHead className="font-bold uppercase text-xs min-w-[200px]">Title</TableHead>
-                    <TableHead className="font-bold uppercase text-xs w-[120px] hidden md:table-cell">Category</TableHead>
-                    <TableHead className="font-bold uppercase text-xs hidden lg:table-cell">Project</TableHead>
-                    <TableHead className="font-bold uppercase text-xs w-[80px]">Priority</TableHead>
-                    <TableHead className="font-bold uppercase text-xs w-[100px]">Status</TableHead>
-                    <TableHead className="font-bold uppercase text-xs w-[100px] hidden sm:table-cell">Created</TableHead>
-                    <TableHead className="font-bold uppercase text-xs w-[50px]"></TableHead>
+                    <TableHead className="font-semibold uppercase text-xs w-[80px] sm:w-[100px]">ID</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs min-w-[200px]">Title</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs w-[120px] hidden md:table-cell">Category</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs hidden lg:table-cell">Project</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs w-[80px]">Priority</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs w-[100px]">Status</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs w-[100px] hidden sm:table-cell">Created</TableHead>
+                    <TableHead className="font-semibold uppercase text-xs w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -845,7 +845,7 @@ export default function Tickets() {
                     return (
                       <TableRow
                         key={ticket.id}
-                        className={`border-b-2 cursor-pointer hover:bg-accent/50 ${isSelected ? "bg-primary/5" : ""}`}
+                        className={`border-b cursor-pointer hover:bg-accent/50 ${isSelected ? "bg-primary/5" : ""}`}
                         onClick={() => navigateOrg(`/tickets/${ticket.display_id}`)}
                       >
                         <TableCell onClick={(e) => e.stopPropagation()}>
@@ -907,7 +907,7 @@ export default function Tickets() {
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="border-2">
+                            <DropdownMenuContent align="end" className="border">
                               <DropdownMenuItem onClick={(e) => {
                                 e.stopPropagation();
                                 navigateOrg(`/tickets/${ticket.display_id}`);
@@ -966,12 +966,12 @@ export default function Tickets() {
       {/* Edit Ticket Sheet */}
       <Sheet open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-          <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+          <SheetHeader className="border-b border-border pb-4 mb-4">
             <SheetTitle>Edit Ticket</SheetTitle>
           </SheetHeader>
           <div className="grid gap-4 py-4">
             {selectedTicket && (
-              <div className="p-3 bg-secondary rounded border-2 border-border">
+              <div className="p-3 bg-secondary rounded border border-border">
                 <p className="font-mono text-xs text-muted-foreground">{selectedTicket.display_id}</p>
                 <p className="font-medium">{selectedTicket.title}</p>
               </div>
@@ -983,10 +983,10 @@ export default function Tickets() {
                   value={editForm.category}
                   onValueChange={(value: TicketCategory) => setEditForm({ ...editForm, category: value })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="feature">Feature Request</SelectItem>
                     <SelectItem value="quote">Customer Quote</SelectItem>
                     <SelectItem value="feedback">Feedback</SelectItem>
@@ -1000,10 +1000,10 @@ export default function Tickets() {
                   value={editForm.project_id}
                   onValueChange={(value) => setEditForm({ ...editForm, project_id: value })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     {projects?.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
@@ -1020,10 +1020,10 @@ export default function Tickets() {
                   value={editForm.priority}
                   onValueChange={(value: TicketPriority) => setEditForm({ ...editForm, priority: value })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="low">Low</SelectItem>
@@ -1036,10 +1036,10 @@ export default function Tickets() {
                   value={editForm.status}
                   onValueChange={(value: TicketStatus) => setEditForm({ ...editForm, status: value })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="open">Open</SelectItem>
                     <SelectItem value="in-progress">In Progress</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
@@ -1054,10 +1054,10 @@ export default function Tickets() {
                 value={editForm.assignee_id}
                 onValueChange={(value) => setEditForm({ ...editForm, assignee_id: value })}
               >
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   {teamMembers?.filter(m => m.status === "active").map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.name}
@@ -1067,11 +1067,11 @@ export default function Tickets() {
               </Select>
             </div>
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleUpdateTicket} className="border-2" disabled={updateTicket.isPending}>
+            <Button onClick={handleUpdateTicket} className="border" disabled={updateTicket.isPending}>
               {updateTicket.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (

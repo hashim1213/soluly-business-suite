@@ -21,7 +21,9 @@ export default {
   			foreground: 'hsl(var(--foreground))',
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				foreground: 'hsl(var(--primary-foreground))',
+  				hover: 'hsl(var(--primary-hover, var(--primary) / 0.9))',
+  				pressed: 'hsl(var(--primary-pressed, var(--primary) / 0.8))'
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
@@ -86,30 +88,9 @@ export default {
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		},
   		fontFamily: {
-  			sans: [
-  				'Space Grotesk',
-  				'ui-sans-serif',
-  				'system-ui',
-  				'-apple-system',
-  				'BlinkMacSystemFont',
-  				'Segoe UI',
-  				'Roboto',
-  				'Helvetica Neue',
-  				'Arial',
-  				'Noto Sans',
-  				'sans-serif'
-  			],
-  			mono: [
-  				'Space Mono',
-  				'ui-monospace',
-  				'SFMono-Regular',
-  				'Menlo',
-  				'Monaco',
-  				'Consolas',
-  				'Liberation Mono',
-  				'Courier New',
-  				'monospace'
-  			]
+  			sans: ['var(--font-sans)'],
+  			serif: ['var(--font-serif)'],
+  			mono: ['var(--font-mono)']
   		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',

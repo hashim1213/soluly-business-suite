@@ -435,20 +435,20 @@ export default function Projects() {
             variant="outline"
             size="sm"
             onClick={() => setShowArchivedProjects(!showArchivedProjects)}
-            className="border-2"
+            className="border"
           >
             <Archive className="h-4 w-4 mr-2" />
             {showArchivedProjects ? "Hide Archived" : "Show Archived"}
           </Button>
           <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
             <SheetTrigger asChild>
-              <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
+              <Button className="border shadow-sm hover:shadow-md transition-shadow">
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
               </Button>
             </SheetTrigger>
           <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-            <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+            <SheetHeader className="border-b border-border pb-4 mb-4">
               <SheetTitle>Create New Project</SheetTitle>
             </SheetHeader>
             <div className="grid gap-4 py-4">
@@ -459,7 +459,7 @@ export default function Projects() {
                   placeholder="Enter project name"
                   value={newProject.name}
                   onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -469,7 +469,7 @@ export default function Projects() {
                   placeholder="Brief description of the project"
                   value={newProject.description}
                   onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
 
@@ -482,7 +482,7 @@ export default function Projects() {
                       variant="outline"
                       role="combobox"
                       aria-expanded={contactPopoverOpen}
-                      className="justify-between border-2 w-full"
+                      className="justify-between border w-full"
                     >
                       {selectedContactId
                         ? contacts?.find((c) => c.id === selectedContactId)?.name || newProject.client
@@ -490,7 +490,7 @@ export default function Projects() {
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 border-2" align="start">
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 border" align="start">
                     <Command>
                       <CommandInput placeholder="Search contacts..." />
                       <CommandList>
@@ -501,7 +501,7 @@ export default function Projects() {
                                 placeholder="Enter contact name"
                                 value={newContactName}
                                 onChange={(e) => setNewContactName(e.target.value)}
-                                className="border-2"
+                                className="border"
                                 autoFocus
                               />
                               <Input
@@ -509,7 +509,7 @@ export default function Projects() {
                                 type="email"
                                 value={newProject.clientEmail}
                                 onChange={(e) => setNewProject({ ...newProject, clientEmail: e.target.value })}
-                                className="border-2"
+                                className="border"
                               />
                               <div className="flex gap-2">
                                 <Button
@@ -601,7 +601,7 @@ export default function Projects() {
                     placeholder="client@example.com"
                     value={newProject.clientEmail}
                     onChange={(e) => setNewProject({ ...newProject, clientEmail: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               )}
@@ -614,7 +614,7 @@ export default function Projects() {
                     placeholder="0"
                     value={newProject.value}
                     onChange={(e) => setNewProject({ ...newProject, value: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -624,7 +624,7 @@ export default function Projects() {
                     placeholder="0"
                     value={newProject.budget}
                     onChange={(e) => setNewProject({ ...newProject, budget: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -635,10 +635,10 @@ export default function Projects() {
                   value={newProject.status}
                   onValueChange={(value: ProjectStatus) => setNewProject({ ...newProject, status: value })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                   </SelectContent>
@@ -657,7 +657,7 @@ export default function Projects() {
                     type="date"
                     value={newProject.startDate}
                     onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -670,16 +670,16 @@ export default function Projects() {
                     type="date"
                     value={newProject.endDate}
                     onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => handleDialogOpenChange(false)} className="border-2">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
+              <Button variant="outline" onClick={() => handleDialogOpenChange(false)} className="border">
                 Cancel
               </Button>
-              <Button onClick={handleCreateProject} className="border-2" disabled={createProject.isPending}>
+              <Button onClick={handleCreateProject} className="border" disabled={createProject.isPending}>
                 {createProject.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -696,7 +696,7 @@ export default function Projects() {
       </div>
 
       {projects?.length === 0 ? (
-        <Card className="border-2 border-dashed">
+        <Card className="border border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground mb-4">No projects yet</p>
             <Button onClick={() => setIsDialogOpen(true)}>
@@ -706,7 +706,7 @@ export default function Projects() {
           </CardContent>
         </Card>
       ) : filteredProjects.length === 0 ? (
-        <Card className="border-2 border-dashed">
+        <Card className="border border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Archive className="h-8 w-8 text-muted-foreground mb-3" />
             <p className="text-muted-foreground mb-2">All projects are archived</p>
@@ -718,14 +718,14 @@ export default function Projects() {
       ) : (
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
           {filteredProjects.map((project) => (
-            <Card key={project.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="border-b-2 border-border pb-3">
+            <Card key={project.id} className="border border-border shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="border-b border-border pb-3">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-xs text-muted-foreground">{project.display_id}</span>
                       <span
-                        className={`inline-block px-2 py-0.5 text-xs font-bold uppercase ${
+                        className={`inline-block px-2 py-0.5 text-xs font-semibold uppercase ${
                           projectStatusStyles[project.status as keyof typeof projectStatusStyles] || "bg-slate-400 text-black"
                         }`}
                       >
@@ -736,11 +736,11 @@ export default function Projects() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 border-2 border-transparent hover:border-border">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 border border-transparent hover:border-border">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="border-2">
+                    <DropdownMenuContent align="end" className="border">
                       <DropdownMenuItem onClick={() => navigateOrg(`/projects/${project.display_id}`)}>
                         <FileText className="h-4 w-4 mr-2" />
                         View Details
@@ -779,7 +779,7 @@ export default function Projects() {
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <span>{project.client_name}</span>
                     </div>
-                    <span className="font-mono font-bold">{formatValue(project.value)}</span>
+                    <span className="font-mono font-semibold">{formatValue(project.value)}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
@@ -804,12 +804,12 @@ export default function Projects() {
       {/* Edit Project Sheet */}
       <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-          <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+          <SheetHeader className="border-b border-border pb-4 mb-4">
             <SheetTitle>Edit Project</SheetTitle>
           </SheetHeader>
           {selectedProject && (
             <div className="grid gap-4 py-4">
-              <div className="p-3 bg-secondary rounded border-2 border-border">
+              <div className="p-3 bg-secondary rounded border border-border">
                 <p className="font-mono text-xs text-muted-foreground">{selectedProject.display_id}</p>
               </div>
 
@@ -819,7 +819,7 @@ export default function Projects() {
                   id="edit-name"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
 
@@ -829,7 +829,7 @@ export default function Projects() {
                   id="edit-description"
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={3}
                 />
               </div>
@@ -841,7 +841,7 @@ export default function Projects() {
                     id="edit-client"
                     value={editForm.client_name}
                     onChange={(e) => setEditForm({ ...editForm, client_name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -851,7 +851,7 @@ export default function Projects() {
                     type="email"
                     value={editForm.client_email}
                     onChange={(e) => setEditForm({ ...editForm, client_email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -863,7 +863,7 @@ export default function Projects() {
                     id="edit-value"
                     value={editForm.value}
                     onChange={(e) => setEditForm({ ...editForm, value: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -872,7 +872,7 @@ export default function Projects() {
                     id="edit-budget"
                     value={editForm.budget}
                     onChange={(e) => setEditForm({ ...editForm, budget: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -884,10 +884,10 @@ export default function Projects() {
                     value={editForm.status}
                     onValueChange={(value: ProjectStatus) => setEditForm({ ...editForm, status: value })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="on_hold">On Hold</SelectItem>
@@ -905,7 +905,7 @@ export default function Projects() {
                     max="100"
                     value={editForm.progress}
                     onChange={(e) => setEditForm({ ...editForm, progress: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -921,7 +921,7 @@ export default function Projects() {
                     type="date"
                     value={editForm.start_date}
                     onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -934,7 +934,7 @@ export default function Projects() {
                     type="date"
                     value={editForm.end_date}
                     onChange={(e) => setEditForm({ ...editForm, end_date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -960,7 +960,7 @@ export default function Projects() {
                 </p>
 
                 {editForm.has_maintenance && (
-                  <div className="space-y-4 p-4 border-2 rounded-lg bg-muted/30">
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="edit-maintenance-amount">Amount ($)</Label>
@@ -969,7 +969,7 @@ export default function Projects() {
                           placeholder="500"
                           value={editForm.maintenance_amount}
                           onChange={(e) => setEditForm({ ...editForm, maintenance_amount: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -978,10 +978,10 @@ export default function Projects() {
                           value={editForm.maintenance_frequency}
                           onValueChange={(value) => setEditForm({ ...editForm, maintenance_frequency: value })}
                         >
-                          <SelectTrigger className="border-2">
+                          <SelectTrigger className="border">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="border-2">
+                          <SelectContent className="border">
                             <SelectItem value="monthly">Monthly</SelectItem>
                             <SelectItem value="quarterly">Quarterly</SelectItem>
                             <SelectItem value="yearly">Yearly</SelectItem>
@@ -996,7 +996,7 @@ export default function Projects() {
                         type="date"
                         value={editForm.maintenance_start_date}
                         onChange={(e) => setEditForm({ ...editForm, maintenance_start_date: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -1006,7 +1006,7 @@ export default function Projects() {
                         placeholder="Details about what's included in maintenance..."
                         value={editForm.maintenance_notes}
                         onChange={(e) => setEditForm({ ...editForm, maintenance_notes: e.target.value })}
-                        className="border-2"
+                        className="border"
                         rows={2}
                       />
                     </div>
@@ -1015,20 +1015,20 @@ export default function Projects() {
               </div>
             </div>
           )}
-          <div className="flex justify-between gap-3 border-t-2 border-border pt-4 mt-4">
+          <div className="flex justify-between gap-3 border-t border-border pt-4 mt-4">
             <Button
               variant="outline"
               onClick={() => selectedProject && generateProjectPDF(selectedProject, tickets || [])}
-              className="border-2"
+              className="border"
             >
               <Download className="h-4 w-4 mr-2" />
               Export PDF
             </Button>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setIsEditSheetOpen(false)} className="border-2">
+              <Button variant="outline" onClick={() => setIsEditSheetOpen(false)} className="border">
                 Cancel
               </Button>
-              <Button onClick={handleUpdateProject} className="border-2" disabled={updateProject.isPending}>
+              <Button onClick={handleUpdateProject} className="border" disabled={updateProject.isPending}>
                 {updateProject.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

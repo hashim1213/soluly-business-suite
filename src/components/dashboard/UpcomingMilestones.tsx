@@ -51,8 +51,8 @@ export function UpcomingMilestones() {
   };
 
   return (
-    <Card className="border-2">
-      <CardHeader className="border-b-2 pb-3">
+    <Card className="border">
+      <CardHeader className="border-b pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Flag className="h-4 w-4" />
           Upcoming Milestones

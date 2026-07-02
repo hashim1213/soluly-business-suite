@@ -267,7 +267,7 @@ export default function ContactDetail() {
           <Button variant="ghost" size="icon" onClick={() => navigateOrg("/crm")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-2xl font-bold">Contact Not Found</h1>
+          <h1 className="text-2xl font-semibold">Contact Not Found</h1>
         </div>
         <p className="text-muted-foreground">The contact you're looking for doesn't exist or you don't have access to it.</p>
       </div>
@@ -298,7 +298,7 @@ export default function ContactDetail() {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{contact.name}</h1>
+              <h1 className="text-2xl font-semibold">{contact.name}</h1>
               <Badge variant="outline" className="font-mono text-xs">
                 {contact.display_id}
               </Badge>

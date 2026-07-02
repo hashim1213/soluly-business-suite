@@ -180,7 +180,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
               {format(new Date(email.received_at), "MMM d, yyyy 'at' h:mm a")}
             </span>
           </div>
-          <h2 className="text-2xl font-bold mb-3">{email.subject}</h2>
+          <h2 className="text-2xl font-semibold mb-3">{email.subject}</h2>
           <div className="text-base text-muted-foreground">
             <span className="font-semibold text-foreground">From:</span>{" "}
             <span className="text-foreground">{email.sender_name || email.sender_email}</span>
@@ -208,7 +208,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
                     updateCategory.mutate({ id: email.id, category: value as EmailCategory })
                   }
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -240,7 +240,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
             {email.ai_summary && (
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">AI Summary</Label>
-                <p className="text-base bg-primary/5 border-2 border-primary/20 p-4 rounded-lg leading-relaxed">{email.ai_summary}</p>
+                <p className="text-base bg-primary/5 border border-primary/20 p-4 rounded-lg leading-relaxed">{email.ai_summary}</p>
               </div>
             )}
             {email.ai_suggested_title && (
@@ -263,7 +263,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
               linkToProject.mutate({ emailId: email.id, projectId: value === "none" ? null : value })
             }
           >
-            <SelectTrigger className="border-2">
+            <SelectTrigger className="border">
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
             <SelectContent>
@@ -302,7 +302,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
           {!linkedRecord && email.review_status !== "dismissed" && (
-            <Button onClick={handleOpenCreateDialog} className="border-2">
+            <Button onClick={handleOpenCreateDialog} className="border">
               <Plus className="h-4 w-4 mr-2" />
               Create Record
             </Button>
@@ -312,7 +312,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
               variant="outline"
               onClick={() => dismissEmail.mutate(email.id)}
               disabled={dismissEmail.isPending}
-              className="border-2"
+              className="border"
             >
               <XCircle className="h-4 w-4 mr-2" />
               Dismiss
@@ -322,7 +322,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
             variant="outline"
             onClick={() => reprocess.mutate(email.id)}
             disabled={reprocess.isPending}
-            className="border-2"
+            className="border"
           >
             {reprocess.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -346,7 +346,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
 
       {/* Create Record Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="border-2">
+        <DialogContent className="border">
           <DialogHeader>
             <DialogTitle>Create Record from Email</DialogTitle>
             <DialogDescription>
@@ -357,7 +357,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
             <div className="space-y-2">
               <Label>Record Type</Label>
               <Select value={createCategory} onValueChange={(v) => setCreateCategory(v as any)}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -373,13 +373,13 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
               <Input
                 value={createTitle}
                 onChange={(e) => setCreateTitle(e.target.value)}
-                className="border-2"
+                className="border"
               />
             </div>
             <div className="space-y-2">
               <Label>Priority</Label>
               <Select value={createPriority} onValueChange={(v) => setCreatePriority(v as any)}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -393,7 +393,7 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
             <div className="space-y-2">
               <Label>Project (Optional)</Label>
               <Select value={createProjectId || "none"} onValueChange={(v) => setCreateProjectId(v === "none" ? "" : v)}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
@@ -408,13 +408,13 @@ export function EmailDetailPanel({ emailId }: EmailDetailPanelProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="border-2">
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="border">
               Cancel
             </Button>
             <Button
               onClick={handleCreateRecord}
               disabled={createRecord.isPending || !createTitle}
-              className="border-2"
+              className="border"
             >
               {createRecord.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Create

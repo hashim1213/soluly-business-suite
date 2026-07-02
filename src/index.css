@@ -12,9 +12,125 @@ All colors MUST be HSL.
 
 @layer base {
   /* ========================================
-     DEFAULT THEME (Neobrutalist - Original)
+     FLUENT THEME (Microsoft Fluent 2 - Default)
+     Brand ramp anchored on #0F6CBD, Segoe UI type,
+     Fluent elevation shadows, 8px/4px corner radii.
+     The bare :root IS the Fluent theme; .theme-fluent
+     is an explicit alias used by the theme picker.
      ======================================== */
   :root {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 14%;
+    --primary: 208 85% 40%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 209 81% 35%;
+    --primary-pressed: 207 81% 30%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 14%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 38%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 355 86% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 82%;
+    --input: 0 0% 82%;
+    --ring: 208 85% 40%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 95%;
+    --sidebar-foreground: 0 0% 26%;
+    --sidebar-primary: 208 85% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 89%;
+    --sidebar-accent-foreground: 0 0% 14%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 208 85% 40%;
+    --chart-1: 206 100% 42%;
+    --chart-2: 184 100% 38%;
+    --chart-3: 120 77% 27%;
+    --chart-4: 44 100% 50%;
+    --chart-5: 265 37% 56%;
+    --sidebar: 0 0% 95%;
+    --font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: 'Cascadia Code', 'Cascadia Mono', ui-monospace, 'Segoe UI Mono', SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    --shadow-2xs: 0 1px 2px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 14px 28px rgba(0, 0, 0, 0.24), 0 0 8px rgba(0, 0, 0, 0.2);
+    --shadow-2xl: 0 32px 64px rgba(0, 0, 0, 0.24), 0 0 8px rgba(0, 0, 0, 0.2);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
+  }
+
+  .dark {
+    --background: 0 0% 12%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 16%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 16%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 209 73% 51%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 209 73% 56%;
+    --primary-pressed: 209 73% 61%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 68%;
+    --accent: 0 0% 22%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 358 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 26%;
+    --input: 0 0% 26%;
+    --ring: 210 90% 62%;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 80%;
+    --sidebar-primary: 210 90% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 210 90% 62%;
+    --chart-1: 206 100% 50%;
+    --chart-2: 184 100% 45%;
+    --chart-3: 120 60% 45%;
+    --chart-4: 44 100% 55%;
+    --chart-5: 265 50% 65%;
+    --sidebar: 0 0% 9%;
+    --shadow-2xs: 0 1px 2px rgba(0, 0, 0, 0.28), 0 0 2px rgba(0, 0, 0, 0.24);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.28), 0 0 2px rgba(0, 0, 0, 0.24);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.28), 0 0 2px rgba(0, 0, 0, 0.24);
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.28), 0 0 2px rgba(0, 0, 0, 0.24);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.28), 0 0 2px rgba(0, 0, 0, 0.24);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.28), 0 0 2px rgba(0, 0, 0, 0.24);
+    --shadow-xl: 0 14px 28px rgba(0, 0, 0, 0.48), 0 0 8px rgba(0, 0, 0, 0.4);
+    --shadow-2xl: 0 32px 64px rgba(0, 0, 0, 0.48), 0 0 8px rgba(0, 0, 0, 0.4);
+  }
+
+  /* .theme-fluent intentionally declares no overrides:
+     the :root/.dark tokens above ARE Fluent. The class exists
+     so the theme picker can treat it as a named style. */
+
+  /* ========================================
+     NEOBRUTALIST THEME (previous default)
+     Preserved as an explicitly selectable style.
+     ======================================== */
+  .theme-default {
+    --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --radius: 0rem;
+  }
+
+  .theme-default.light {
     --background: 0 0% 100%;
     --foreground: 0 0% 0%;
     --card: 0 0% 100%;
@@ -34,7 +150,6 @@ All colors MUST be HSL.
     --border: 0 0% 0%;
     --input: 0 0% 0%;
     --ring: 0 0% 0%;
-    --radius: 0rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 0%;
@@ -49,9 +164,6 @@ All colors MUST be HSL.
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --sidebar: 0 0% 98%;
-    --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --shadow-2xs: 1px 1px 0px 0px #000000;
     --shadow-xs: 2px 2px 0px 0px #000000;
     --shadow-sm: 3px 3px 0px 0px #000000;
@@ -60,11 +172,9 @@ All colors MUST be HSL.
     --shadow-lg: 12px 12px 0px 0px #000000;
     --shadow-xl: 16px 16px 0px 0px #000000;
     --shadow-2xl: 24px 24px 0px 0px #000000;
-    --tracking-normal: 0em;
-    --spacing: 0.25rem;
   }
 
-  .dark {
+  .theme-default.dark {
     --background: 0 0% 7%;
     --foreground: 0 0% 95%;
     --card: 0 0% 10%;
@@ -1322,6 +1432,6 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }

@@ -265,7 +265,7 @@ export default function TeamMembers() {
         <div className="flex gap-2 w-full sm:w-auto">
           <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="border-2 flex-1 sm:flex-none">
+              <Button variant="outline" className="border flex-1 sm:flex-none">
                 <Mail className="h-4 w-4 mr-2" />
                 Invite
                 {pendingInvitations > 0 && (
@@ -275,8 +275,8 @@ export default function TeamMembers() {
                 )}
               </Button>
             </DialogTrigger>
-            <DialogContent className="border-2 sm:max-w-[425px]">
-              <DialogHeader className="border-b-2 border-border pb-4">
+            <DialogContent className="border sm:max-w-[425px]">
+              <DialogHeader className="border-b border-border pb-4">
                 <DialogTitle>Invite Team Member</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -287,16 +287,16 @@ export default function TeamMembers() {
                     placeholder="colleague@company.com"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label>Role *</Label>
                   <Select value={inviteRoleId} onValueChange={setInviteRoleId}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {roles?.map((role) => (
                         <SelectItem key={role.id} value={role.id}>
                           {role.name}
@@ -309,11 +309,11 @@ export default function TeamMembers() {
                   </p>
                 </div>
               </div>
-              <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)} className="border-2">
+              <div className="flex justify-end gap-3 border-t border-border pt-4">
+                <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)} className="border">
                   Cancel
                 </Button>
-                <Button onClick={handleInviteMember} disabled={createInvitation.isPending} className="border-2">
+                <Button onClick={handleInviteMember} disabled={createInvitation.isPending} className="border">
                   {createInvitation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
                   Send Invitation
                 </Button>
@@ -322,13 +322,13 @@ export default function TeamMembers() {
           </Dialog>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="border-2 flex-1 sm:flex-none">
+              <Button className="border flex-1 sm:flex-none">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Member
               </Button>
             </DialogTrigger>
-          <DialogContent className="border-2 sm:max-w-[500px]">
-            <DialogHeader className="border-b-2 border-border pb-4">
+          <DialogContent className="border sm:max-w-[500px]">
+            <DialogHeader className="border-b border-border pb-4">
               <DialogTitle>Add Team Member</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -340,7 +340,7 @@ export default function TeamMembers() {
                     placeholder="Full name"
                     value={newMember.name}
                     onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -351,7 +351,7 @@ export default function TeamMembers() {
                     placeholder="email@company.com"
                     value={newMember.email}
                     onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -363,7 +363,7 @@ export default function TeamMembers() {
                     placeholder="+1 555-0100"
                     value={newMember.phone}
                     onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -373,7 +373,7 @@ export default function TeamMembers() {
                     placeholder="e.g., Developer"
                     value={newMember.role}
                     onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -381,10 +381,10 @@ export default function TeamMembers() {
                 <div className="grid gap-2">
                   <Label htmlFor="department">Department</Label>
                   <Select value={newMember.department} onValueChange={(value) => setNewMember({ ...newMember, department: value })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {departments.map((dept) => (
                         <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
@@ -394,10 +394,10 @@ export default function TeamMembers() {
                 <div className="grid gap-2">
                   <Label htmlFor="contract">Contract Type</Label>
                   <Select value={newMember.contractType} onValueChange={(value: ContractType) => setNewMember({ ...newMember, contractType: value })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {contractTypes.map((type) => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
@@ -414,7 +414,7 @@ export default function TeamMembers() {
                     placeholder="0"
                     value={newMember.hourlyRate}
                     onChange={(e) => setNewMember({ ...newMember, hourlyRate: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -425,16 +425,16 @@ export default function TeamMembers() {
                     placeholder="0"
                     value={newMember.salary}
                     onChange={(e) => setNewMember({ ...newMember, salary: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-2">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border">
                 Cancel
               </Button>
-              <Button onClick={handleAddMember} className="border-2" disabled={createTeamMember.isPending}>
+              <Button onClick={handleAddMember} className="border" disabled={createTeamMember.isPending}>
                 {createTeamMember.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Add Member
               </Button>
@@ -445,53 +445,53 @@ export default function TeamMembers() {
       </div>
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-emerald-600 shrink-0">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border border-border flex items-center justify-center bg-emerald-600 shrink-0">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold truncate">{activeMembers}</div>
+                <div className="text-lg sm:text-2xl font-semibold truncate">{activeMembers}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Active</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-blue-600 shrink-0">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border border-border flex items-center justify-center bg-blue-600 shrink-0">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold font-mono truncate">{totalHours}</div>
+                <div className="text-lg sm:text-2xl font-semibold font-mono truncate">{totalHours}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Hours</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-primary shrink-0">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border border-border flex items-center justify-center bg-primary shrink-0">
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold font-mono truncate">{canViewAmounts ? `$${totalLaborCost.toLocaleString()}` : "••••••"}</div>
+                <div className="text-lg sm:text-2xl font-semibold font-mono truncate">{canViewAmounts ? `$${totalLaborCost.toLocaleString()}` : "••••••"}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Labor Cost</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-secondary shrink-0">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border border-border flex items-center justify-center bg-secondary shrink-0">
                 <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold truncate">{contractors}</div>
+                <div className="text-lg sm:text-2xl font-semibold truncate">{contractors}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Contractors</div>
               </div>
             </div>
@@ -501,8 +501,8 @@ export default function TeamMembers() {
 
       {/* Pending Invitations */}
       {invitations && invitations.length > 0 && (
-        <Card className="border-2 border-border shadow-sm">
-          <CardHeader className="border-b-2 border-border py-3">
+        <Card className="border border-border shadow-sm">
+          <CardHeader className="border-b border-border py-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <UserPlus className="h-4 w-4" />
@@ -518,7 +518,7 @@ export default function TeamMembers() {
                 return (
                   <div key={invitation.id} className="flex items-center justify-between p-4 gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Avatar className="h-8 w-8 border-2 border-border">
+                      <Avatar className="h-8 w-8 border border-border">
                         <AvatarFallback className="bg-muted text-xs">
                           {invitation.email.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
@@ -540,7 +540,7 @@ export default function TeamMembers() {
                       {isExpired ? (
                         <Badge variant="destructive" className="text-xs">Expired</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-xs border-2">Pending</Badge>
+                        <Badge variant="outline" className="text-xs border">Pending</Badge>
                       )}
                       <Button
                         variant="ghost"
@@ -580,8 +580,8 @@ export default function TeamMembers() {
         </Card>
       )}
 
-      <Card className="border-2 border-border shadow-sm">
-        <CardHeader className="border-b-2 border-border">
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="border-b border-border">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>All Team Members</CardTitle>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -591,14 +591,14 @@ export default function TeamMembers() {
                   placeholder="Search members..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full sm:w-[200px] border-2"
+                  className="pl-10 w-full sm:w-[200px] border"
                 />
               </div>
               <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                <SelectTrigger className="w-full sm:w-[150px] border-2">
+                <SelectTrigger className="w-full sm:w-[150px] border">
                   <SelectValue placeholder="Department" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="all">All Departments</SelectItem>
                   {departments.map((dept) => (
                     <SelectItem key={dept} value={dept}>{dept}</SelectItem>
@@ -606,10 +606,10 @@ export default function TeamMembers() {
                 </SelectContent>
               </Select>
               <Select value={filterContract} onValueChange={setFilterContract}>
-                <SelectTrigger className="w-full sm:w-[150px] border-2">
+                <SelectTrigger className="w-full sm:w-[150px] border">
                   <SelectValue placeholder="Contract" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="all">All Types</SelectItem>
                   {contractTypes.map((type) => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
@@ -626,7 +626,7 @@ export default function TeamMembers() {
               <div key={member.id} className="p-4 cursor-pointer hover:bg-accent/50" onClick={() => navigateOrg(`/team/${member.id}`)}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <Avatar className="h-10 w-10 border-2 border-border shrink-0">
+                    <Avatar className="h-10 w-10 border border-border shrink-0">
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
@@ -640,11 +640,11 @@ export default function TeamMembers() {
                     </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border-2 border-transparent hover:border-border">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border border-transparent hover:border-border">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="border-2">
+                      <DropdownMenuContent align="end" className="border">
                         <DropdownMenuItem onClick={(e) => {
                           e.stopPropagation();
                           setEditingMember(member);
@@ -692,12 +692,12 @@ export default function TeamMembers() {
                 {member.projects.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {member.projects.slice(0, 2).map((p) => (
-                      <Badge key={p.project_id} variant="outline" className="border-2 text-xs max-w-[100px] truncate" title={p.project?.name || p.project_id}>
+                      <Badge key={p.project_id} variant="outline" className="border text-xs max-w-[100px] truncate" title={p.project?.name || p.project_id}>
                         {p.project?.name || p.project_id}
                       </Badge>
                     ))}
                     {member.projects.length > 2 && (
-                      <Badge variant="outline" className="border-2 text-xs shrink-0">
+                      <Badge variant="outline" className="border text-xs shrink-0">
                         +{member.projects.length - 2}
                       </Badge>
                     )}
@@ -710,24 +710,24 @@ export default function TeamMembers() {
           <div className="hidden sm:block overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-b-2 hover:bg-transparent">
-                  <TableHead className="font-bold uppercase text-xs">Member</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Role</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Department</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Contract</TableHead>
-                  <TableHead className="font-bold uppercase text-xs text-right">Rate/Hr</TableHead>
-                  <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Projects</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                <TableRow className="border-b hover:bg-transparent">
+                  <TableHead className="font-semibold uppercase text-xs">Member</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Role</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Department</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Contract</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs text-right">Rate/Hr</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs text-right">Hours</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Projects</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Status</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredMembers.map((member) => (
-                  <TableRow key={member.id} className="border-b-2 cursor-pointer hover:bg-accent/50" onClick={() => navigateOrg(`/team/${member.id}`)}>
+                  <TableRow key={member.id} className="border-b cursor-pointer hover:bg-accent/50" onClick={() => navigateOrg(`/team/${member.id}`)}>
                     <TableCell>
                       <Link to={getOrgPath(`/team/${member.id}`)} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                        <Avatar className="h-8 w-8 border-2 border-border">
+                        <Avatar className="h-8 w-8 border border-border">
                           <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar || member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -739,7 +739,7 @@ export default function TeamMembers() {
                     <TableCell>{member.role}</TableCell>
                     <TableCell>{member.department}</TableCell>
                     <TableCell>
-                      <Badge variant={member.contract_type === "Full-time" ? "default" : member.contract_type === "Contractor" ? "secondary" : "outline"} className="border-2 border-border">
+                      <Badge variant={member.contract_type === "Full-time" ? "default" : member.contract_type === "Contractor" ? "secondary" : "outline"} className="border border-border">
                         {member.contract_type}
                       </Badge>
                     </TableCell>
@@ -750,7 +750,7 @@ export default function TeamMembers() {
                         {member.projects.length > 0 ? (
                           member.projects.slice(0, 2).map((p) => (
                             <Link key={p.project_id} to={getOrgPath(`/projects/${p.project?.display_id}`)} onClick={(e) => e.stopPropagation()}>
-                              <Badge variant="outline" className="border-2 cursor-pointer hover:bg-accent text-xs max-w-[90px] truncate" title={p.project?.name || p.project_id}>
+                              <Badge variant="outline" className="border cursor-pointer hover:bg-accent text-xs max-w-[90px] truncate" title={p.project?.name || p.project_id}>
                                 {p.project?.name || p.project_id}
                               </Badge>
                             </Link>
@@ -759,7 +759,7 @@ export default function TeamMembers() {
                           <span className="text-muted-foreground text-sm">None</span>
                         )}
                         {member.projects.length > 2 && (
-                          <Badge variant="outline" className="border-2 text-xs shrink-0">
+                          <Badge variant="outline" className="border text-xs shrink-0">
                             +{member.projects.length - 2}
                           </Badge>
                         )}
@@ -773,11 +773,11 @@ export default function TeamMembers() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border-2 border-transparent hover:border-border">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border border-transparent hover:border-border">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-2">
+                        <DropdownMenuContent align="end" className="border">
                           <DropdownMenuItem onClick={(e) => {
                             e.stopPropagation();
                             setEditingMember(member);
@@ -829,8 +829,8 @@ export default function TeamMembers() {
 
       {/* Edit Member Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[500px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Team Member</DialogTitle>
           </DialogHeader>
           {editingMember && (
@@ -841,7 +841,7 @@ export default function TeamMembers() {
                   <Input
                     value={editingMember.name}
                     onChange={(e) => setEditingMember({ ...editingMember, name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -850,7 +850,7 @@ export default function TeamMembers() {
                     type="email"
                     value={editingMember.email}
                     onChange={(e) => setEditingMember({ ...editingMember, email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -860,7 +860,7 @@ export default function TeamMembers() {
                   <Input
                     value={editingMember.phone || ""}
                     onChange={(e) => setEditingMember({ ...editingMember, phone: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -868,7 +868,7 @@ export default function TeamMembers() {
                   <Input
                     value={editingMember.role}
                     onChange={(e) => setEditingMember({ ...editingMember, role: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -876,10 +876,10 @@ export default function TeamMembers() {
                 <div className="grid gap-2">
                   <Label>Department</Label>
                   <Select value={editingMember.department} onValueChange={(value) => setEditingMember({ ...editingMember, department: value })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {departments.map((dept) => (
                         <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
@@ -889,10 +889,10 @@ export default function TeamMembers() {
                 <div className="grid gap-2">
                   <Label>Contract Type</Label>
                   <Select value={editingMember.contract_type} onValueChange={(value: ContractType) => setEditingMember({ ...editingMember, contract_type: value })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {contractTypes.map((type) => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
@@ -907,7 +907,7 @@ export default function TeamMembers() {
                     type="number"
                     value={editingMember.hourly_rate}
                     onChange={(e) => setEditingMember({ ...editingMember, hourly_rate: parseFloat(e.target.value) || 0 })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -916,17 +916,17 @@ export default function TeamMembers() {
                     type="number"
                     value={editingMember.salary}
                     onChange={(e) => setEditingMember({ ...editingMember, salary: parseFloat(e.target.value) || 0 })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleEditMember} className="border-2" disabled={updateTeamMember.isPending}>
+            <Button onClick={handleEditMember} className="border" disabled={updateTeamMember.isPending}>
               {updateTeamMember.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes
             </Button>

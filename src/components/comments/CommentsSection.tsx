@@ -95,9 +95,9 @@ export function CommentsSection({ entityType, entityId }: CommentsSectionProps) 
   };
 
   return (
-    <Card className="border-2 border-border shadow-sm">
-      <CardHeader className="border-b-2 border-border">
-        <CardTitle className="text-lg font-bold uppercase tracking-wider flex items-center gap-2">
+    <Card className="border border-border shadow-sm">
+      <CardHeader className="border-b border-border">
+        <CardTitle className="text-lg font-semibold uppercase tracking-wider flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
           Comments
         </CardTitle>
@@ -111,7 +111,7 @@ export function CommentsSection({ entityType, entityId }: CommentsSectionProps) 
           <div className="space-y-4">
             {comments.map((comment) => (
               <div key={comment.id} className="flex gap-3">
-                <Avatar className="h-8 w-8 border-2 border-border flex-shrink-0">
+                <Avatar className="h-8 w-8 border border-border flex-shrink-0">
                   <AvatarFallback className="bg-secondary text-xs">
                     {comment.author?.name ? getInitials(comment.author.name) : "??"}
                   </AvatarFallback>
@@ -134,14 +134,14 @@ export function CommentsSection({ entityType, entityId }: CommentsSectionProps) 
                       <Textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="border-2 min-h-[80px]"
+                        className="border min-h-[80px]"
                       />
                       <div className="flex gap-2">
                         <Button
                           size="sm"
                           onClick={handleSaveEdit}
                           disabled={updateComment.isPending || !editContent.trim()}
-                          className="border-2"
+                          className="border"
                         >
                           {updateComment.isPending ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -154,7 +154,7 @@ export function CommentsSection({ entityType, entityId }: CommentsSectionProps) 
                           size="sm"
                           variant="outline"
                           onClick={handleCancelEdit}
-                          className="border-2"
+                          className="border"
                         >
                           <X className="h-3 w-3" />
                           <span className="ml-1">Cancel</span>
@@ -186,7 +186,7 @@ export function CommentsSection({ entityType, entityId }: CommentsSectionProps) 
                                 Delete
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="border-2">
+                            <AlertDialogContent className="border">
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete Comment</AlertDialogTitle>
                                 <AlertDialogDescription>
@@ -194,7 +194,7 @@ export function CommentsSection({ entityType, entityId }: CommentsSectionProps) 
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
+                                <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDelete(comment.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -217,18 +217,18 @@ export function CommentsSection({ entityType, entityId }: CommentsSectionProps) 
         )}
 
         {/* Add Comment */}
-        <div className="pt-4 border-t-2 border-border">
+        <div className="pt-4 border-t border-border">
           <Textarea
             placeholder="Add a comment..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="border-2 min-h-[100px] mb-3"
+            className="border min-h-[100px] mb-3"
           />
           <div className="flex justify-end">
             <Button
               onClick={handleAddComment}
               disabled={!newComment.trim() || createComment.isPending}
-              className="border-2"
+              className="border"
             >
               {createComment.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

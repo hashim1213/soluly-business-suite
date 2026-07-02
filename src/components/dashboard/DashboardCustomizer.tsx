@@ -79,13 +79,13 @@ export function DashboardCustomizer() {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="border-2">
+        <Button variant="outline" size="sm" className="border">
           <Settings className="h-4 w-4 mr-2" />
           Customize
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader className="border-b-2 pb-4 mb-4">
+        <SheetHeader className="border-b pb-4 mb-4">
           <SheetTitle>Customize Dashboard</SheetTitle>
           <SheetDescription>
             Add, remove, and reorder widgets to personalize your dashboard.
@@ -93,7 +93,7 @@ export function DashboardCustomizer() {
         </SheetHeader>
 
         <Tabs defaultValue="stats" className="w-full">
-          <TabsList className="w-full border-2 mb-4">
+          <TabsList className="w-full border mb-4">
             <TabsTrigger value="stats" className="flex-1">Stats Cards</TabsTrigger>
             <TabsTrigger value="widgets" className="flex-1">Widgets</TabsTrigger>
           </TabsList>
@@ -107,7 +107,7 @@ export function DashboardCustomizer() {
               ) : (
                 <div className="space-y-2">
                   {currentStatCards.map((card, index) => (
-                    <Card key={card!.id} className="border-2">
+                    <Card key={card!.id} className="border">
                       <CardContent className="p-3 flex items-center gap-3">
                         <div className="flex flex-col gap-1">
                           <Button
@@ -165,7 +165,7 @@ export function DashboardCustomizer() {
                   {availableStatCardsToAdd.map((card) => (
                     <Card
                       key={card.id}
-                      className="border-2 cursor-pointer hover:bg-accent/50 transition-colors"
+                      className="border cursor-pointer hover:bg-accent/50 transition-colors"
                       onClick={() => addStatCard(card.id)}
                     >
                       <CardContent className="p-3 flex items-center gap-3">
@@ -196,7 +196,7 @@ export function DashboardCustomizer() {
               ) : (
                 <div className="space-y-2">
                   {currentWidgets.map((widget, index) => (
-                    <Card key={widget!.id} className="border-2">
+                    <Card key={widget!.id} className="border">
                       <CardContent className="p-3 flex items-center gap-3">
                         <div className="flex flex-col gap-1">
                           <Button
@@ -254,7 +254,7 @@ export function DashboardCustomizer() {
                   {availableWidgetsToAdd.map((widget) => (
                     <Card
                       key={widget.id}
-                      className="border-2 cursor-pointer hover:bg-accent/50 transition-colors"
+                      className="border cursor-pointer hover:bg-accent/50 transition-colors"
                       onClick={() => addWidget(widget.id)}
                     >
                       <CardContent className="p-3 flex items-center gap-3">
@@ -283,7 +283,7 @@ export function DashboardCustomizer() {
           <Button
             variant="outline"
             size="sm"
-            className="border-2"
+            className="border"
             onClick={() => {
               resetToDefaults();
             }}

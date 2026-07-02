@@ -212,7 +212,7 @@ export default function AcceptInvite() {
   if (error && !invitation) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-2">
+        <Card className="w-full max-w-md border">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="flex justify-center">
@@ -220,10 +220,10 @@ export default function AcceptInvite() {
                   <AlertCircle className="h-6 w-6 text-destructive" />
                 </div>
               </div>
-              <h2 className="text-xl font-bold">Invalid Invitation</h2>
+              <h2 className="text-xl font-semibold">Invalid Invitation</h2>
               <p className="text-muted-foreground">{error}</p>
               <Link to="/login">
-                <Button variant="outline" className="border-2">
+                <Button variant="outline" className="border">
                   Go to Login
                 </Button>
               </Link>
@@ -237,7 +237,7 @@ export default function AcceptInvite() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-2">
+        <Card className="w-full max-w-md border">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="flex justify-center">
@@ -245,7 +245,7 @@ export default function AcceptInvite() {
                   <CheckCircle className="h-6 w-6 text-chart-2" />
                 </div>
               </div>
-              <h2 className="text-xl font-bold">Welcome aboard!</h2>
+              <h2 className="text-xl font-semibold">Welcome aboard!</h2>
               <p className="text-muted-foreground">
                 {isExistingUser
                   ? `You've joined ${successOrg?.name || "the organization"}. Redirecting...`
@@ -265,14 +265,14 @@ export default function AcceptInvite() {
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-2">
+        <Card className="w-full max-w-md border">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <div className="h-12 w-12 bg-primary flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-primary-foreground" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">
+            <CardTitle className="text-2xl font-semibold">
               Join {invitation?.organization?.name}
             </CardTitle>
             <CardDescription>
@@ -301,7 +301,7 @@ export default function AcceptInvite() {
                 type="email"
                 value={invitation?.email || ""}
                 disabled
-                className="border-2 bg-muted"
+                className="border bg-muted"
               />
             </div>
 
@@ -311,14 +311,14 @@ export default function AcceptInvite() {
                 type="email"
                 value={user.email || ""}
                 disabled
-                className="border-2 bg-muted"
+                className="border bg-muted"
               />
             </div>
 
             {emailMatches ? (
               <Button
                 onClick={handleExistingUserAccept}
-                className="w-full border-2"
+                className="w-full border"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -334,7 +334,7 @@ export default function AcceptInvite() {
               <div className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full border-2"
+                  className="w-full border"
                   onClick={() => navigate("/login")}
                 >
                   Log out and sign in with correct email
@@ -350,14 +350,14 @@ export default function AcceptInvite() {
   // New user flow - need to create account
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-2">
+      <Card className="w-full max-w-md border">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="h-12 w-12 bg-primary flex items-center justify-center">
               <Building2 className="h-6 w-6 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">
+          <CardTitle className="text-2xl font-semibold">
             Join {invitation?.organization?.name}
           </CardTitle>
           <CardDescription>
@@ -378,7 +378,7 @@ export default function AcceptInvite() {
                 type="email"
                 value={invitation?.email || ""}
                 disabled
-                className="border-2 bg-muted"
+                className="border bg-muted"
               />
             </div>
 
@@ -391,7 +391,7 @@ export default function AcceptInvite() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="border-2"
+                className="border"
               />
             </div>
 
@@ -404,7 +404,7 @@ export default function AcceptInvite() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="border-2"
+                className="border"
               />
             </div>
 
@@ -417,11 +417,11 @@ export default function AcceptInvite() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="border-2"
+                className="border"
               />
             </div>
 
-            <Button type="submit" className="w-full border-2" disabled={isSubmitting}>
+            <Button type="submit" className="w-full border" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

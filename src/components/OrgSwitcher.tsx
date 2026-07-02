@@ -61,7 +61,7 @@ export function OrgSwitcher({ collapsed = false }: OrgSwitcherProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 rounded-md border-2 border-transparent hover:border-border"
+            className="h-9 w-9 rounded-md border border-transparent hover:border-border"
           >
             <Avatar className="h-7 w-7">
               {currentOrg?.logo_url ? (
@@ -94,7 +94,7 @@ export function OrgSwitcher({ collapsed = false }: OrgSwitcherProps) {
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between px-2 h-10 border-2 border-transparent hover:border-border"
+          className="w-full justify-between px-2 h-10 border border-transparent hover:border-border"
         >
           <div className="flex items-center gap-2 min-w-0">
             <Avatar className="h-6 w-6 shrink-0">

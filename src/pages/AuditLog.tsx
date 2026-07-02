@@ -135,7 +135,7 @@ export default function AuditLog() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
             <Shield className="h-6 w-6" />
             Audit Log
           </h1>
@@ -147,7 +147,7 @@ export default function AuditLog() {
           onClick={handleExport}
           disabled={isExporting}
           variant="outline"
-          className="border-2"
+          className="border"
         >
           {isExporting ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -160,35 +160,35 @@ export default function AuditLog() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-2">
+        <Card className="border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Activity className="h-4 w-4" />
               <span className="text-sm">Total Events</span>
             </div>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-semibold">
               {statsLoading ? "-" : stats?.total.toLocaleString()}
             </p>
           </CardContent>
         </Card>
-        <Card className="border-2">
+        <Card className="border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Calendar className="h-4 w-4" />
               <span className="text-sm">Last 24 Hours</span>
             </div>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-semibold">
               {statsLoading ? "-" : stats?.last24Hours.toLocaleString()}
             </p>
           </CardContent>
         </Card>
-        <Card className="border-2">
+        <Card className="border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-orange-600 mb-1">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-sm">High Risk</span>
             </div>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-semibold">
               {statsLoading
                 ? "-"
                 : (
@@ -198,13 +198,13 @@ export default function AuditLog() {
             </p>
           </CardContent>
         </Card>
-        <Card className="border-2">
+        <Card className="border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Calendar className="h-4 w-4" />
               <span className="text-sm">Last 7 Days</span>
             </div>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-semibold">
               {statsLoading ? "-" : stats?.last7Days.toLocaleString()}
             </p>
           </CardContent>
@@ -212,7 +212,7 @@ export default function AuditLog() {
       </div>
 
       {/* Filters */}
-      <Card className="border-2">
+      <Card className="border">
         <CardContent className="pt-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="space-y-1.5">
@@ -223,10 +223,10 @@ export default function AuditLog() {
                   setFilters({ ...filters, eventType: value as SecurityEventType | "all" })
                 }
               >
-                <SelectTrigger className="w-48 border-2">
+                <SelectTrigger className="w-48 border">
                   <SelectValue placeholder="All events" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="all">All Events</SelectItem>
                   {Object.entries(eventTypeLabels).map(([type, label]) => (
                     <SelectItem key={type} value={type}>
@@ -245,10 +245,10 @@ export default function AuditLog() {
                   setFilters({ ...filters, riskLevel: value as RiskLevel | "all" })
                 }
               >
-                <SelectTrigger className="w-36 border-2">
+                <SelectTrigger className="w-36 border">
                   <SelectValue placeholder="All levels" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="all">All Levels</SelectItem>
                   {Object.entries(riskLevelConfig).map(([level, config]) => (
                     <SelectItem key={level} value={level}>
@@ -270,10 +270,10 @@ export default function AuditLog() {
                   })
                 }
               >
-                <SelectTrigger className="w-48 border-2">
+                <SelectTrigger className="w-48 border">
                   <SelectValue placeholder="All users" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="all">All Users</SelectItem>
                   {teamMembers?.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
@@ -292,7 +292,7 @@ export default function AuditLog() {
                 onChange={(e) =>
                   setFilters({ ...filters, dateFrom: e.target.value || undefined })
                 }
-                className="w-36 border-2"
+                className="w-36 border"
               />
             </div>
 
@@ -304,7 +304,7 @@ export default function AuditLog() {
                 onChange={(e) =>
                   setFilters({ ...filters, dateTo: e.target.value || undefined })
                 }
-                className="w-36 border-2"
+                className="w-36 border"
               />
             </div>
 
@@ -323,7 +323,7 @@ export default function AuditLog() {
       </Card>
 
       {/* Events Table */}
-      <Card className="border-2">
+      <Card className="border">
         <CardContent className="p-0">
           {logsLoading ? (
             <div className="flex items-center justify-center py-12">

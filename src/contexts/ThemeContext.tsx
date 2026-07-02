@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ThemeStyle =
+  | "fluent"
   | "default"
   | "professional"
   | "modern"
@@ -49,7 +50,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   const [style, setStyleState] = useState<ThemeStyle>(() => {
-    return safeLocalStorage(THEME_STYLE_KEY, "default") as ThemeStyle;
+    return safeLocalStorage(THEME_STYLE_KEY, "fluent") as ThemeStyle;
   });
 
   const [resolvedMode, setResolvedMode] = useState<"light" | "dark">(() => {
@@ -85,6 +86,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Remove all theme classes
     root.classList.remove("light", "dark");
     root.classList.remove(
+      "theme-fluent",
       "theme-default",
       "theme-professional",
       "theme-modern",

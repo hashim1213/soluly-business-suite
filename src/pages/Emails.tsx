@@ -111,16 +111,16 @@ export default function Emails() {
   if (!hasConnectedAccounts) {
     return (
       <div className="space-y-6">
-        <Card className="border-2 border-dashed">
+        <Card className="border border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
               <Mail className="h-10 w-10 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold mb-3">Email Inbox</h1>
+            <h1 className="text-3xl font-semibold mb-3">Email Inbox</h1>
             <p className="text-muted-foreground mb-8 max-w-md text-base">
               Connect your Gmail account to automatically sync, categorize, and manage incoming emails with AI-powered processing.
             </p>
-            <Button size="lg" onClick={() => navigate(`/org/${organization?.slug}/settings`)} className="border-2">
+            <Button size="lg" onClick={() => navigate(`/org/${organization?.slug}/settings`)} className="border">
               <Settings className="h-5 w-5 mr-2" />
               Connect Gmail in Settings
             </Button>
@@ -147,7 +147,7 @@ export default function Emails() {
             <Button
               onClick={handleProcessAll}
               disabled={processAll.isPending}
-              className="border-2"
+              className="border"
               size="sm"
             >
               {processAll.isPending ? (
@@ -164,7 +164,7 @@ export default function Emails() {
             variant="outline"
             onClick={handleQuickSync}
             disabled={syncAll.isPending}
-            className="border-2"
+            className="border"
             size="sm"
           >
             {syncAll.isPending ? (
@@ -178,11 +178,11 @@ export default function Emails() {
           {/* More Actions Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="border-2">
+              <Button variant="outline" size="sm" className="border">
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="border-2 w-48">
+            <DropdownMenuContent align="start" className="border w-48">
               <DropdownMenuItem onClick={() => setIsSyncDialogOpen(true)}>
                 <Calendar className="h-4 w-4 mr-2" />
                 Sync Older Emails
@@ -203,7 +203,7 @@ export default function Emails() {
                     Clear All Emails
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="border-2">
+                <AlertDialogContent className="border">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Clear All Emails?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -211,7 +211,7 @@ export default function Emails() {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
+                    <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => clearAll.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -254,7 +254,7 @@ export default function Emails() {
       <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
         <div className="flex items-center justify-between">
           <CollapsibleTrigger asChild>
-            <Button variant="outline" className="border-2">
+            <Button variant="outline" className="border">
               <Filter className="h-4 w-4 mr-2" />
               Filters
               {hasActiveFilters && (
@@ -279,8 +279,8 @@ export default function Emails() {
       {/* Main Content - Gmail-style Layout */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[33.33%_66.67%] gap-4 min-h-0">
         {/* Email List - 1/3 width */}
-        <Card className="border-2 overflow-hidden flex flex-col">
-          <div className="p-4 border-b-2 bg-muted/30 flex items-center justify-between shrink-0">
+        <Card className="border overflow-hidden flex flex-col">
+          <div className="p-4 border-b bg-muted/30 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-muted-foreground" />
               <h2 className="font-semibold">
@@ -300,14 +300,14 @@ export default function Emails() {
         </Card>
 
         {/* Email Detail - 2/3 width for reading */}
-        <Card className="border-2 overflow-hidden">
+        <Card className="border overflow-hidden">
           <EmailDetailPanel emailId={selectedEmailId} />
         </Card>
       </div>
 
       {/* Sync Options Dialog */}
       <Dialog open={isSyncDialogOpen} onOpenChange={setIsSyncDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-md">
+        <DialogContent className="border sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Sync Older Emails</DialogTitle>
             <DialogDescription>
@@ -318,10 +318,10 @@ export default function Emails() {
             <div className="space-y-2">
               <Label>Date Range</Label>
               <Select value={syncDateRange} onValueChange={setSyncDateRange}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="1week">Last Week</SelectItem>
                   <SelectItem value="2weeks">Last 2 Weeks</SelectItem>
                   <SelectItem value="1month">Last Month</SelectItem>
@@ -336,10 +336,10 @@ export default function Emails() {
             <div className="space-y-2">
               <Label>Email Limit</Label>
               <Select value={syncMaxResults} onValueChange={setSyncMaxResults}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="50">50 emails</SelectItem>
                   <SelectItem value="100">100 emails</SelectItem>
                   <SelectItem value="200">200 emails</SelectItem>
@@ -353,10 +353,10 @@ export default function Emails() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSyncDialogOpen(false)} className="border-2">
+            <Button variant="outline" onClick={() => setIsSyncDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleSyncAll} disabled={syncAll.isPending} className="border-2">
+            <Button onClick={handleSyncAll} disabled={syncAll.isPending} className="border">
               {syncAll.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

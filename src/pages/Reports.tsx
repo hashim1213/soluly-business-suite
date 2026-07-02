@@ -1149,10 +1149,10 @@ export default function Reports() {
           <div className="space-y-2">
             <Label>Select Project</Label>
             <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-              <SelectTrigger className="w-full border-2">
+              <SelectTrigger className="w-full border">
                 <SelectValue placeholder="Choose a project..." />
               </SelectTrigger>
-              <SelectContent className="border-2">
+              <SelectContent className="border">
                 {projects?.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.display_id} - {project.name}
@@ -1164,7 +1164,7 @@ export default function Reports() {
           {selectedProjectId && (
             <Button
               variant="outline"
-              className="border-2"
+              className="border"
               onClick={() => setIsOptionsDialogOpen(true)}
             >
               <Settings2 className="h-4 w-4 mr-2" />
@@ -1187,7 +1187,7 @@ export default function Reports() {
             </div>
             <Button
               variant="outline"
-              className="border-2"
+              className="border"
               onClick={() => setIsOptionsDialogOpen(true)}
             >
               <Settings2 className="h-4 w-4 mr-2" />
@@ -1197,27 +1197,27 @@ export default function Reports() {
 
           {/* Project Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="border-2">
+            <Card className="border">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{project.status}</div>
+                <div className="text-2xl font-semibold">{project.status}</div>
                 <div className="text-sm text-muted-foreground">Status</div>
               </CardContent>
             </Card>
-            <Card className="border-2">
+            <Card className="border">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{project.progress || 0}%</div>
+                <div className="text-2xl font-semibold">{project.progress || 0}%</div>
                 <div className="text-sm text-muted-foreground">Progress</div>
               </CardContent>
             </Card>
-            <Card className="border-2">
+            <Card className="border">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{project.budget ? `$${project.budget.toLocaleString()}` : "N/A"}</div>
+                <div className="text-2xl font-semibold">{project.budget ? `$${project.budget.toLocaleString()}` : "N/A"}</div>
                 <div className="text-sm text-muted-foreground">Budget</div>
               </CardContent>
             </Card>
-            <Card className="border-2">
+            <Card className="border">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">{projTickets?.length || 0}</div>
+                <div className="text-2xl font-semibold">{projTickets?.length || 0}</div>
                 <div className="text-sm text-muted-foreground">Tickets</div>
               </CardContent>
             </Card>
@@ -1225,7 +1225,7 @@ export default function Reports() {
 
           {/* Timeline */}
           {projectOptions.includeTimeline && (project.start_date || project.end_date) && (
-            <Card className="border-2">
+            <Card className="border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Timeline</CardTitle>
               </CardHeader>
@@ -1246,7 +1246,7 @@ export default function Reports() {
 
           {/* Description */}
           {projectOptions.includeOverview && project.description && (
-            <Card className="border-2">
+            <Card className="border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Description</CardTitle>
               </CardHeader>
@@ -1258,7 +1258,7 @@ export default function Reports() {
 
           {/* Tickets */}
           {projectOptions.includeTickets && projTickets && projTickets.length > 0 && (
-            <Card className="border-2">
+            <Card className="border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Tickets ({projTickets.length})</CardTitle>
               </CardHeader>
@@ -1352,7 +1352,7 @@ export default function Reports() {
 
       case "table":
         return (
-          <div className="border-2 rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
@@ -1412,7 +1412,7 @@ export default function Reports() {
             />
           </div>
           {reportData?.type === "table" && (
-            <Button onClick={handleExportCSV} variant="outline" size="sm" className="border-2">
+            <Button onClick={handleExportCSV} variant="outline" size="sm" className="border">
               <Download className="h-4 w-4 mr-2" />
               CSV
             </Button>
@@ -1431,7 +1431,7 @@ export default function Reports() {
               fileName={`${activeTemplate?.name || "report"}-${format(new Date(), "yyyy-MM-dd")}.pdf`}
             >
               {({ loading }) => (
-                <Button disabled={loading} size="sm" className="border-2">
+                <Button disabled={loading} size="sm" className="border">
                   {loading ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
@@ -1448,7 +1448,7 @@ export default function Reports() {
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Sidebar - Report Categories & Templates */}
         <div className="lg:col-span-1 space-y-4">
-          <Card className="border-2">
+          <Card className="border">
             <CardHeader className="pb-2 pt-4">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Categories</CardTitle>
             </CardHeader>
@@ -1485,7 +1485,7 @@ export default function Reports() {
             </CardContent>
           </Card>
 
-          <Card className="border-2">
+          <Card className="border">
             <CardHeader className="pb-2 pt-4">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                 {categoryLabels[selectedCategory].replace(" Reports", "")} Reports
@@ -1506,8 +1506,8 @@ export default function Reports() {
                     }}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all ${
                       isSelected
-                        ? "bg-primary/10 border-2 border-primary/30"
-                        : "hover:bg-muted/60 border-2 border-transparent"
+                        ? "bg-primary/10 border border-primary/30"
+                        : "hover:bg-muted/60 border border-transparent"
                     }`}
                   >
                     <div className={`p-1.5 rounded-md ${isSelected ? "bg-primary/20" : "bg-muted"}`}>
@@ -1526,11 +1526,11 @@ export default function Reports() {
         {/* Main Content - Report Display */}
         <div className="lg:col-span-3 space-y-4">
           {/* Report Header */}
-          <Card className="border-2">
+          <Card className="border">
             <CardContent className="py-4">
               <div className="flex items-center gap-4">
                 {activeTemplate && (
-                  <div className="p-3 rounded-xl bg-primary/10 border-2 border-primary/20">
+                  <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
                     <activeTemplate.icon className="h-6 w-6 text-primary" />
                   </div>
                 )}
@@ -1546,10 +1546,10 @@ export default function Reports() {
           {reportData?.stats && reportData.stats.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {reportData.stats.map((stat: any, idx: number) => (
-                <Card key={idx} className="border-2">
+                <Card key={idx} className="border">
                   <CardContent className="p-4">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</p>
-                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                    <p className="text-2xl font-semibold mt-1">{stat.value}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -1557,7 +1557,7 @@ export default function Reports() {
           )}
 
           {/* Report Content */}
-          <Card className="border-2">
+          <Card className="border">
             <CardContent className="p-6">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-16">
@@ -1584,7 +1584,7 @@ export default function Reports() {
 
       {/* Project Report Options Dialog */}
       <Dialog open={isOptionsDialogOpen} onOpenChange={setIsOptionsDialogOpen}>
-        <DialogContent className="border-2">
+        <DialogContent className="border">
           <DialogHeader>
             <DialogTitle>Customize Project Report</DialogTitle>
           </DialogHeader>
@@ -1666,10 +1666,10 @@ export default function Reports() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOptionsDialogOpen(false)} className="border-2">
+            <Button variant="outline" onClick={() => setIsOptionsDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={() => setIsOptionsDialogOpen(false)} className="border-2">
+            <Button onClick={() => setIsOptionsDialogOpen(false)} className="border">
               Apply
             </Button>
           </DialogFooter>

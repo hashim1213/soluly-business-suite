@@ -275,11 +275,11 @@ export default function FormSubmit() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="max-w-md w-full border-2 border-red-200">
+        <Card className="max-w-md w-full border border-red-200">
           <CardContent className="pt-6">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
-              <h1 className="text-xl font-bold mb-2">Unable to Load Form</h1>
+              <h1 className="text-xl font-semibold mb-2">Unable to Load Form</h1>
               <p className="text-gray-600">{error}</p>
             </div>
           </CardContent>
@@ -291,11 +291,11 @@ export default function FormSubmit() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="max-w-md w-full border-2 border-green-200">
+        <Card className="max-w-md w-full border border-green-200">
           <CardContent className="pt-6">
             <div className="text-center">
               <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-4" />
-              <h1 className="text-xl font-bold mb-2">Response Submitted</h1>
+              <h1 className="text-xl font-semibold mb-2">Response Submitted</h1>
               <p className="text-gray-600">{thankYouMessage}</p>
             </div>
           </CardContent>
@@ -318,7 +318,7 @@ export default function FormSubmit() {
         )}
 
         {/* Form Header */}
-        <Card className="border-2 border-gray-200 mb-6">
+        <Card className="border border-gray-200 mb-6">
           <CardHeader>
             <CardTitle className="text-2xl">{form?.title}</CardTitle>
             {form?.description && (
@@ -331,7 +331,7 @@ export default function FormSubmit() {
 
         {/* Respondent Info (if not anonymous) */}
         {!form?.settings?.allow_anonymous && (
-          <Card className="border-2 border-gray-200 mb-6">
+          <Card className="border border-gray-200 mb-6">
             <CardHeader>
               <CardTitle className="text-lg">Your Information</CardTitle>
             </CardHeader>
@@ -343,7 +343,7 @@ export default function FormSubmit() {
                   value={respondentName}
                   onChange={(e) => setRespondentName(e.target.value)}
                   placeholder="Your name"
-                  className="border-2"
+                  className="border"
                   disabled={!!formLink?.recipient_name}
                 />
               </div>
@@ -364,7 +364,7 @@ export default function FormSubmit() {
                     }
                   }}
                   placeholder="your@email.com"
-                  className={`border-2 ${validationErrors["respondent_email"] ? "border-red-500" : ""}`}
+                  className={`border ${validationErrors["respondent_email"] ? "border-red-500" : ""}`}
                   disabled={!!formLink?.recipient_email}
                 />
                 {validationErrors["respondent_email"] && (
@@ -378,7 +378,7 @@ export default function FormSubmit() {
         {/* Form Fields */}
         <div className="space-y-6">
           {fields.map((field) => (
-            <Card key={field.id} className="border-2 border-gray-200">
+            <Card key={field.id} className="border border-gray-200">
               <CardContent className="pt-6">
                 <FormFieldRenderer
                   field={field}
@@ -396,7 +396,7 @@ export default function FormSubmit() {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full py-6 text-lg border-2"
+            className="w-full py-6 text-lg border"
           >
             {isSubmitting ? (
               <>
@@ -433,7 +433,7 @@ function FormFieldRenderer({
             value={(value as string) || ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder || ""}
-            className={`border-2 ${error ? "border-red-500" : ""}`}
+            className={`border ${error ? "border-red-500" : ""}`}
           />
         );
 
@@ -443,7 +443,7 @@ function FormFieldRenderer({
             value={(value as string) || ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder || ""}
-            className={`border-2 min-h-[120px] ${error ? "border-red-500" : ""}`}
+            className={`border min-h-[120px] ${error ? "border-red-500" : ""}`}
           />
         );
 
@@ -454,7 +454,7 @@ function FormFieldRenderer({
             value={(value as string) || ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder || "email@example.com"}
-            className={`border-2 ${error ? "border-red-500" : ""}`}
+            className={`border ${error ? "border-red-500" : ""}`}
           />
         );
 
@@ -468,7 +468,7 @@ function FormFieldRenderer({
             min={field.validation?.min}
             max={field.validation?.max}
             step={field.validation?.step}
-            className={`border-2 ${error ? "border-red-500" : ""}`}
+            className={`border ${error ? "border-red-500" : ""}`}
           />
         );
 
@@ -480,7 +480,7 @@ function FormFieldRenderer({
             onChange={(e) => onChange(e.target.value)}
             min={field.validation?.min_date}
             max={field.validation?.max_date}
-            className={`border-2 ${error ? "border-red-500" : ""}`}
+            className={`border ${error ? "border-red-500" : ""}`}
           />
         );
 
@@ -490,7 +490,7 @@ function FormFieldRenderer({
             value={(value as string) || ""}
             onValueChange={onChange}
           >
-            <SelectTrigger className={`border-2 ${error ? "border-red-500" : ""}`}>
+            <SelectTrigger className={`border ${error ? "border-red-500" : ""}`}>
               <SelectValue placeholder={field.placeholder || "Select an option"} />
             </SelectTrigger>
             <SelectContent>
@@ -561,7 +561,7 @@ function FormFieldRenderer({
               type="button"
               variant={value === "yes" ? "default" : "outline"}
               onClick={() => onChange("yes")}
-              className="flex-1 border-2"
+              className="flex-1 border"
             >
               Yes
             </Button>
@@ -569,7 +569,7 @@ function FormFieldRenderer({
               type="button"
               variant={value === "no" ? "default" : "outline"}
               onClick={() => onChange("no")}
-              className="flex-1 border-2"
+              className="flex-1 border"
             >
               No
             </Button>
@@ -614,7 +614,7 @@ function FormFieldRenderer({
                     key={num}
                     type="button"
                     onClick={() => onChange(num)}
-                    className={`flex-1 py-3 text-center border-2 rounded transition-colors ${
+                    className={`flex-1 py-3 text-center border rounded transition-colors ${
                       scaleValue === num
                         ? "bg-primary text-primary-foreground border-primary"
                         : "border-gray-200 hover:border-gray-400"
@@ -637,7 +637,7 @@ function FormFieldRenderer({
           <Input
             value={(value as string) || ""}
             onChange={(e) => onChange(e.target.value)}
-            className="border-2"
+            className="border"
           />
         );
     }

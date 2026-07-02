@@ -48,8 +48,8 @@ export function TeamWorkload() {
   };
 
   return (
-    <Card className="border-2">
-      <CardHeader className="border-b-2 pb-3">
+    <Card className="border">
+      <CardHeader className="border-b pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Users className="h-4 w-4" />
           Team Workload
@@ -65,7 +65,7 @@ export function TeamWorkload() {
             {workload.map((member) => (
               <div key={member.id} className="p-3">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8 border-2">
+                  <Avatar className="h-8 w-8 border">
                     <AvatarFallback className="bg-secondary text-xs">
                       {getInitials(member.name)}
                     </AvatarFallback>

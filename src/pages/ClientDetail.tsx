@@ -195,7 +195,7 @@ export default function ClientDetail() {
         <p className="text-muted-foreground">
           The client you're looking for doesn't exist or you don't have access to it.
         </p>
-        <Button onClick={() => navigateOrg("/crm")} variant="outline" className="border-2">
+        <Button onClick={() => navigateOrg("/crm")} variant="outline" className="border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to CRM
         </Button>
@@ -212,13 +212,13 @@ export default function ClientDetail() {
             variant="ghost"
             size="icon"
             onClick={() => navigateOrg("/crm")}
-            className="border-2 border-transparent hover:border-border"
+            className="border border-transparent hover:border-border"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{client.name}</h1>
+              <h1 className="text-2xl font-semibold">{client.name}</h1>
               <Badge className={clientStatusStyles[client.status || "active"]}>
                 {client.status || "active"}
               </Badge>
@@ -233,7 +233,7 @@ export default function ClientDetail() {
               <Button
                 variant="outline"
                 onClick={() => setIsEditing(false)}
-                className="border-2"
+                className="border"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancel
@@ -241,7 +241,7 @@ export default function ClientDetail() {
               <Button
                 onClick={handleSave}
                 disabled={updateClient.isPending}
-                className="border-2"
+                className="border"
               >
                 {updateClient.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -256,18 +256,18 @@ export default function ClientDetail() {
               <Button
                 variant="outline"
                 onClick={handleStartEdit}
-                className="border-2"
+                className="border"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="border-2">
+                  <Button variant="outline" size="icon" className="border">
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="border-2">
+                <DropdownMenuContent align="end" className="border">
                   <DropdownMenuItem
                     onClick={() => setIsDeleteDialogOpen(true)}
                     className="text-destructive"
@@ -284,53 +284,53 @@ export default function ClientDetail() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-2">
+        <Card className="border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-emerald-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-emerald-600">
                 <DollarSign className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-xl font-bold font-mono">{formatCurrency(totalRevenue)}</div>
+                <div className="text-xl font-semibold font-mono">{formatCurrency(totalRevenue)}</div>
                 <div className="text-sm text-muted-foreground">Total Revenue</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2">
+        <Card className="border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-blue-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-blue-600">
                 <FileText className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-xl font-bold font-mono">{formatCurrency(pipelineValue)}</div>
+                <div className="text-xl font-semibold font-mono">{formatCurrency(pipelineValue)}</div>
                 <div className="text-sm text-muted-foreground">Pipeline Value</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2">
+        <Card className="border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-purple-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-purple-600">
                 <FileText className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-xl font-bold">{clientQuotes.length}</div>
+                <div className="text-xl font-semibold">{clientQuotes.length}</div>
                 <div className="text-sm text-muted-foreground">Total Deals</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2">
+        <Card className="border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-amber-500">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-amber-500">
                 <Users className="h-5 w-5 text-black" />
               </div>
               <div>
-                <div className="text-xl font-bold">{contacts?.length || 0}</div>
+                <div className="text-xl font-semibold">{contacts?.length || 0}</div>
                 <div className="text-sm text-muted-foreground">Contacts</div>
               </div>
             </div>
@@ -340,7 +340,7 @@ export default function ClientDetail() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="border-2 border-border bg-secondary">
+        <TabsList className="border border-border bg-secondary">
           <TabsTrigger
             value="overview"
             className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -365,8 +365,8 @@ export default function ClientDetail() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Company Information */}
-            <Card className="border-2">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border">
+              <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="h-5 w-5" />
                   Company Information
@@ -460,8 +460,8 @@ export default function ClientDetail() {
             </Card>
 
             {/* Primary Contact */}
-            <Card className="border-2">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border">
+              <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
                   Primary Contact
@@ -527,8 +527,8 @@ export default function ClientDetail() {
             </Card>
 
             {/* Notes */}
-            <Card className="border-2 md:col-span-2">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border md:col-span-2">
+              <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
                   Notes
@@ -563,7 +563,7 @@ export default function ClientDetail() {
               {contacts.map((contact) => (
                 <Card
                   key={contact.id}
-                  className="border-2 cursor-pointer hover:shadow-md transition-shadow"
+                  className="border cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
                 >
                   <CardContent className="p-4">
@@ -593,14 +593,14 @@ export default function ClientDetail() {
               ))}
             </div>
           ) : (
-            <Card className="border-2">
+            <Card className="border">
               <CardContent className="p-8 text-center">
                 <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Contacts Yet</h3>
                 <p className="text-muted-foreground mb-4">
                   Add contacts and link them to this company in the CRM.
                 </p>
-                <Button onClick={() => navigateOrg("/crm")} variant="outline" className="border-2">
+                <Button onClick={() => navigateOrg("/crm")} variant="outline" className="border">
                   Go to CRM
                 </Button>
               </CardContent>
@@ -615,7 +615,7 @@ export default function ClientDetail() {
               {clientQuotes.map((quote) => (
                 <Card
                   key={quote.id}
-                  className="border-2 cursor-pointer hover:shadow-md transition-shadow"
+                  className="border cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => navigateOrg(`/quotes/${quote.display_id}`)}
                 >
                   <CardContent className="p-4">
@@ -630,7 +630,7 @@ export default function ClientDetail() {
                           </span>
                         </div>
                         <h3 className="font-semibold truncate">{quote.title}</h3>
-                        <p className="text-lg font-mono font-bold mt-2">
+                        <p className="text-lg font-mono font-semibold mt-2">
                           {formatCurrency(quote.value || 0)}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -643,14 +643,14 @@ export default function ClientDetail() {
               ))}
             </div>
           ) : (
-            <Card className="border-2">
+            <Card className="border">
               <CardContent className="p-8 text-center">
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Deals Yet</h3>
                 <p className="text-muted-foreground mb-4">
                   Create deals in the CRM pipeline to track sales for this client.
                 </p>
-                <Button onClick={() => navigateOrg("/crm")} variant="outline" className="border-2">
+                <Button onClick={() => navigateOrg("/crm")} variant="outline" className="border">
                   Go to CRM
                 </Button>
               </CardContent>
@@ -661,7 +661,7 @@ export default function ClientDetail() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="border-2">
+        <AlertDialogContent className="border">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Client</AlertDialogTitle>
             <AlertDialogDescription>
@@ -670,7 +670,7 @@ export default function ClientDetail() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

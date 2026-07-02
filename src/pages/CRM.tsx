@@ -645,53 +645,53 @@ export default function CRM() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-blue-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-blue-600">
                 <Target className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">{formatValue(totalPipelineValue)}</div>
+                <div className="text-2xl font-semibold font-mono">{formatValue(totalPipelineValue)}</div>
                 <div className="text-sm text-muted-foreground">Pipeline Value</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-emerald-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-emerald-600">
                 <Handshake className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">{formatValue(wonValue)}</div>
+                <div className="text-2xl font-semibold font-mono">{formatValue(wonValue)}</div>
                 <div className="text-sm text-muted-foreground">Won Deals</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-primary">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-primary">
                 <Users className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{leads?.length || 0}</div>
+                <div className="text-2xl font-semibold">{leads?.length || 0}</div>
                 <div className="text-sm text-muted-foreground">Active Leads</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-amber-500">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-amber-500">
                 <Building className="h-5 w-5 text-black" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{clients?.length || 0}</div>
+                <div className="text-2xl font-semibold">{clients?.length || 0}</div>
                 <div className="text-sm text-muted-foreground">Total Clients</div>
               </div>
             </div>
@@ -706,14 +706,14 @@ export default function CRM() {
           placeholder="Search deals, leads, clients..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 border-2"
+          className="pl-10 border"
         />
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-          <TabsList className="border-2 border-border bg-secondary p-1 w-max sm:w-auto">
+          <TabsList className="border border-border bg-secondary p-1 w-max sm:w-auto">
             <TabsTrigger value="pipeline" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <span className="hidden sm:inline">Pipeline</span>
               <span className="sm:hidden">Pipe</span> ({activeDeals})
@@ -739,13 +739,13 @@ export default function CRM() {
           <div className="flex justify-end">
             <Dialog open={isNewDealOpen} onOpenChange={setIsNewDealOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2">
+                <Button className="border">
                   <Plus className="h-4 w-4 mr-2" />
                   New Deal
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[500px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Create New Deal</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
@@ -755,7 +755,7 @@ export default function CRM() {
                       placeholder="e.g., Enterprise Package Quote"
                       value={newDeal.title}
                       onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -764,7 +764,7 @@ export default function CRM() {
                       placeholder="Describe the deal..."
                       value={newDeal.description}
                       onChange={(e) => setNewDeal({ ...newDeal, description: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -794,10 +794,10 @@ export default function CRM() {
                         }
                       }}
                     >
-                      <SelectTrigger className="border-2">
+                      <SelectTrigger className="border">
                         <SelectValue placeholder="Select from contacts or enter manually" />
                       </SelectTrigger>
-                      <SelectContent className="border-2">
+                      <SelectContent className="border">
                         <SelectItem value="manual">Enter manually</SelectItem>
                         {contacts?.map((contact) => (
                           <SelectItem key={contact.id} value={contact.id}>
@@ -817,7 +817,7 @@ export default function CRM() {
                         placeholder="Company name"
                         value={newDeal.company_name}
                         onChange={(e) => setNewDeal({ ...newDeal, company_name: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -827,7 +827,7 @@ export default function CRM() {
                         placeholder="0"
                         value={newDeal.value}
                         onChange={(e) => setNewDeal({ ...newDeal, value: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -838,7 +838,7 @@ export default function CRM() {
                         placeholder="Contact name"
                         value={newDeal.contact_name}
                         onChange={(e) => setNewDeal({ ...newDeal, contact_name: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -848,7 +848,7 @@ export default function CRM() {
                         placeholder="email@company.com"
                         value={newDeal.contact_email}
                         onChange={(e) => setNewDeal({ ...newDeal, contact_email: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -858,7 +858,7 @@ export default function CRM() {
                       type="date"
                       value={newDeal.valid_until}
                       onChange={(e) => setNewDeal({ ...newDeal, valid_until: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -867,15 +867,15 @@ export default function CRM() {
                       placeholder="Internal notes..."
                       value={newDeal.notes}
                       onChange={(e) => setNewDeal({ ...newDeal, notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => setIsNewDealOpen(false)} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewDealOpen(false)} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateDeal} className="border-2" disabled={createQuote.isPending}>
+                  <Button onClick={handleCreateDeal} className="border" disabled={createQuote.isPending}>
                     {createQuote.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Create Deal
                   </Button>
@@ -887,10 +887,10 @@ export default function CRM() {
           {/* Pipeline View */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {dealsByStage.map((stage) => (
-              <Card key={stage.id} className="border-2 border-border shadow-sm">
+              <Card key={stage.id} className="border border-border shadow-sm">
                 <CardHeader className={`py-3 px-4 ${stage.color} ${stage.textDark ? "text-white" : ""}`}>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-bold">{stage.name}</CardTitle>
+                    <CardTitle className="text-sm font-semibold">{stage.name}</CardTitle>
                     <Badge variant="secondary" className="bg-white/20 text-current border-0">
                       {stage.deals.length}
                     </Badge>
@@ -908,7 +908,7 @@ export default function CRM() {
                     stage.deals.map((deal) => (
                       <Card
                         key={deal.id}
-                        className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        className="border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}
                       >
                         <CardContent className="p-3">
@@ -918,7 +918,7 @@ export default function CRM() {
                               <p className="text-xs text-muted-foreground truncate">
                                 {deal.company_name}
                               </p>
-                              <p className="text-sm font-mono font-bold mt-1">
+                              <p className="text-sm font-mono font-semibold mt-1">
                                 {formatValue(deal.value)}
                               </p>
                             </div>
@@ -928,7 +928,7 @@ export default function CRM() {
                                   <MoreVertical className="h-3 w-3" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="border-2">
+                              <DropdownMenuContent align="end" className="border">
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedQuoteId(deal.id);
@@ -1002,13 +1002,13 @@ export default function CRM() {
           <div className="flex justify-end">
             <Dialog open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2">
+                <Button className="border">
                   <UserPlus className="h-4 w-4 mr-2" />
                   New Lead
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[500px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Add New Lead</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1018,7 +1018,7 @@ export default function CRM() {
                       placeholder="Company name"
                       value={newLead.name}
                       onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1028,7 +1028,7 @@ export default function CRM() {
                         placeholder="Contact name"
                         value={newLead.contact_name}
                         onChange={(e) => setNewLead({ ...newLead, contact_name: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -1038,7 +1038,7 @@ export default function CRM() {
                         placeholder="email@company.com"
                         value={newLead.contact_email}
                         onChange={(e) => setNewLead({ ...newLead, contact_email: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -1049,7 +1049,7 @@ export default function CRM() {
                         placeholder="+1 234 567 8900"
                         value={newLead.contact_phone}
                         onChange={(e) => setNewLead({ ...newLead, contact_phone: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -1058,7 +1058,7 @@ export default function CRM() {
                         placeholder="e.g., Website, Referral"
                         value={newLead.source}
                         onChange={(e) => setNewLead({ ...newLead, source: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -1068,15 +1068,15 @@ export default function CRM() {
                       placeholder="Additional notes..."
                       value={newLead.notes}
                       onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => setIsNewLeadOpen(false)} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewLeadOpen(false)} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateLead} className="border-2" disabled={createLead.isPending}>
+                  <Button onClick={handleCreateLead} className="border" disabled={createLead.isPending}>
                     {createLead.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Add Lead
                   </Button>
@@ -1086,12 +1086,12 @@ export default function CRM() {
           </div>
 
           {filteredLeads.length === 0 ? (
-            <Card className="border-2 border-border">
+            <Card className="border border-border">
               <CardContent className="p-8 text-center">
                 <UserPlus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Leads Yet</h3>
                 <p className="text-muted-foreground mb-4">Add your first lead to start tracking potential customers.</p>
-                <Button onClick={() => setIsNewLeadOpen(true)} className="border-2">
+                <Button onClick={() => setIsNewLeadOpen(true)} className="border">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Lead
                 </Button>
@@ -1100,7 +1100,7 @@ export default function CRM() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredLeads.map((lead) => (
-                <Card key={lead.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+                <Card key={lead.id} className="border border-border shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -1129,7 +1129,7 @@ export default function CRM() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-2">
+                        <DropdownMenuContent align="end" className="border">
                           <DropdownMenuItem onClick={() => updateLead.mutate({ id: lead.id, status: "contacted" })}>
                             Mark as Contacted
                           </DropdownMenuItem>
@@ -1159,13 +1159,13 @@ export default function CRM() {
           <div className="flex justify-end">
             <Dialog open={isNewClientOpen} onOpenChange={setIsNewClientOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2">
+                <Button className="border">
                   <Building className="h-4 w-4 mr-2" />
                   New Client
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[600px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[600px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Add New Client</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1175,7 +1175,7 @@ export default function CRM() {
                       placeholder="Company name"
                       value={newClient.name}
                       onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
 
@@ -1215,10 +1215,10 @@ export default function CRM() {
                       value=""
                       onValueChange={handleSelectContact}
                     >
-                      <SelectTrigger className="border-2">
+                      <SelectTrigger className="border">
                         <SelectValue placeholder="Select contacts to add..." />
                       </SelectTrigger>
-                      <SelectContent className="border-2 max-h-60">
+                      <SelectContent className="border max-h-60">
                         {contacts?.filter(c => !selectedContactIds.includes(c.id)).map((contact) => (
                           <SelectItem key={contact.id} value={contact.id}>
                             <div className="flex items-center gap-2">
@@ -1239,7 +1239,7 @@ export default function CRM() {
                     </Select>
                   </div>
 
-                  <div className="border-t-2 border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <p className="text-sm font-medium mb-3">Primary Contact Details</p>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
@@ -1248,7 +1248,7 @@ export default function CRM() {
                           placeholder="Contact name"
                           value={newClient.contact_name}
                           onChange={(e) => setNewClient({ ...newClient, contact_name: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -1258,7 +1258,7 @@ export default function CRM() {
                           placeholder="email@company.com"
                           value={newClient.contact_email}
                           onChange={(e) => setNewClient({ ...newClient, contact_email: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                     </div>
@@ -1269,7 +1269,7 @@ export default function CRM() {
                           placeholder="+1 234 567 8900"
                           value={newClient.contact_phone}
                           onChange={(e) => setNewClient({ ...newClient, contact_phone: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -1278,17 +1278,17 @@ export default function CRM() {
                           placeholder="e.g., Technology"
                           value={newClient.industry}
                           onChange={(e) => setNewClient({ ...newClient, industry: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => { setIsNewClientOpen(false); setSelectedContactIds([]); }} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => { setIsNewClientOpen(false); setSelectedContactIds([]); }} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateClient} className="border-2" disabled={createClient.isPending || bulkAddClientContacts.isPending}>
+                  <Button onClick={handleCreateClient} className="border" disabled={createClient.isPending || bulkAddClientContacts.isPending}>
                     {(createClient.isPending || bulkAddClientContacts.isPending) ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Add Client
                   </Button>
@@ -1298,12 +1298,12 @@ export default function CRM() {
           </div>
 
           {filteredClients.length === 0 ? (
-            <Card className="border-2 border-border">
+            <Card className="border border-border">
               <CardContent className="p-8 text-center">
                 <Building className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Clients Yet</h3>
                 <p className="text-muted-foreground mb-4">Add your first client or convert a lead.</p>
-                <Button onClick={() => setIsNewClientOpen(true)} className="border-2">
+                <Button onClick={() => setIsNewClientOpen(true)} className="border">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Client
                 </Button>
@@ -1316,7 +1316,7 @@ export default function CRM() {
                 {filteredClients.map((client) => (
                   <Card
                     key={client.id}
-                    className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    className="border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => navigateOrg(`/clients/${client.display_id}`)}
                   >
                     <CardContent className="p-4">
@@ -1352,7 +1352,7 @@ export default function CRM() {
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuContent align="end" className="border">
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
                               <ChevronRight className="h-4 w-4 mr-2" />
                               View Details
@@ -1375,11 +1375,11 @@ export default function CRM() {
 
               {/* Desktop Table View */}
               <div className="hidden md:block">
-                <Card className="border-2 border-border">
+                <Card className="border border-border">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b-2 border-border bg-muted/50">
+                        <tr className="border-b border-border bg-muted/50">
                           <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
                           <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
                           <th className="text-left py-3 px-4 font-medium text-sm">Client Name</th>
@@ -1440,7 +1440,7 @@ export default function CRM() {
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="border-2">
+                                <DropdownMenuContent align="end" className="border">
                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
                                     <ChevronRight className="h-4 w-4 mr-2" />
                                     View Details
@@ -1472,13 +1472,13 @@ export default function CRM() {
           <div className="flex justify-end">
             <Dialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2">
+                <Button className="border">
                   <CheckSquare className="h-4 w-4 mr-2" />
                   New Task
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[500px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Create New Task</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1488,7 +1488,7 @@ export default function CRM() {
                       placeholder="e.g., Follow up with client"
                       value={newTask.title}
                       onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -1497,7 +1497,7 @@ export default function CRM() {
                       placeholder="Task details..."
                       value={newTask.description}
                       onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1507,16 +1507,16 @@ export default function CRM() {
                         type="date"
                         value={newTask.due_date}
                         onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
                       <Label>Related Deal</Label>
                       <Select value={newTask.quote_id} onValueChange={(value) => setNewTask({ ...newTask, quote_id: value })}>
-                        <SelectTrigger className="border-2">
+                        <SelectTrigger className="border">
                           <SelectValue placeholder="Select deal (optional)" />
                         </SelectTrigger>
-                        <SelectContent className="border-2">
+                        <SelectContent className="border">
                           {quotes?.map((quote) => (
                             <SelectItem key={quote.id} value={quote.id}>
                               {quote.title}
@@ -1527,11 +1527,11 @@ export default function CRM() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => setIsNewTaskOpen(false)} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewTaskOpen(false)} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateTask} className="border-2" disabled={createTask.isPending}>
+                  <Button onClick={handleCreateTask} className="border" disabled={createTask.isPending}>
                     {createTask.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Create Task
                   </Button>
@@ -1542,8 +1542,8 @@ export default function CRM() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Pending Tasks */}
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
                   Pending Tasks ({pendingTasks.length})
@@ -1591,8 +1591,8 @@ export default function CRM() {
             </Card>
 
             {/* Completed Tasks */}
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <CheckSquare className="h-5 w-5" />
                   Completed ({completedTasks.length})
@@ -1636,11 +1636,11 @@ export default function CRM() {
             <div className="flex items-center gap-2">
               {tags && tags.length > 0 && (
                 <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="border-2 w-40">
+                  <SelectTrigger className="border w-40">
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="All Tags" />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="all">All Tags</SelectItem>
                     {tags.map((tag) => (
                       <SelectItem key={tag.id} value={tag.id}>
@@ -1660,7 +1660,7 @@ export default function CRM() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="border-2"
+                className="border"
                 onClick={() => setIsImportDialogOpen(true)}
               >
                 <Upload className="h-4 w-4 mr-2" />
@@ -1668,7 +1668,7 @@ export default function CRM() {
               </Button>
               <Button
                 variant="outline"
-                className="border-2"
+                className="border"
                 onClick={() => contacts && exportContacts.mutate(contacts)}
                 disabled={exportContacts.isPending || !contacts?.length}
               >
@@ -1677,13 +1677,13 @@ export default function CRM() {
               </Button>
               <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
                 <DialogTrigger asChild>
-                  <Button className="border-2">
+                  <Button className="border">
                     <User className="h-4 w-4 mr-2" />
                     New Contact
                   </Button>
                 </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[500px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Add New Contact</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1693,7 +1693,7 @@ export default function CRM() {
                       placeholder="Contact name"
                       value={newContact.name}
                       onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1704,7 +1704,7 @@ export default function CRM() {
                         placeholder="email@company.com"
                         value={newContact.email}
                         onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -1713,7 +1713,7 @@ export default function CRM() {
                         placeholder="+1 234 567 8900"
                         value={newContact.phone}
                         onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -1724,16 +1724,16 @@ export default function CRM() {
                         placeholder="e.g., Project Manager"
                         value={newContact.job_title}
                         onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
                       <Label>Company</Label>
                       <Select value={newContact.company_id} onValueChange={(value) => setNewContact({ ...newContact, company_id: value })}>
-                        <SelectTrigger className="border-2">
+                        <SelectTrigger className="border">
                           <SelectValue placeholder="Select company (optional)" />
                         </SelectTrigger>
-                        <SelectContent className="border-2">
+                        <SelectContent className="border">
                           {clients?.map((client) => (
                             <SelectItem key={client.id} value={client.id}>
                               {client.name}
@@ -1745,20 +1745,20 @@ export default function CRM() {
                   </div>
                   {/* Add New Company Section */}
                   {isCreatingCompanyInline ? (
-                    <div className="grid gap-2 p-3 border-2 border-dashed border-border rounded-md bg-muted/30">
+                    <div className="grid gap-2 p-3 border border-dashed border-border rounded-md bg-muted/30">
                       <Label className="text-sm font-medium">Create New Company</Label>
                       <div className="flex gap-2">
                         <Input
                           placeholder="Enter company name"
                           value={inlineCompanyName}
                           onChange={(e) => setInlineCompanyName(e.target.value)}
-                          className="border-2 flex-1"
+                          className="border flex-1"
                           autoFocus
                         />
                         <Button
                           onClick={handleCreateInlineCompany}
                           disabled={createClient.isPending || !inlineCompanyName.trim()}
-                          className="border-2"
+                          className="border"
                         >
                           {createClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
                           Create
@@ -1766,7 +1766,7 @@ export default function CRM() {
                         <Button
                           variant="outline"
                           onClick={() => { setIsCreatingCompanyInline(false); setInlineCompanyName(""); }}
-                          className="border-2"
+                          className="border"
                         >
                           Cancel
                         </Button>
@@ -1777,7 +1777,7 @@ export default function CRM() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsCreatingCompanyInline(true)}
-                      className="border-2 w-fit"
+                      className="border w-fit"
                     >
                       <PlusCircle className="h-4 w-4 mr-2" />
                       Add New Company
@@ -1789,7 +1789,7 @@ export default function CRM() {
                       placeholder="Mailing/billing address..."
                       value={newContact.address}
                       onChange={(e) => setNewContact({ ...newContact, address: e.target.value })}
-                      className="border-2"
+                      className="border"
                       rows={2}
                     />
                   </div>
@@ -1799,15 +1799,15 @@ export default function CRM() {
                       placeholder="Additional notes..."
                       value={newContact.notes}
                       onChange={(e) => setNewContact({ ...newContact, notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => { setIsNewContactOpen(false); setIsCreatingCompanyInline(false); setInlineCompanyName(""); }} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => { setIsNewContactOpen(false); setIsCreatingCompanyInline(false); setInlineCompanyName(""); }} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateContact} className="border-2" disabled={createContact.isPending}>
+                  <Button onClick={handleCreateContact} className="border" disabled={createContact.isPending}>
                     {createContact.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Add Contact
                   </Button>
@@ -1818,12 +1818,12 @@ export default function CRM() {
           </div>
 
           {filteredContacts.length === 0 ? (
-            <Card className="border-2 border-border">
+            <Card className="border border-border">
               <CardContent className="p-8 text-center">
                 <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Contacts Yet</h3>
                 <p className="text-muted-foreground mb-4">Add contacts to easily link them to deals, quotes, and projects.</p>
-                <Button onClick={() => setIsNewContactOpen(true)} className="border-2">
+                <Button onClick={() => setIsNewContactOpen(true)} className="border">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Contact
                 </Button>
@@ -1836,7 +1836,7 @@ export default function CRM() {
                 {filteredContacts.map((contact) => (
                   <Card
                     key={contact.id}
-                    className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    className="border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
                   >
                     <CardContent className="p-4">
@@ -1901,7 +1901,7 @@ export default function CRM() {
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuContent align="end" className="border">
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
                               <ChevronRight className="h-4 w-4 mr-2" />
                               View Details
@@ -1924,11 +1924,11 @@ export default function CRM() {
 
               {/* Desktop Table View */}
               <div className="hidden md:block">
-                <Card className="border-2 border-border">
+                <Card className="border border-border">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b-2 border-border bg-muted/50">
+                        <tr className="border-b border-border bg-muted/50">
                           <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
                           <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
                           <th className="text-left py-3 px-4 font-medium text-sm">Job Title</th>
@@ -2010,7 +2010,7 @@ export default function CRM() {
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="border-2">
+                                <DropdownMenuContent align="end" className="border">
                                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
                                     <ChevronRight className="h-4 w-4 mr-2" />
                                     View Details
@@ -2040,8 +2040,8 @@ export default function CRM() {
 
       {/* Edit Contact Dialog */}
       <Dialog open={!!editingContact} onOpenChange={(open) => !open && setEditingContact(null)}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[500px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Contact</DialogTitle>
           </DialogHeader>
           {editingContact && (
@@ -2052,7 +2052,7 @@ export default function CRM() {
                   placeholder="Contact name"
                   value={editingContact.name}
                   onChange={(e) => setEditingContact({ ...editingContact, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -2063,7 +2063,7 @@ export default function CRM() {
                     placeholder="email@company.com"
                     value={editingContact.email || ""}
                     onChange={(e) => setEditingContact({ ...editingContact, email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -2072,7 +2072,7 @@ export default function CRM() {
                     placeholder="+1 234 567 8900"
                     value={editingContact.phone || ""}
                     onChange={(e) => setEditingContact({ ...editingContact, phone: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -2083,7 +2083,7 @@ export default function CRM() {
                     placeholder="e.g., Project Manager"
                     value={editingContact.job_title || ""}
                     onChange={(e) => setEditingContact({ ...editingContact, job_title: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -2092,10 +2092,10 @@ export default function CRM() {
                     value={editingContact.company_id || ""}
                     onValueChange={(value) => setEditingContact({ ...editingContact, company_id: value })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select company (optional)" />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {clients?.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
@@ -2107,20 +2107,20 @@ export default function CRM() {
               </div>
               {/* Add New Company Section */}
               {isCreatingCompanyInlineEdit ? (
-                <div className="grid gap-2 p-3 border-2 border-dashed border-border rounded-md bg-muted/30">
+                <div className="grid gap-2 p-3 border border-dashed border-border rounded-md bg-muted/30">
                   <Label className="text-sm font-medium">Create New Company</Label>
                   <div className="flex gap-2">
                     <Input
                       placeholder="Enter company name"
                       value={inlineCompanyNameEdit}
                       onChange={(e) => setInlineCompanyNameEdit(e.target.value)}
-                      className="border-2 flex-1"
+                      className="border flex-1"
                       autoFocus
                     />
                     <Button
                       onClick={handleCreateInlineCompanyEdit}
                       disabled={createClient.isPending || !inlineCompanyNameEdit.trim()}
-                      className="border-2"
+                      className="border"
                     >
                       {createClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
                       Create
@@ -2128,7 +2128,7 @@ export default function CRM() {
                     <Button
                       variant="outline"
                       onClick={() => { setIsCreatingCompanyInlineEdit(false); setInlineCompanyNameEdit(""); }}
-                      className="border-2"
+                      className="border"
                     >
                       Cancel
                     </Button>
@@ -2139,7 +2139,7 @@ export default function CRM() {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsCreatingCompanyInlineEdit(true)}
-                  className="border-2 w-fit"
+                  className="border w-fit"
                 >
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Add New Company
@@ -2151,7 +2151,7 @@ export default function CRM() {
                   placeholder="Mailing/billing address..."
                   value={editingContact.address || ""}
                   onChange={(e) => setEditingContact({ ...editingContact, address: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={2}
                 />
               </div>
@@ -2161,16 +2161,16 @@ export default function CRM() {
                   placeholder="Additional notes..."
                   value={editingContact.notes || ""}
                   onChange={(e) => setEditingContact({ ...editingContact, notes: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => { setEditingContact(null); setIsCreatingCompanyInlineEdit(false); setInlineCompanyNameEdit(""); }} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => { setEditingContact(null); setIsCreatingCompanyInlineEdit(false); setInlineCompanyNameEdit(""); }} className="border">
               Cancel
             </Button>
-            <Button onClick={handleUpdateContact} className="border-2" disabled={updateContact.isPending}>
+            <Button onClick={handleUpdateContact} className="border" disabled={updateContact.isPending}>
               {updateContact.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes
             </Button>
@@ -2180,18 +2180,18 @@ export default function CRM() {
 
       {/* Log Activity Dialog */}
       <Dialog open={isActivityDialogOpen} onOpenChange={setIsActivityDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[400px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[400px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Log Activity</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Activity Type</Label>
               <Select value={newActivity.type} onValueChange={(value: ActivityType) => setNewActivity({ ...newActivity, type: value })}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="call">
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4" /> Call
@@ -2221,7 +2221,7 @@ export default function CRM() {
                 placeholder="Describe the activity..."
                 value={newActivity.description}
                 onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
-                className="border-2"
+                className="border"
               />
             </div>
             <div className="grid gap-2">
@@ -2230,15 +2230,15 @@ export default function CRM() {
                 placeholder="e.g., 30 min"
                 value={newActivity.duration}
                 onChange={(e) => setNewActivity({ ...newActivity, duration: e.target.value })}
-                className="border-2"
+                className="border"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsActivityDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsActivityDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleLogActivity} className="border-2" disabled={createActivity.isPending}>
+            <Button onClick={handleLogActivity} className="border" disabled={createActivity.isPending}>
               {createActivity.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Log Activity
             </Button>
@@ -2248,8 +2248,8 @@ export default function CRM() {
 
       {/* Edit Client Dialog */}
       <Dialog open={!!editingClient} onOpenChange={(open) => !open && setEditingClient(null)}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[500px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Client</DialogTitle>
           </DialogHeader>
           {editingClient && (
@@ -2260,7 +2260,7 @@ export default function CRM() {
                   placeholder="Company name"
                   value={editingClient.name}
                   onChange={(e) => setEditingClient({ ...editingClient, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -2270,7 +2270,7 @@ export default function CRM() {
                     placeholder="Contact name"
                     value={editingClient.contact_name || ""}
                     onChange={(e) => setEditingClient({ ...editingClient, contact_name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -2280,7 +2280,7 @@ export default function CRM() {
                     placeholder="email@company.com"
                     value={editingClient.contact_email || ""}
                     onChange={(e) => setEditingClient({ ...editingClient, contact_email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -2291,7 +2291,7 @@ export default function CRM() {
                     placeholder="+1 234 567 8900"
                     value={editingClient.contact_phone || ""}
                     onChange={(e) => setEditingClient({ ...editingClient, contact_phone: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -2300,17 +2300,17 @@ export default function CRM() {
                     placeholder="e.g., Technology"
                     value={editingClient.industry || ""}
                     onChange={(e) => setEditingClient({ ...editingClient, industry: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setEditingClient(null)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setEditingClient(null)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleUpdateClient} className="border-2" disabled={updateClient.isPending}>
+            <Button onClick={handleUpdateClient} className="border" disabled={updateClient.isPending}>
               {updateClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes
             </Button>
@@ -2326,8 +2326,8 @@ export default function CRM() {
           setImportPreview([]);
         }
       }}>
-        <DialogContent className="border-2 sm:max-w-[600px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[600px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Import Contacts</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -2349,7 +2349,7 @@ export default function CRM() {
                     reader.readAsText(file);
                   }
                 }}
-                className="border-2"
+                className="border"
               />
               <p className="text-xs text-muted-foreground">
                 Upload a CSV file with columns: Name, Email, Phone, Job Title, Company, Address, Notes, Tags
@@ -2359,7 +2359,7 @@ export default function CRM() {
             {importPreview.length > 0 && (
               <div className="grid gap-2">
                 <Label>Preview (first 5 rows)</Label>
-                <div className="border-2 border-border rounded-md overflow-x-auto">
+                <div className="border border-border rounded-md overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-muted">
                       <tr>
@@ -2387,7 +2387,7 @@ export default function CRM() {
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button
               variant="outline"
               onClick={() => {
@@ -2395,7 +2395,7 @@ export default function CRM() {
                 setImportFile(null);
                 setImportPreview([]);
               }}
-              className="border-2"
+              className="border"
             >
               Cancel
             </Button>
@@ -2424,7 +2424,7 @@ export default function CRM() {
                 };
                 reader.readAsText(importFile);
               }}
-              className="border-2"
+              className="border"
               disabled={importContacts.isPending || !importFile}
             >
               {importContacts.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}

@@ -34,9 +34,9 @@ export function ProjectsOverview() {
 
   if (isLoading) {
     return (
-      <Card className="border-2 border-border shadow-sm">
-        <CardHeader className="border-b-2 border-border">
-          <CardTitle className="text-lg font-bold uppercase tracking-wider">Active Projects</CardTitle>
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="border-b border-border">
+          <CardTitle className="text-lg font-semibold uppercase tracking-wider">Active Projects</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -46,9 +46,9 @@ export function ProjectsOverview() {
   }
 
   return (
-    <Card className="border-2 border-border shadow-sm">
-      <CardHeader className="border-b-2 border-border">
-        <CardTitle className="text-lg font-bold uppercase tracking-wider">Active Projects</CardTitle>
+    <Card className="border border-border shadow-sm">
+      <CardHeader className="border-b border-border">
+        <CardTitle className="text-lg font-semibold uppercase tracking-wider">Active Projects</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {activeProjects.length === 0 ? (
@@ -71,9 +71,9 @@ export function ProjectsOverview() {
                       <span className="text-sm text-muted-foreground">{ticketCount} open tickets</span>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold font-mono">{formatValue(project.budget)}</div>
+                      <div className="font-semibold font-mono">{formatValue(project.budget)}</div>
                       <span
-                        className={`inline-block px-2 py-0.5 text-xs font-bold uppercase ${
+                        className={`inline-block px-2 py-0.5 text-xs font-semibold uppercase ${
                           projectStatusStyles[project.status as keyof typeof projectStatusStyles] || "bg-slate-400 text-black"
                         }`}
                       >
