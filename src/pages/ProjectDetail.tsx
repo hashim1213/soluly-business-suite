@@ -13,6 +13,7 @@ import { useProjectTasks, useCreateProjectTask, useUpdateProjectTask, useToggleP
 import { useProjectMilestones, useCreateProjectMilestone, useUpdateProjectMilestone, useToggleProjectMilestone, useDeleteProjectMilestone } from "@/hooks/useProjectMilestones";
 import { ProjectGantt } from "@/components/projects/ProjectGantt";
 import { MaintenancePanel } from "@/components/projects/MaintenancePanel";
+import { RecurringChargesCard } from "@/components/projects/RecurringChargesCard";
 import { useProjectCosts, useCreateProjectCost, useUpdateProjectCost, useDeleteProjectCost, COST_CATEGORIES } from "@/hooks/useProjectCosts";
 import { useProjectContracts, useCreateProjectContract, useUpdateProjectContract, useDeleteProjectContract } from "@/hooks/useProjectContracts";
 import { useProjectExternalMembers, useAddProjectExternalMember, useRemoveProjectExternalMember, useCreateContactAndAddToProject } from "@/hooks/useProjectExternalMembers";
@@ -1861,6 +1862,7 @@ export default function ProjectDetail() {
 
         {/* Invoices Tab */}
         <TabsContent value="invoices" className="space-y-6">
+          {dbProject && <RecurringChargesCard project={dbProject} />}
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
