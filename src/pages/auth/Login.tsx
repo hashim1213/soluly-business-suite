@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { validateEmail } from "@/lib/validation";
 
 export default function Login() {
   useDocumentTitle("Login");
@@ -14,6 +15,7 @@ export default function Login() {
   const { signIn, isAuthenticated, organization, user, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,11 +35,23 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setError(null);
+
+    // Light client-side validation for immediate, clear feedback
+    if (!validateEmail(email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const result = await signIn(email, password);
+      const result = await signIn(email.trim(), password);
 
       if (result.error) {
         setError(result.error);
@@ -68,10 +82,14 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {error && (
-              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md border border-destructive/20">
-                {error}
+              <div
+                role="alert"
+                className="bg-destructive/10 text-destructive text-sm p-3 rounded-md border border-destructive/20 flex items-start gap-2"
+              >
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
@@ -82,9 +100,14 @@ export default function Login() {
                 type="email"
                 placeholder="you@company.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError(null);
+                }}
                 required
                 autoComplete="email"
+                autoFocus
+                disabled={isLoading}
                 className="border"
               />
             </div>
@@ -99,16 +122,35 @@ export default function Login() {
                   Forgot password?
                 </Link>
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                className="border"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  required
+                  autoComplete="current-password"
+                  disabled={isLoading}
+                  className="border pr-10"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <Button type="submit" className="w-full border" disabled={isLoading}>
