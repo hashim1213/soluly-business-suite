@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTimeEntriesByMember, useCreateTimeEntry, useDeleteTimeEntry, TimeEntryWithProject } from "@/hooks/useTimeEntries";
+import { useTimeEntriesByMember, useCreateTimeEntry, useUpdateTimeEntry, useDeleteTimeEntry, TimeEntryWithProject } from "@/hooks/useTimeEntries";
 import { useProjects } from "@/hooks/useProjects";
 import { SessionTracker } from "@/components/SessionTracker";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,6 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Clock,
   Plus,
   Calendar,
@@ -20,6 +28,8 @@ import {
   TrendingUp,
   Loader2,
   Trash2,
+  Pencil,
+  Copy,
   ChevronLeft,
   ChevronRight,
   User,
@@ -30,7 +40,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 export default function MyHours() {
   const { member } = useAuth();
@@ -38,13 +48,16 @@ export default function MyHours() {
   const { data: timeEntries, isLoading: entriesLoading } = useTimeEntriesByMember(member?.id);
   const { data: projects } = useProjects();
   const createTimeEntry = useCreateTimeEntry();
+  const updateTimeEntry = useUpdateTimeEntry();
   const deleteTimeEntry = useDeleteTimeEntry();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Week navigation state
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
 
   // Quick entry form state
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<TimeEntryWithProject | null>(null);
   const [quickEntry, setQuickEntry] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     hours: "",
@@ -52,6 +65,15 @@ export default function MyHours() {
     description: "",
     billable: true,
   });
+
+  // Open the Log Time dialog when navigated with ?new=true
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsQuickEntryOpen(true);
+      searchParams.delete("new");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Get assigned projects for the current member
   const assignedProjects = useMemo(() => {
@@ -103,6 +125,22 @@ export default function MyHours() {
     return days;
   }, [currentWeekStart]);
 
+  const resetQuickEntry = () => {
+    setQuickEntry({
+      date: format(new Date(), "yyyy-MM-dd"),
+      hours: "",
+      project_id: "",
+      description: "",
+      billable: true,
+    });
+    setEditingEntry(null);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsQuickEntryOpen(open);
+    if (!open) resetQuickEntry();
+  };
+
   const handleQuickEntry = async () => {
     if (!member?.id || !quickEntry.hours || !quickEntry.date) return;
 
@@ -111,23 +149,55 @@ export default function MyHours() {
       return;
     }
 
-    await createTimeEntry.mutateAsync({
-      team_member_id: member.id,
-      date: quickEntry.date,
-      hours,
-      project_id: quickEntry.project_id || null,
-      description: quickEntry.description || null,
-      billable: quickEntry.billable,
-    });
+    if (editingEntry) {
+      await updateTimeEntry.mutateAsync({
+        id: editingEntry.id,
+        oldHours: editingEntry.hours,
+        date: quickEntry.date,
+        hours,
+        project_id: quickEntry.project_id || null,
+        description: quickEntry.description || null,
+        billable: quickEntry.billable,
+      });
+    } else {
+      await createTimeEntry.mutateAsync({
+        team_member_id: member.id,
+        date: quickEntry.date,
+        hours,
+        project_id: quickEntry.project_id || null,
+        description: quickEntry.description || null,
+        billable: quickEntry.billable,
+      });
+    }
 
+    resetQuickEntry();
+    setIsQuickEntryOpen(false);
+  };
+
+  // Open the dialog pre-filled to edit an existing entry
+  const handleEditEntry = (entry: TimeEntryWithProject) => {
+    setEditingEntry(entry);
+    setQuickEntry({
+      date: entry.date,
+      hours: String(entry.hours),
+      project_id: entry.project_id || "",
+      description: entry.description || "",
+      billable: entry.billable,
+    });
+    setIsQuickEntryOpen(true);
+  };
+
+  // Open the create dialog pre-filled from an existing entry with today's date
+  const handleDuplicateEntry = (entry: TimeEntryWithProject) => {
+    setEditingEntry(null);
     setQuickEntry({
       date: format(new Date(), "yyyy-MM-dd"),
-      hours: "",
-      project_id: "",
-      description: "",
-      billable: true,
+      hours: String(entry.hours),
+      project_id: entry.project_id || "",
+      description: entry.description || "",
+      billable: entry.billable,
     });
-    setIsQuickEntryOpen(false);
+    setIsQuickEntryOpen(true);
   };
 
   const handleDeleteEntry = async (entry: TimeEntryWithProject) => {
@@ -149,7 +219,7 @@ export default function MyHours() {
   if (!member) {
     return (
       <div className="p-6">
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-8 text-center">
             <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="font-semibold mb-2">No Team Member Profile</h3>
@@ -167,16 +237,16 @@ export default function MyHours() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <p className="text-muted-foreground">Track and manage your work hours</p>
-        <Dialog open={isQuickEntryOpen} onOpenChange={setIsQuickEntryOpen}>
+        <Dialog open={isQuickEntryOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
-            <Button className="border-2">
+            <Button className="border">
               <Plus className="h-4 w-4 mr-2" />
               Log Time
             </Button>
           </DialogTrigger>
-          <DialogContent className="border-2 sm:max-w-[425px]">
-            <DialogHeader className="border-b-2 border-border pb-4">
-              <DialogTitle>Log Time</DialogTitle>
+          <DialogContent className="border sm:max-w-[425px]">
+            <DialogHeader className="border-b border-border pb-4">
+              <DialogTitle>{editingEntry ? "Edit Time Entry" : "Log Time"}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -186,7 +256,7 @@ export default function MyHours() {
                     type="date"
                     value={quickEntry.date}
                     onChange={(e) => setQuickEntry({ ...quickEntry, date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -199,7 +269,7 @@ export default function MyHours() {
                     placeholder="e.g., 8"
                     value={quickEntry.hours}
                     onChange={(e) => setQuickEntry({ ...quickEntry, hours: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -209,10 +279,10 @@ export default function MyHours() {
                   value={quickEntry.project_id || "none"}
                   onValueChange={(value) => setQuickEntry({ ...quickEntry, project_id: value === "none" ? "" : value })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue placeholder="Select project (optional)" />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="none">No Project</SelectItem>
                     {assignedProjects?.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
@@ -228,7 +298,7 @@ export default function MyHours() {
                   placeholder="What did you work on?"
                   value={quickEntry.description}
                   onChange={(e) => setQuickEntry({ ...quickEntry, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={3}
                 />
               </div>
@@ -243,17 +313,17 @@ export default function MyHours() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => setIsQuickEntryOpen(false)} className="border-2">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
+              <Button variant="outline" onClick={() => handleDialogOpenChange(false)} className="border">
                 Cancel
               </Button>
               <Button
                 onClick={handleQuickEntry}
-                disabled={createTimeEntry.isPending || !quickEntry.hours || !quickEntry.date}
-                className="border-2"
+                disabled={createTimeEntry.isPending || updateTimeEntry.isPending || !quickEntry.hours || !quickEntry.date}
+                className="border"
               >
-                {createTimeEntry.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Log Time
+                {(createTimeEntry.isPending || updateTimeEntry.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {editingEntry ? "Edit Time Entry" : "Log Time"}
               </Button>
             </div>
           </DialogContent>
@@ -265,7 +335,7 @@ export default function MyHours() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -273,12 +343,12 @@ export default function MyHours() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">This Week</p>
-                <p className="text-2xl font-bold">{weekStats.totalHours.toFixed(1)}h</p>
+                <p className="text-2xl font-semibold">{weekStats.totalHours.toFixed(1)}h</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
@@ -286,12 +356,12 @@ export default function MyHours() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Billable</p>
-                <p className="text-2xl font-bold">{weekStats.billableHours.toFixed(1)}h</p>
+                <p className="text-2xl font-semibold">{weekStats.billableHours.toFixed(1)}h</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
@@ -299,12 +369,12 @@ export default function MyHours() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Non-Billable</p>
-                <p className="text-2xl font-bold">{weekStats.nonBillableHours.toFixed(1)}h</p>
+                <p className="text-2xl font-semibold">{weekStats.nonBillableHours.toFixed(1)}h</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
@@ -312,7 +382,7 @@ export default function MyHours() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Hours</p>
-                <p className="text-2xl font-bold">{(member.total_hours || 0).toFixed(1)}h</p>
+                <p className="text-2xl font-semibold">{(member.total_hours || 0).toFixed(1)}h</p>
               </div>
             </div>
           </CardContent>
@@ -320,8 +390,8 @@ export default function MyHours() {
       </div>
 
       {/* Weekly Calendar View */}
-      <Card className="border-2 border-border">
-        <CardHeader className="border-b-2 border-border">
+      <Card className="border border-border">
+        <CardHeader className="border-b border-border">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Weekly Timesheet</CardTitle>
@@ -334,7 +404,7 @@ export default function MyHours() {
                 variant="outline"
                 size="icon"
                 onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
-                className="border-2"
+                className="border"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -342,7 +412,7 @@ export default function MyHours() {
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-                className="border-2"
+                className="border"
               >
                 Today
               </Button>
@@ -350,7 +420,7 @@ export default function MyHours() {
                 variant="outline"
                 size="icon"
                 onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
-                className="border-2"
+                className="border"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -364,13 +434,13 @@ export default function MyHours() {
               return (
                 <div
                   key={day.date}
-                  className={`p-3 rounded-lg border-2 text-center cursor-pointer transition-colors hover:bg-muted/50 ${
+                  className={`p-3 rounded-lg border text-center cursor-pointer transition-colors hover:bg-muted/50 ${
                     day.isToday ? "border-primary bg-primary/5" : "border-border"
                   }`}
                   onClick={() => handleQuickDayLog(day.date)}
                 >
                   <p className="text-xs text-muted-foreground font-medium">{day.dayName}</p>
-                  <p className={`text-lg font-bold ${day.isToday ? "text-primary" : ""}`}>{day.dayNum}</p>
+                  <p className={`text-lg font-semibold ${day.isToday ? "text-primary" : ""}`}>{day.dayNum}</p>
                   <div className="mt-2">
                     {dayHours > 0 ? (
                       <Badge variant="secondary" className="text-xs">
@@ -390,8 +460,8 @@ export default function MyHours() {
       </Card>
 
       {/* Recent Time Entries */}
-      <Card className="border-2 border-border">
-        <CardHeader className="border-b-2 border-border">
+      <Card className="border border-border">
+        <CardHeader className="border-b border-border">
           <CardTitle>Recent Time Entries</CardTitle>
           <CardDescription>Your logged hours from this week</CardDescription>
         </CardHeader>
@@ -405,7 +475,7 @@ export default function MyHours() {
               <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="font-semibold mb-2">No Time Entries This Week</h3>
               <p className="text-muted-foreground mb-4">Start logging your hours to track your work.</p>
-              <Button onClick={() => setIsQuickEntryOpen(true)} className="border-2">
+              <Button onClick={() => setIsQuickEntryOpen(true)} className="border">
                 <Plus className="h-4 w-4 mr-2" />
                 Log Your First Entry
               </Button>
@@ -454,15 +524,36 @@ export default function MyHours() {
                             <p className="text-sm text-muted-foreground mt-1">{entry.description}</p>
                           )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteEntry(entry)}
-                          disabled={deleteTimeEntry.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEditEntry(entry)}
+                            title="Edit entry"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDuplicateEntry(entry)}
+                            title="Duplicate entry"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteEntry(entry)}
+                            disabled={deleteTimeEntry.isPending}
+                            title="Delete entry"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -471,27 +562,27 @@ export default function MyHours() {
 
               {/* Desktop View */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b-2 border-border bg-muted/50">
-                      <th className="text-left py-3 px-4 font-medium text-sm">Date</th>
-                      <th className="text-left py-3 px-4 font-medium text-sm">Project</th>
-                      <th className="text-left py-3 px-4 font-medium text-sm">Description</th>
-                      <th className="text-left py-3 px-4 font-medium text-sm">Hours</th>
-                      <th className="text-left py-3 px-4 font-medium text-sm">Type</th>
-                      <th className="text-left py-3 px-4 font-medium text-sm">Logged By</th>
-                      <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b hover:bg-transparent">
+                      <TableHead className="font-semibold uppercase text-xs">Date</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Project</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs">Description</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs w-[80px]">Hours</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs w-[120px]">Type</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs w-[100px]">Logged By</TableHead>
+                      <TableHead className="font-semibold uppercase text-xs w-[120px] text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {weekEntries.map((entry) => {
                       const isSelfLogged = !entry.logged_by || entry.logged_by === entry.team_member_id;
                       return (
-                        <tr key={entry.id} className="border-b border-border hover:bg-muted/30">
-                          <td className="py-3 px-4">
+                        <TableRow key={entry.id} className="border-b border-border hover:bg-muted/30">
+                          <TableCell>
                             <span className="font-medium">{format(parseISO(entry.date), "EEE, MMM d")}</span>
-                          </td>
-                          <td className="py-3 px-4">
+                          </TableCell>
+                          <TableCell>
                             {entry.project ? (
                               <Link
                                 to={getOrgPath(`/projects/${entry.project.display_id}`)}
@@ -505,21 +596,21 @@ export default function MyHours() {
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
-                          </td>
-                          <td className="py-3 px-4">
+                          </TableCell>
+                          <TableCell>
                             <span className="text-sm text-muted-foreground truncate max-w-[200px] block" title={entry.description || ""}>
                               {entry.description || "-"}
                             </span>
-                          </td>
-                          <td className="py-3 px-4">
+                          </TableCell>
+                          <TableCell>
                             <Badge variant="secondary">{entry.hours}h</Badge>
-                          </td>
-                          <td className="py-3 px-4">
+                          </TableCell>
+                          <TableCell>
                             <Badge variant={entry.billable ? "default" : "outline"}>
                               {entry.billable ? "Billable" : "Non-Billable"}
                             </Badge>
-                          </td>
-                          <td className="py-3 px-4">
+                          </TableCell>
+                          <TableCell>
                             {isSelfLogged ? (
                               <Badge variant="outline" className="text-xs gap-1 border-green-500 text-green-600">
                                 <UserCheck className="h-3 w-3" />
@@ -540,23 +631,44 @@ export default function MyHours() {
                                 </Tooltip>
                               </TooltipProvider>
                             )}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteEntry(entry)}
-                              disabled={deleteTimeEntry.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </td>
-                        </tr>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleEditEntry(entry)}
+                                title="Edit entry"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleDuplicateEntry(entry)}
+                                title="Duplicate entry"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteEntry(entry)}
+                                disabled={deleteTimeEntry.isPending}
+                                title="Delete entry"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </>
           )}

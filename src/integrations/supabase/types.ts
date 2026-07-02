@@ -254,7 +254,7 @@ export type Database = {
       crm_clients: {
         Row: {
           address: string | null
-          contact_email: string
+          contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
           created_at: string
@@ -268,7 +268,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          contact_email: string
+          contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -282,7 +282,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          contact_email?: string
+          contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -306,6 +306,7 @@ export type Database = {
           id: string
           industry: string | null
           name: string
+          notes: string | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
@@ -319,6 +320,7 @@ export type Database = {
           id?: string
           industry?: string | null
           name: string
+          notes?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -332,6 +334,7 @@ export type Database = {
           id?: string
           industry?: string | null
           name?: string
+          notes?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -342,6 +345,7 @@ export type Database = {
         Row: {
           completed: boolean
           created_at: string
+          description: string | null
           display_id: string
           due_date: string
           id: string
@@ -353,6 +357,7 @@ export type Database = {
         Insert: {
           completed?: boolean
           created_at?: string
+          description?: string | null
           display_id: string
           due_date: string
           id?: string
@@ -364,6 +369,7 @@ export type Database = {
         Update: {
           completed?: boolean
           created_at?: string
+          description?: string | null
           display_id?: string
           due_date?: string
           id?: string
@@ -1188,6 +1194,126 @@ export type Database = {
           }
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string | null
+          resource_id: string | null
+          resource_type: string
+          team_member_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          resource_id?: string | null
+          resource_type: string
+          team_member_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          resource_id?: string | null
+          resource_type?: string
+          team_member_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      security_events: {
+        Row: {
+          created_at: string | null
+          event_details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          organization_id: string | null
+          risk_level: string | null
+          team_member_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          risk_level?: string | null
+          team_member_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          risk_level?: string | null
+          team_member_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      sprints: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          goal: string | null
+          id: string
+          name: string
+          organization_id: string
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tickets: {
         Row: {
           assignee_id: string | null
@@ -1197,14 +1323,18 @@ export type Database = {
           display_id: string
           id: string
           organization_id: string
+          board_rank: number
           priority: Database["public"]["Enums"]["ticket_priority"]
           project_id: string | null
+          sprint_id: string | null
           status: Database["public"]["Enums"]["ticket_status"]
+          story_points: number | null
           title: string
           updated_at: string
         }
         Insert: {
           assignee_id?: string | null
+          board_rank?: number
           category?: Database["public"]["Enums"]["ticket_category"]
           created_at?: string
           description?: string | null
@@ -1213,12 +1343,15 @@ export type Database = {
           organization_id: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           project_id?: string | null
+          sprint_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          story_points?: number | null
           title: string
           updated_at?: string
         }
         Update: {
           assignee_id?: string | null
+          board_rank?: number
           category?: Database["public"]["Enums"]["ticket_category"]
           created_at?: string
           description?: string | null
@@ -1227,7 +1360,9 @@ export type Database = {
           organization_id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           project_id?: string | null
+          sprint_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          story_points?: number | null
           title?: string
           updated_at?: string
         }
@@ -1257,6 +1392,7 @@ export type Database = {
       }
       project_tasks: {
         Row: {
+          start_date: string | null
           id: string
           organization_id: string
           project_id: string
@@ -1277,6 +1413,7 @@ export type Database = {
           priority?: "high" | "medium" | "low"
           assignee_id?: string | null
           due_date?: string | null
+          start_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1289,6 +1426,7 @@ export type Database = {
           priority?: "high" | "medium" | "low"
           assignee_id?: string | null
           due_date?: string | null
+          start_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -2059,9 +2197,9 @@ export type Database = {
       feedback_sentiment: "positive" | "neutral" | "negative"
       feedback_source: "email" | "call" | "support"
       feedback_status: "acknowledged" | "under-review" | "investigating" | "in-progress" | "resolved"
-      lead_status: "cold" | "warm" | "hot"
+      lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
       member_status: "active" | "inactive"
-      project_status: "active" | "pending" | "completed"
+      project_status: "active" | "pending" | "completed" | "on_hold" | "cancelled"
       quote_status: "draft" | "sent" | "negotiating" | "accepted" | "rejected"
       task_priority: "high" | "medium" | "low"
       ticket_category: "feature" | "quote" | "feedback" | "issue"
@@ -2213,9 +2351,9 @@ export const Constants = {
       feedback_sentiment: ["positive", "neutral", "negative"],
       feedback_source: ["email", "call", "support"],
       feedback_status: ["acknowledged", "under-review", "investigating", "in-progress", "resolved"],
-      lead_status: ["cold", "warm", "hot"],
+      lead_status: ["new", "contacted", "qualified", "converted", "lost"],
       member_status: ["active", "inactive"],
-      project_status: ["active", "pending", "completed"],
+      project_status: ["active", "pending", "completed", "on_hold", "cancelled"],
       quote_status: ["draft", "sent", "negotiating", "accepted", "rejected"],
       task_priority: ["high", "medium", "low"],
       ticket_category: ["feature", "quote", "feedback", "issue"],

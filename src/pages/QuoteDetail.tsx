@@ -409,13 +409,13 @@ export default function QuoteDetail() {
   if (error || !quote) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigateOrg("/tickets/quotes")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/tickets/quotes")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Quotes
         </Button>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-bold mb-2">Quote Not Found</h2>
+            <h2 className="text-xl font-semibold mb-2">Quote Not Found</h2>
             <p className="text-muted-foreground">The quote "{quoteId}" doesn't exist or was deleted.</p>
           </CardContent>
         </Card>
@@ -434,7 +434,7 @@ export default function QuoteDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigateOrg("/tickets/quotes")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/tickets/quotes")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -448,25 +448,25 @@ export default function QuoteDetail() {
               {stageLabels[quote.status] || quote.status}
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">{quote.title}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{quote.title}</h1>
           <p className="text-muted-foreground mt-2 max-w-2xl">{quote.description || "No description"}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-2">
+          <Button variant="outline" className="border">
             <Send className="h-4 w-4 mr-2" />
             Send to Client
           </Button>
-          <Button variant="outline" className="border-2" onClick={handleStartEdit}>
+          <Button variant="outline" className="border" onClick={handleStartEdit}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="border-2 border-transparent hover:border-border">
+              <Button variant="ghost" size="icon" className="border border-transparent hover:border-border">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="border-2">
+            <DropdownMenuContent align="end" className="border">
               <DropdownMenuItem onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
                 {isGeneratingPdf ? (
                   <>
@@ -494,53 +494,53 @@ export default function QuoteDetail() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                 <DollarSign className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">{formatCurrency(quote.value)}</div>
+                <div className="text-2xl font-semibold font-mono">{formatCurrency(quote.value)}</div>
                 <div className="text-sm text-muted-foreground">Quote Value</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                 <Building className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-lg font-bold truncate">{quote.company_name}</div>
+                <div className="text-lg font-semibold truncate">{quote.company_name}</div>
                 <div className="text-sm text-muted-foreground">Company</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                 <Calendar className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-lg font-bold">{formatDate(quote.valid_until)}</div>
+                <div className="text-lg font-semibold">{formatDate(quote.valid_until)}</div>
                 <div className="text-sm text-muted-foreground">Valid Until</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-chart-2">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-chart-2">
                 <FileText className="h-5 w-5 text-background" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{quote.stage}%</div>
+                <div className="text-2xl font-semibold">{quote.stage}%</div>
                 <div className="text-sm text-muted-foreground">Deal Progress</div>
               </div>
             </div>
@@ -550,21 +550,21 @@ export default function QuoteDetail() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border flex flex-row items-center justify-between">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border flex flex-row items-center justify-between">
               <CardTitle>Line Items</CardTitle>
               {!isEditingLineItems ? (
-                <Button variant="outline" size="sm" className="border-2" onClick={() => setIsEditingLineItems(true)}>
+                <Button variant="outline" size="sm" className="border" onClick={() => setIsEditingLineItems(true)}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Items
                 </Button>
               ) : (
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="border-2" onClick={cancelEditLineItems}>
+                  <Button variant="outline" size="sm" className="border" onClick={cancelEditLineItems}>
                     <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
-                  <Button size="sm" className="border-2" onClick={saveLineItems} disabled={bulkUpdateLineItems.isPending}>
+                  <Button size="sm" className="border" onClick={saveLineItems} disabled={bulkUpdateLineItems.isPending}>
                     {bulkUpdateLineItems.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                     Save
                   </Button>
@@ -581,7 +581,7 @@ export default function QuoteDetail() {
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="font-semibold mb-2">No Line Items</h3>
                   <p className="text-muted-foreground mb-4">Add line items to break down the quote.</p>
-                  <Button variant="outline" onClick={() => { setIsEditingLineItems(true); addLineItem(); }} className="border-2">
+                  <Button variant="outline" onClick={() => { setIsEditingLineItems(true); addLineItem(); }} className="border">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Line Item
                   </Button>
@@ -590,11 +590,11 @@ export default function QuoteDetail() {
                 <>
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-b-2 hover:bg-transparent">
-                        <TableHead className="font-bold uppercase text-xs">Description</TableHead>
-                        <TableHead className="font-bold uppercase text-xs text-right w-20">Qty</TableHead>
-                        <TableHead className="font-bold uppercase text-xs text-right w-32">Unit Price</TableHead>
-                        <TableHead className="font-bold uppercase text-xs text-right w-32">Total</TableHead>
+                      <TableRow className="border-b hover:bg-transparent">
+                        <TableHead className="font-semibold uppercase text-xs">Description</TableHead>
+                        <TableHead className="font-semibold uppercase text-xs text-right w-20">Qty</TableHead>
+                        <TableHead className="font-semibold uppercase text-xs text-right w-32">Unit Price</TableHead>
+                        <TableHead className="font-semibold uppercase text-xs text-right w-32">Total</TableHead>
                         {isEditingLineItems && <TableHead className="w-12"></TableHead>}
                       </TableRow>
                     </TableHeader>
@@ -605,14 +605,14 @@ export default function QuoteDetail() {
                         const total = qty * price;
 
                         return (
-                          <TableRow key={item.id} className="border-b-2">
+                          <TableRow key={item.id} className="border-b">
                             <TableCell>
                               {isEditingLineItems ? (
                                 <Input
                                   value={item.description}
                                   onChange={(e) => updateLineItem(item.id, "description", e.target.value)}
                                   placeholder="Item description"
-                                  className="border-2"
+                                  className="border"
                                 />
                               ) : (
                                 <span className="font-medium">{item.description || "Unnamed item"}</span>
@@ -624,7 +624,7 @@ export default function QuoteDetail() {
                                   type="number"
                                   value={qty}
                                   onChange={(e) => updateLineItem(item.id, "quantity", parseInt(e.target.value) || 0)}
-                                  className="border-2 w-20 text-right"
+                                  className="border w-20 text-right"
                                 />
                               ) : (
                                 <span className="font-mono">{qty}</span>
@@ -636,13 +636,13 @@ export default function QuoteDetail() {
                                   type="number"
                                   value={price}
                                   onChange={(e) => updateLineItem(item.id, "unit_price", parseFloat(e.target.value) || 0)}
-                                  className="border-2 w-32 text-right"
+                                  className="border w-32 text-right"
                                 />
                               ) : (
                                 <span className="font-mono">{formatCurrency(price)}</span>
                               )}
                             </TableCell>
-                            <TableCell className="text-right font-mono font-bold">
+                            <TableCell className="text-right font-mono font-semibold">
                               {formatCurrency(total)}
                             </TableCell>
                             {isEditingLineItems && (
@@ -663,7 +663,7 @@ export default function QuoteDetail() {
                       {isEditingLineItems && (
                         <TableRow>
                           <TableCell colSpan={5}>
-                            <Button variant="outline" size="sm" onClick={addLineItem} className="border-2 w-full border-dashed">
+                            <Button variant="outline" size="sm" onClick={addLineItem} className="border w-full border-dashed">
                               <Plus className="h-4 w-4 mr-2" />
                               Add Line Item
                             </Button>
@@ -672,8 +672,8 @@ export default function QuoteDetail() {
                       )}
                       {lineItems.length > 0 && (
                         <TableRow className="border-t-4 border-border bg-secondary/50">
-                          <TableCell colSpan={isEditingLineItems ? 4 : 3} className="text-right font-bold uppercase">Subtotal</TableCell>
-                          <TableCell className="text-right font-mono font-bold text-lg">{formatCurrency(subtotal)}</TableCell>
+                          <TableCell colSpan={isEditingLineItems ? 4 : 3} className="text-right font-semibold uppercase">Subtotal</TableCell>
+                          <TableCell className="text-right font-mono font-semibold text-lg">{formatCurrency(subtotal)}</TableCell>
                           {isEditingLineItems && <TableCell></TableCell>}
                         </TableRow>
                       )}
@@ -684,8 +684,8 @@ export default function QuoteDetail() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <CardTitle>Notes</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
@@ -695,18 +695,18 @@ export default function QuoteDetail() {
         </div>
 
         <div className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <CardTitle>Quote Status</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               <div>
                 <div className="text-sm text-muted-foreground mb-2">Status</div>
                 <Select value={quote.status} onValueChange={handleStatusChange} disabled={updateQuote.isPending}>
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="sent">Sent</SelectItem>
                     <SelectItem value="negotiating">Negotiating</SelectItem>
@@ -716,7 +716,7 @@ export default function QuoteDetail() {
                 </Select>
               </div>
 
-              <div className="border-t-2 border-border pt-4">
+              <div className="border-t border-border pt-4">
                 <div className="text-sm text-muted-foreground mb-2">Deal Progress</div>
                 <Progress value={quote.stage} className="h-3" />
                 <div className="text-right font-mono text-sm mt-1">{quote.stage}%</div>
@@ -724,13 +724,13 @@ export default function QuoteDetail() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <CardTitle>Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10 border-2 border-border">
+                <Avatar className="h-10 w-10 border border-border">
                   <AvatarFallback className="bg-secondary">
                     {(quote.contact_name || quote.company_name).split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                   </AvatarFallback>
@@ -742,7 +742,7 @@ export default function QuoteDetail() {
               </div>
 
               {quote.contact_email && (
-                <div className="border-t-2 border-border pt-4">
+                <div className="border-t border-border pt-4">
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <a href={`mailto:${quote.contact_email}`} className="text-primary hover:underline">
@@ -754,8 +754,8 @@ export default function QuoteDetail() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <CardTitle>Timestamps</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-3">
@@ -783,8 +783,8 @@ export default function QuoteDetail() {
 
       {/* Edit Quote Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="border-2 sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Quote</DialogTitle>
           </DialogHeader>
           {editData && (
@@ -795,7 +795,7 @@ export default function QuoteDetail() {
                   id="edit-title"
                   value={editData.title}
                   onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -804,7 +804,7 @@ export default function QuoteDetail() {
                   id="edit-description"
                   value={editData.description}
                   onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -814,7 +814,7 @@ export default function QuoteDetail() {
                     id="edit-company"
                     value={editData.company_name}
                     onChange={(e) => setEditData({ ...editData, company_name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -824,7 +824,7 @@ export default function QuoteDetail() {
                     type="number"
                     value={editData.value}
                     onChange={(e) => setEditData({ ...editData, value: parseFloat(e.target.value) || 0 })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -835,7 +835,7 @@ export default function QuoteDetail() {
                     id="edit-contact-name"
                     value={editData.contact_name}
                     onChange={(e) => setEditData({ ...editData, contact_name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -845,7 +845,7 @@ export default function QuoteDetail() {
                     type="email"
                     value={editData.contact_email}
                     onChange={(e) => setEditData({ ...editData, contact_email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -857,7 +857,7 @@ export default function QuoteDetail() {
                     type="date"
                     value={editData.valid_until}
                     onChange={(e) => setEditData({ ...editData, valid_until: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -867,7 +867,7 @@ export default function QuoteDetail() {
                     value={editData.po_number}
                     onChange={(e) => setEditData({ ...editData, po_number: e.target.value })}
                     placeholder="Client PO number"
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -878,7 +878,7 @@ export default function QuoteDetail() {
                   value={editData.billing_address}
                   onChange={(e) => setEditData({ ...editData, billing_address: e.target.value })}
                   placeholder="Full billing address for the invoice"
-                  className="border-2"
+                  className="border"
                   rows={2}
                 />
               </div>
@@ -891,7 +891,7 @@ export default function QuoteDetail() {
                   value={editData.tax_rate}
                   onChange={(e) => setEditData({ ...editData, tax_rate: parseFloat(e.target.value) || 0 })}
                   placeholder="0"
-                  className="border-2 w-32"
+                  className="border w-32"
                 />
               </div>
               <div className="grid gap-2">
@@ -900,7 +900,7 @@ export default function QuoteDetail() {
                   id="edit-notes"
                   value={editData.notes}
                   onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={2}
                 />
               </div>
@@ -911,17 +911,17 @@ export default function QuoteDetail() {
                   value={editData.terms}
                   onChange={(e) => setEditData({ ...editData, terms: e.target.value })}
                   placeholder="Payment terms for this invoice"
-                  className="border-2"
+                  className="border"
                   rows={3}
                 />
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsEditing(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditing(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit} className="border-2" disabled={updateQuote.isPending}>
+            <Button onClick={handleSaveEdit} className="border" disabled={updateQuote.isPending}>
               {updateQuote.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
             </Button>

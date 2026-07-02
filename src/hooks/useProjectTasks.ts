@@ -11,6 +11,7 @@ export interface ProjectTask {
   completed: boolean;
   priority: "high" | "medium" | "low";
   assignee_id: string | null;
+  start_date: string | null;
   due_date: string | null;
   created_at: string;
   updated_at: string;
@@ -27,6 +28,7 @@ export interface CreateProjectTaskInput {
   title: string;
   priority?: "high" | "medium" | "low";
   assignee_id?: string;
+  start_date?: string;
   due_date?: string;
 }
 
@@ -36,6 +38,7 @@ export interface UpdateProjectTaskInput {
   completed?: boolean;
   priority?: "high" | "medium" | "low";
   assignee_id?: string | null;
+  start_date?: string | null;
   due_date?: string | null;
 }
 
@@ -92,6 +95,7 @@ export function useCreateProjectTask() {
           title: input.title,
           priority: input.priority || "medium",
           assignee_id: input.assignee_id || null,
+          start_date: input.start_date || null,
           due_date: input.due_date || null,
           completed: false,
         })

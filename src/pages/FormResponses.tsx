@@ -130,7 +130,7 @@ export default function FormResponses() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b-2 border-border">
+      <div className="sticky top-0 z-10 bg-background border-b border-border">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -138,13 +138,13 @@ export default function FormResponses() {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigateOrg(`forms/${displayId}`)}
-                className="border-2 border-border"
+                className="border border-border"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold">{form.title} - Responses</h1>
+                  <h1 className="text-xl font-semibold">{form.title} - Responses</h1>
                   <Badge className={formStatusStyles[form.status]}>
                     {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
                   </Badge>
@@ -160,7 +160,7 @@ export default function FormResponses() {
                 variant="outline"
                 onClick={handleExportCSV}
                 disabled={!responses || responses.length === 0}
-                className="border-2 border-border"
+                className="border border-border"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
@@ -168,7 +168,7 @@ export default function FormResponses() {
               <Button
                 variant="outline"
                 onClick={() => navigateOrg(`forms/${displayId}`)}
-                className="border-2 border-border"
+                className="border border-border"
               >
                 <FileText className="mr-2 h-4 w-4" />
                 Edit Form
@@ -181,7 +181,7 @@ export default function FormResponses() {
       {/* Main Content */}
       <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="border-2 border-border">
+          <TabsList className="border border-border">
             <TabsTrigger value="responses" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Responses
             </TabsTrigger>
@@ -201,13 +201,13 @@ export default function FormResponses() {
                     placeholder="Search responses..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 border-2 border-border"
+                    className="pl-9 border border-border"
                   />
                 </div>
               </div>
 
               {/* Responses Table */}
-              <Card className="border-2 border-border">
+              <Card className="border border-border">
                 <CardContent className="p-0">
                   {filteredResponses.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -222,10 +222,10 @@ export default function FormResponses() {
                   ) : (
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-b-2 border-border">
-                          <TableHead className="font-bold">Respondent</TableHead>
-                          <TableHead className="font-bold">Link Type</TableHead>
-                          <TableHead className="font-bold">Submitted</TableHead>
+                        <TableRow className="border-b border-border">
+                          <TableHead className="font-semibold">Respondent</TableHead>
+                          <TableHead className="font-semibold">Link Type</TableHead>
+                          <TableHead className="font-semibold">Submitted</TableHead>
                           <TableHead className="w-[100px]"></TableHead>
                         </TableRow>
                       </TableHeader>
@@ -321,42 +321,42 @@ export default function FormResponses() {
               <div className="space-y-6">
                 {/* Summary Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Card className="border-2 border-border">
+                  <Card className="border border-border">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
                       <BarChart3 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{analytics.totalResponses}</div>
+                      <div className="text-2xl font-semibold">{analytics.totalResponses}</div>
                     </CardContent>
                   </Card>
-                  <Card className="border-2 border-border">
+                  <Card className="border border-border">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <CardTitle className="text-sm font-medium">Avg. Completion Time</CardTitle>
                       <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">
+                      <div className="text-2xl font-semibold">
                         {analytics.averageCompletionTime
                           ? `${Math.round(analytics.averageCompletionTime)}s`
                           : "N/A"}
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="border-2 border-border">
+                  <Card className="border border-border">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <CardTitle className="text-sm font-medium">Fields</CardTitle>
                       <FileText className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{fields.length}</div>
+                      <div className="text-2xl font-semibold">{fields.length}</div>
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* Responses Over Time */}
                 {analytics.responsesOverTime.length > 0 && (
-                  <Card className="border-2 border-border">
+                  <Card className="border border-border">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <TrendingUp className="h-5 w-5" />
@@ -400,7 +400,7 @@ export default function FormResponses() {
                     const isExpanded = expandedFieldId === field.id;
 
                     return (
-                      <Card key={field.id} className="border-2 border-border">
+                      <Card key={field.id} className="border border-border">
                         <CardHeader
                           className="cursor-pointer"
                           onClick={() => setExpandedFieldId(isExpanded ? null : field.id)}
@@ -442,7 +442,7 @@ export default function FormResponses() {
                             {fieldAnalytic.average !== undefined && (
                               <div className="flex items-center gap-2">
                                 <span className="text-sm text-muted-foreground">Average:</span>
-                                <span className="font-bold text-lg">
+                                <span className="font-semibold text-lg">
                                   {fieldAnalytic.average.toFixed(1)}
                                 </span>
                               </div>
@@ -473,7 +473,7 @@ export default function FormResponses() {
                 </div>
               </div>
             ) : (
-              <Card className="border-2 border-border">
+              <Card className="border border-border">
                 <CardContent className="py-12 text-center">
                   <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold">No data yet</h3>
@@ -489,7 +489,7 @@ export default function FormResponses() {
 
       {/* Response Detail Dialog */}
       <Dialog open={!!selectedResponse} onOpenChange={() => setSelectedResponse(null)}>
-        <DialogContent className="sm:max-w-[600px] border-2 border-border max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] border border-border max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Response Details</DialogTitle>
           </DialogHeader>
@@ -581,7 +581,7 @@ export default function FormResponses() {
                 <Button
                   variant="outline"
                   onClick={() => handleDeleteResponse(selectedResponse.id)}
-                  className="border-2 border-border text-red-600"
+                  className="border border-border text-red-600"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Response

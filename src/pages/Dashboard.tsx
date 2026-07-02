@@ -1,4 +1,4 @@
-import { FolderKanban, Ticket, Lightbulb, DollarSign, Loader2, Users, CheckSquare, Mail, Calendar, MessageSquare, UserPlus, FileText } from "lucide-react";
+import { FolderKanban, Ticket, Lightbulb, DollarSign, Loader2, Users, CheckSquare, Mail, Calendar, MessageSquare, UserPlus, FileText, Clock } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentTickets } from "@/components/dashboard/RecentTickets";
 import { ProjectsOverview } from "@/components/dashboard/ProjectsOverview";
@@ -8,6 +8,7 @@ import { TeamWorkload } from "@/components/dashboard/TeamWorkload";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { TasksList } from "@/components/dashboard/TasksList";
+import { SprintOverview } from "@/components/dashboard/SprintOverview";
 import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer";
 import { useProjects } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
@@ -15,13 +16,15 @@ import { useFeatureRequests } from "@/hooks/useFeatureRequests";
 import { useQuotes } from "@/hooks/useQuotes";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useContacts } from "@/hooks/useContacts";
+import { useCrmClients } from "@/hooks/useCRM";
 import { useEmails, useEmailStats } from "@/hooks/useEmails";
+import { useTimeEntriesByMember } from "@/hooks/useTimeEntries";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
 import { useDashboardPreferences, StatCardType, WidgetType } from "@/hooks/useDashboardPreferences";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, endOfWeek, startOfMonth, addDays, isWithinInterval } from "date-fns";
+import { startOfWeek, endOfWeek, startOfMonth, addDays, isWithinInterval, parseISO } from "date-fns";
 
 export default function Dashboard() {
   const { hasPermission, member, organization } = useAuth();
@@ -35,7 +38,9 @@ export default function Dashboard() {
   const { data: quotes, isLoading: quotesLoading } = useQuotes();
   const { data: teamMembers, isLoading: teamLoading } = useTeamMembers();
   const { data: contacts, isLoading: contactsLoading } = useContacts();
+  const { data: crmClients } = useCrmClients();
   const { data: emailStats } = useEmailStats();
+  const { data: myTimeEntries } = useTimeEntriesByMember(member?.id);
 
   // Tasks due today query
   const { data: tasksDueToday } = useQuery({
@@ -121,7 +126,17 @@ export default function Dashboard() {
   }).length || 0;
 
   const activeQuotes = quotes?.filter(q => q.status !== "rejected" && q.status !== "accepted").length || 0;
-  const totalClients = contacts?.filter(c => c.type === "client").length || 0;
+  const totalClients = crmClients?.length || 0;
+
+  // Current member's hours logged this week (Mon-Sun, same week logic as MyHours)
+  const hoursWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const hoursWeekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const hoursThisWeek = myTimeEntries?.reduce((sum, entry) => {
+    const entryDate = parseISO(entry.date);
+    return isWithinInterval(entryDate, { start: hoursWeekStart, end: hoursWeekEnd })
+      ? sum + entry.hours
+      : sum;
+  }, 0) || 0;
 
   const formatPipelineValue = (value: number) => {
     if (!canViewAmounts) return "••••••";
@@ -244,6 +259,14 @@ export default function Dashboard() {
       href: "/crm?tab=quotes",
       permission: canViewQuotes && canViewCrm,
     },
+    hoursThisWeek: {
+      title: "My Hours This Week",
+      value: `${hoursThisWeek.toFixed(1)}h`,
+      description: "Hours logged this week",
+      icon: Clock,
+      href: "/my-hours",
+      permission: !!member,
+    },
   };
 
   // Widget components
@@ -256,6 +279,7 @@ export default function Dashboard() {
     quickActions: { component: QuickActions, permission: true },
     recentActivity: { component: RecentActivity, permission: true },
     tasksList: { component: TasksList, permission: canViewProjects },
+    sprintOverview: { component: SprintOverview, permission: canViewTickets },
   };
 
   if (isLoading) {
@@ -319,7 +343,7 @@ export default function Dashboard() {
 
       {/* Empty state */}
       {visibleStatCards.length === 0 && visibleWidgets.length === 0 && (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
+        <div className="text-center py-12 border border-dashed rounded-lg">
           <p className="text-muted-foreground mb-4">
             Your dashboard is empty. Click Customize to add widgets.
           </p>

@@ -76,7 +76,7 @@ export default function GmailCallback() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-2">
+      <Card className="w-full max-w-md border">
         <CardContent className="pt-6">
           {status === "loading" && (
             <div className="flex flex-col items-center text-center space-y-4">

@@ -167,13 +167,13 @@ export default function TicketDetail() {
   if (error || !ticket) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigateOrg("/tickets")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/tickets")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Tickets
         </Button>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-bold mb-2">Ticket Not Found</h2>
+            <h2 className="text-xl font-semibold mb-2">Ticket Not Found</h2>
             <p className="text-muted-foreground">The ticket "{ticketId}" doesn't exist or was deleted.</p>
           </CardContent>
         </Card>
@@ -186,7 +186,7 @@ export default function TicketDetail() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center gap-2 sm:gap-4">
-        <Button variant="ghost" onClick={() => navigateOrg("/tickets")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/tickets")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 sm:mr-2" />
           <span className="hidden sm:inline">Back</span>
         </Button>
@@ -207,7 +207,7 @@ export default function TicketDetail() {
               {ticket.priority}
             </Badge>
           </div>
-          <h1 className="text-xl sm:text-3xl font-bold tracking-tight">{ticket.title}</h1>
+          <h1 className="text-xl sm:text-3xl font-semibold tracking-tight">{ticket.title}</h1>
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2 text-sm text-muted-foreground">
             {ticket.project && (
               <span
@@ -223,17 +223,17 @@ export default function TicketDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" className="border-2" onClick={handleStartEdit}>
+          <Button variant="outline" className="border" onClick={handleStartEdit}>
             <Edit className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Edit</span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="border-2 border-transparent hover:border-border">
+              <Button variant="ghost" size="icon" className="border border-transparent hover:border-border">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="border-2">
+            <DropdownMenuContent align="end" className="border">
               <DropdownMenuItem onClick={handleGoToCategoryView}>
                 View in {categoryLabels[ticket.category] || "Category"} List
               </DropdownMenuItem>
@@ -247,8 +247,8 @@ export default function TicketDetail() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <CardTitle>Description</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
@@ -263,18 +263,18 @@ export default function TicketDetail() {
         </div>
 
         <div className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <CardTitle>Details</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               <div>
                 <div className="text-sm text-muted-foreground mb-2">Status</div>
                 <Select value={ticket.status} onValueChange={handleStatusChange} disabled={updateTicket.isPending}>
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="open">Open</SelectItem>
                     <SelectItem value="in-progress">In Progress</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
@@ -283,13 +283,13 @@ export default function TicketDetail() {
                 </Select>
               </div>
 
-              <div className="border-t-2 border-border pt-4">
+              <div className="border-t border-border pt-4">
                 <div className="text-sm text-muted-foreground mb-2">Priority</div>
                 <Select value={ticket.priority} onValueChange={handlePriorityChange} disabled={updateTicket.isPending}>
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="low">Low</SelectItem>
@@ -297,7 +297,7 @@ export default function TicketDetail() {
                 </Select>
               </div>
 
-              <div className="border-t-2 border-border pt-4">
+              <div className="border-t border-border pt-4">
                 <div className="text-sm text-muted-foreground mb-1">Category</div>
                 <div className="flex items-center gap-2">
                   <CategoryIcon className="h-4 w-4" />
@@ -306,7 +306,7 @@ export default function TicketDetail() {
               </div>
 
               {ticket.project && (
-                <div className="border-t-2 border-border pt-4">
+                <div className="border-t border-border pt-4">
                   <div className="text-sm text-muted-foreground mb-1">Project</div>
                   <div className="flex items-center gap-2">
                     <FolderOpen className="h-4 w-4 text-muted-foreground" />
@@ -321,10 +321,10 @@ export default function TicketDetail() {
               )}
 
               {ticket.assignee && (
-                <div className="border-t-2 border-border pt-4">
+                <div className="border-t border-border pt-4">
                   <div className="text-sm text-muted-foreground mb-1">Assignee</div>
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6 border-2 border-border">
+                    <Avatar className="h-6 w-6 border border-border">
                       <AvatarFallback className="bg-secondary text-xs">
                         {ticket.assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                       </AvatarFallback>
@@ -336,8 +336,8 @@ export default function TicketDetail() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <CardTitle>Timestamps</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-3">
@@ -358,8 +358,8 @@ export default function TicketDetail() {
 
       {/* Edit Ticket Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[500px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Ticket</DialogTitle>
           </DialogHeader>
           {editData && (
@@ -370,7 +370,7 @@ export default function TicketDetail() {
                   id="edit-title"
                   value={editData.title}
                   onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -379,7 +379,7 @@ export default function TicketDetail() {
                   id="edit-description"
                   value={editData.description}
                   onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={4}
                 />
               </div>
@@ -387,10 +387,10 @@ export default function TicketDetail() {
                 <div className="grid gap-2">
                   <Label>Status</Label>
                   <Select value={editData.status} onValueChange={(v) => setEditData({ ...editData, status: v })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="open">Open</SelectItem>
                       <SelectItem value="in-progress">In Progress</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
@@ -401,10 +401,10 @@ export default function TicketDetail() {
                 <div className="grid gap-2">
                   <Label>Priority</Label>
                   <Select value={editData.priority} onValueChange={(v) => setEditData({ ...editData, priority: v })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="high">High</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
                       <SelectItem value="low">Low</SelectItem>
@@ -416,10 +416,10 @@ export default function TicketDetail() {
                 <div className="grid gap-2">
                   <Label>Category</Label>
                   <Select value={editData.category} onValueChange={(v) => setEditData({ ...editData, category: v })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="uncategorized">Uncategorized</SelectItem>
                       <SelectItem value="feature">Feature Request</SelectItem>
                       <SelectItem value="quote">Customer Quote</SelectItem>
@@ -434,10 +434,10 @@ export default function TicketDetail() {
                     value={editData.project_id || "none"}
                     onValueChange={(v) => setEditData({ ...editData, project_id: v === "none" ? null : v })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="none">No project</SelectItem>
                       {projects?.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
@@ -450,11 +450,11 @@ export default function TicketDetail() {
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsEditing(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditing(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit} className="border-2" disabled={updateTicket.isPending}>
+            <Button onClick={handleSaveEdit} className="border" disabled={updateTicket.isPending}>
               {updateTicket.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
             </Button>

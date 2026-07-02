@@ -63,7 +63,16 @@ import { useBulkAddClientContacts } from "@/hooks/useClientContacts";
 import { useTags } from "@/hooks/useTags";
 import { useExportContacts, useImportContacts, parseCSV } from "@/hooks/useContactImportExport";
 import { Database } from "@/integrations/supabase/types";
-import { X, PlusCircle, Upload, Download, Tags, Filter } from "lucide-react";
+import { X, PlusCircle, Upload, Download, Tags, Filter, LayoutGrid, List, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 type ActivityType = Database["public"]["Enums"]["activity_type"];
@@ -85,6 +94,108 @@ const leadStatusStyles: Record<LeadStatus, string> = {
   converted: "bg-emerald-600 text-white",
   lost: "bg-red-600 text-white",
 };
+
+const leadStatusOptions: { value: LeadStatus; label: string }[] = [
+  { value: "new", label: "New" },
+  { value: "contacted", label: "Contacted" },
+  { value: "qualified", label: "Qualified" },
+  { value: "converted", label: "Converted" },
+  { value: "lost", label: "Lost" },
+];
+
+// Generic client-side column sorting shared by the CRM tables
+type SortState = { key: string; dir: "asc" | "desc" };
+
+function sortRows<T>(
+  list: T[],
+  sort: SortState,
+  getters: Record<string, (item: T) => string | number | null | undefined>
+): T[] {
+  const get = getters[sort.key];
+  if (!get) return list;
+  const dir = sort.dir === "asc" ? 1 : -1;
+  return [...list].sort((a, b) => {
+    const av = get(a);
+    const bv = get(b);
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+    return String(av).localeCompare(String(bv)) * dir;
+  });
+}
+
+function SortableTh({
+  sort,
+  onSort,
+  id,
+  label,
+  className,
+}: {
+  sort: SortState;
+  onSort: (id: string) => void;
+  id: string;
+  label: string;
+  className?: string;
+}) {
+  const active = sort.key === id;
+  return (
+    <TableHead
+      className={cn("cursor-pointer select-none whitespace-nowrap", className)}
+      onClick={() => onSort(id)}
+      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {active ? (
+          sort.dir === "asc" ? (
+            <ArrowUp className="h-3 w-3" />
+          ) : (
+            <ArrowDown className="h-3 w-3" />
+          )
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </span>
+    </TableHead>
+  );
+}
+
+function ViewToggle({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; icon: React.ComponentType<{ className?: string }>; label: string }[];
+}) {
+  return (
+    <div className="flex items-center rounded-sm border border-input overflow-hidden shrink-0">
+      {options.map((opt) => (
+        <Button
+          key={opt.value}
+          variant="ghost"
+          size="sm"
+          onClick={() => onChange(opt.value)}
+          className={cn("rounded-none h-8 px-2.5", value === opt.value && "bg-accent text-accent-foreground")}
+          aria-label={opt.label}
+          title={opt.label}
+        >
+          <opt.icon className="h-4 w-4" />
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+function savedView(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export default function CRM() {
   const { navigateOrg } = useOrgNavigation();
@@ -121,6 +232,28 @@ export default function CRM() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("pipeline");
+  const [dealsView, setDealsViewState] = useState<string>(() => savedView("soluly-crm-deals-view", "board"));
+  const [leadsView, setLeadsViewState] = useState<string>(() => savedView("soluly-crm-leads-view", "table"));
+  const [dealSort, setDealSort] = useState<SortState>({ key: "", dir: "asc" });
+  const [hoveredStage, setHoveredStage] = useState<string | null>(null);
+  const [leadSort, setLeadSort] = useState<SortState>({ key: "", dir: "asc" });
+  const [clientSort, setClientSort] = useState<SortState>({ key: "", dir: "asc" });
+  const [contactSort, setContactSort] = useState<SortState>({ key: "", dir: "asc" });
+
+  const setDealsView = (v: string) => {
+    setDealsViewState(v);
+    try { localStorage.setItem("soluly-crm-deals-view", v); } catch { /* ignore */ }
+  };
+  const setLeadsView = (v: string) => {
+    setLeadsViewState(v);
+    try { localStorage.setItem("soluly-crm-leads-view", v); } catch { /* ignore */ }
+  };
+  const makeSortToggle = (sort: SortState, set: (s: SortState) => void) => (key: string) =>
+    set(sort.key === key ? { key, dir: sort.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" });
+  const toggleDealSort = makeSortToggle(dealSort, setDealSort);
+  const toggleLeadSort = makeSortToggle(leadSort, setLeadSort);
+  const toggleClientSort = makeSortToggle(clientSort, setClientSort);
+  const toggleContactSort = makeSortToggle(contactSort, setContactSort);
   const [isNewDealOpen, setIsNewDealOpen] = useState(false);
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
@@ -267,6 +400,41 @@ export default function CRM() {
       contact.company?.name?.toLowerCase().includes(query)
     );
   }) || [];
+
+  // Column-sorted lists for the table views
+  const sortedDeals = sortRows(filteredQuotes, dealSort, {
+    title: (q) => q.title,
+    company_name: (q) => q.company_name,
+    status: (q) => pipelineStages.findIndex((s) => s.id === q.status),
+    value: (q) => q.value,
+    valid_until: (q) => q.valid_until,
+    last_activity: (q) => q.last_activity,
+  });
+  const sortedLeads = sortRows(filteredLeads, leadSort, {
+    name: (l) => l.name,
+    status: (l) => l.status,
+    contact_name: (l) => l.contact_name,
+    contact_email: (l) => l.contact_email,
+    source: (l) => l.source,
+    created_at: (l) => l.created_at,
+  });
+  const sortedClients = sortRows(filteredClients, clientSort, {
+    name: (c) => c.name,
+    status: (c) => c.status,
+    contact_name: (c) => c.contact_name,
+    contact_email: (c) => c.contact_email,
+    contact_phone: (c) => c.contact_phone,
+    industry: (c) => c.industry,
+    total_revenue: (c) => c.total_revenue,
+  });
+  const sortedContacts = sortRows(filteredContacts, contactSort, {
+    name: (c) => c.name,
+    job_title: (c) => c.job_title,
+    company: (c) => c.company?.name,
+    email: (c) => c.email,
+    phone: (c) => c.phone,
+    created_at: (c) => c.created_at,
+  });
 
   const handleCreateDeal = async () => {
     if (!newDeal.title || !newDeal.company_name) {
@@ -645,53 +813,53 @@ export default function CRM() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-blue-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-blue-600">
                 <Target className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">{formatValue(totalPipelineValue)}</div>
+                <div className="text-2xl font-semibold font-mono">{formatValue(totalPipelineValue)}</div>
                 <div className="text-sm text-muted-foreground">Pipeline Value</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-emerald-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-emerald-600">
                 <Handshake className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">{formatValue(wonValue)}</div>
+                <div className="text-2xl font-semibold font-mono">{formatValue(wonValue)}</div>
                 <div className="text-sm text-muted-foreground">Won Deals</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-primary">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-primary">
                 <Users className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{leads?.length || 0}</div>
+                <div className="text-2xl font-semibold">{leads?.length || 0}</div>
                 <div className="text-sm text-muted-foreground">Active Leads</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-amber-500">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-amber-500">
                 <Building className="h-5 w-5 text-black" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{clients?.length || 0}</div>
+                <div className="text-2xl font-semibold">{clients?.length || 0}</div>
                 <div className="text-sm text-muted-foreground">Total Clients</div>
               </div>
             </div>
@@ -706,14 +874,14 @@ export default function CRM() {
           placeholder="Search deals, leads, clients..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 border-2"
+          className="pl-10 border"
         />
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-          <TabsList className="border-2 border-border bg-secondary p-1 w-max sm:w-auto">
+          <TabsList className="border border-border bg-secondary p-1 w-max sm:w-auto">
             <TabsTrigger value="pipeline" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <span className="hidden sm:inline">Pipeline</span>
               <span className="sm:hidden">Pipe</span> ({activeDeals})
@@ -736,16 +904,24 @@ export default function CRM() {
 
         {/* Pipeline Tab */}
         <TabsContent value="pipeline" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <ViewToggle
+              value={dealsView}
+              onChange={setDealsView}
+              options={[
+                { value: "board", icon: LayoutGrid, label: "Board view" },
+                { value: "table", icon: List, label: "Table view" },
+              ]}
+            />
             <Dialog open={isNewDealOpen} onOpenChange={setIsNewDealOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2">
+                <Button className="border">
                   <Plus className="h-4 w-4 mr-2" />
                   New Deal
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[500px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Create New Deal</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
@@ -755,7 +931,7 @@ export default function CRM() {
                       placeholder="e.g., Enterprise Package Quote"
                       value={newDeal.title}
                       onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -764,7 +940,7 @@ export default function CRM() {
                       placeholder="Describe the deal..."
                       value={newDeal.description}
                       onChange={(e) => setNewDeal({ ...newDeal, description: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -794,10 +970,10 @@ export default function CRM() {
                         }
                       }}
                     >
-                      <SelectTrigger className="border-2">
+                      <SelectTrigger className="border">
                         <SelectValue placeholder="Select from contacts or enter manually" />
                       </SelectTrigger>
-                      <SelectContent className="border-2">
+                      <SelectContent className="border">
                         <SelectItem value="manual">Enter manually</SelectItem>
                         {contacts?.map((contact) => (
                           <SelectItem key={contact.id} value={contact.id}>
@@ -817,7 +993,7 @@ export default function CRM() {
                         placeholder="Company name"
                         value={newDeal.company_name}
                         onChange={(e) => setNewDeal({ ...newDeal, company_name: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -827,7 +1003,7 @@ export default function CRM() {
                         placeholder="0"
                         value={newDeal.value}
                         onChange={(e) => setNewDeal({ ...newDeal, value: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -838,7 +1014,7 @@ export default function CRM() {
                         placeholder="Contact name"
                         value={newDeal.contact_name}
                         onChange={(e) => setNewDeal({ ...newDeal, contact_name: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -848,7 +1024,7 @@ export default function CRM() {
                         placeholder="email@company.com"
                         value={newDeal.contact_email}
                         onChange={(e) => setNewDeal({ ...newDeal, contact_email: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -858,7 +1034,7 @@ export default function CRM() {
                       type="date"
                       value={newDeal.valid_until}
                       onChange={(e) => setNewDeal({ ...newDeal, valid_until: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -867,15 +1043,15 @@ export default function CRM() {
                       placeholder="Internal notes..."
                       value={newDeal.notes}
                       onChange={(e) => setNewDeal({ ...newDeal, notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => setIsNewDealOpen(false)} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewDealOpen(false)} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateDeal} className="border-2" disabled={createQuote.isPending}>
+                  <Button onClick={handleCreateDeal} className="border" disabled={createQuote.isPending}>
                     {createQuote.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Create Deal
                   </Button>
@@ -885,12 +1061,13 @@ export default function CRM() {
           </div>
 
           {/* Pipeline View */}
+          {dealsView === "board" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {dealsByStage.map((stage) => (
-              <Card key={stage.id} className="border-2 border-border shadow-sm">
+              <Card key={stage.id} className="border border-border shadow-sm">
                 <CardHeader className={`py-3 px-4 ${stage.color} ${stage.textDark ? "text-white" : ""}`}>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-bold">{stage.name}</CardTitle>
+                    <CardTitle className="text-sm font-semibold">{stage.name}</CardTitle>
                     <Badge variant="secondary" className="bg-white/20 text-current border-0">
                       {stage.deals.length}
                     </Badge>
@@ -899,7 +1076,25 @@ export default function CRM() {
                     {formatValue(stage.totalValue)}
                   </div>
                 </CardHeader>
-                <CardContent className="p-2 space-y-2 min-h-[200px]">
+                <CardContent
+                  className={cn(
+                    "p-2 space-y-2 min-h-[200px] transition-colors",
+                    hoveredStage === stage.id && "ring-2 ring-primary/40 bg-accent/50"
+                  )}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setHoveredStage(stage.id);
+                  }}
+                  onDragLeave={() => setHoveredStage(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setHoveredStage(null);
+                    const draggedId = e.dataTransfer.getData("text/plain");
+                    if (!draggedId) return;
+                    handleMoveStage(draggedId, stage.id as QuoteStatus);
+                    toast.success(`Deal moved to ${stage.name}`);
+                  }}
+                >
                   {stage.deals.length === 0 ? (
                     <div className="text-center text-muted-foreground text-sm py-8">
                       No deals
@@ -908,7 +1103,9 @@ export default function CRM() {
                     stage.deals.map((deal) => (
                       <Card
                         key={deal.id}
-                        className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        draggable
+                        onDragStart={(e) => e.dataTransfer.setData("text/plain", deal.id)}
+                        className="border border-border shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
                         onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}
                       >
                         <CardContent className="p-3">
@@ -918,9 +1115,15 @@ export default function CRM() {
                               <p className="text-xs text-muted-foreground truncate">
                                 {deal.company_name}
                               </p>
-                              <p className="text-sm font-mono font-bold mt-1">
+                              <p className="text-sm font-mono font-semibold mt-1">
                                 {formatValue(deal.value)}
                               </p>
+                              {deal.valid_until && (
+                                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  Close {formatDate(deal.valid_until)}
+                                </p>
+                              )}
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -928,7 +1131,7 @@ export default function CRM() {
                                   <MoreVertical className="h-3 w-3" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="border-2">
+                              <DropdownMenuContent align="end" className="border">
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedQuoteId(deal.id);
@@ -995,20 +1198,123 @@ export default function CRM() {
               </Card>
             ))}
           </div>
+          ) : (
+            <Card className="border border-border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="title" label="Deal" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="company_name" label="Company" className="hidden md:table-cell" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="status" label="Stage" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="value" label="Value" className="text-right" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="valid_until" label="Close Date" className="hidden lg:table-cell" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="last_activity" label="Last Activity" className="hidden xl:table-cell" />
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedDeals.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No deals yet
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedDeals.map((deal) => (
+                      <TableRow
+                        key={deal.id}
+                        className="cursor-pointer"
+                        onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}
+                      >
+                        <TableCell>
+                          <div className="font-medium leading-tight">{deal.title}</div>
+                          <div className="font-mono text-xs text-muted-foreground">{deal.display_id}</div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{deal.company_name}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={deal.status}
+                            onValueChange={(v) => handleMoveStage(deal.id, v as QuoteStatus)}
+                          >
+                            <SelectTrigger className="h-7 w-[130px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {pipelineStages.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-right font-mono">{formatValue(deal.value)}</TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground whitespace-nowrap">
+                          {formatDate(deal.valid_until)}
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell text-muted-foreground whitespace-nowrap">
+                          {deal.last_activity ? formatDate(deal.last_activity) : "—"}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="border">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedQuoteId(deal.id);
+                                  setIsActivityDialogOpen(true);
+                                }}
+                              >
+                                <Phone className="h-4 w-4 mr-2" />
+                                Log Activity
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}>
+                                <ChevronRight className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteQuote.mutate(deal.id)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Deal
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Leads Tab */}
         <TabsContent value="leads" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <ViewToggle
+              value={leadsView}
+              onChange={setLeadsView}
+              options={[
+                { value: "table", icon: List, label: "Table view" },
+                { value: "cards", icon: LayoutGrid, label: "Card view" },
+              ]}
+            />
             <Dialog open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2">
+                <Button className="border">
                   <UserPlus className="h-4 w-4 mr-2" />
                   New Lead
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[500px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Add New Lead</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1018,7 +1324,7 @@ export default function CRM() {
                       placeholder="Company name"
                       value={newLead.name}
                       onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1028,7 +1334,7 @@ export default function CRM() {
                         placeholder="Contact name"
                         value={newLead.contact_name}
                         onChange={(e) => setNewLead({ ...newLead, contact_name: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -1038,7 +1344,7 @@ export default function CRM() {
                         placeholder="email@company.com"
                         value={newLead.contact_email}
                         onChange={(e) => setNewLead({ ...newLead, contact_email: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -1049,7 +1355,7 @@ export default function CRM() {
                         placeholder="+1 234 567 8900"
                         value={newLead.contact_phone}
                         onChange={(e) => setNewLead({ ...newLead, contact_phone: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -1058,7 +1364,7 @@ export default function CRM() {
                         placeholder="e.g., Website, Referral"
                         value={newLead.source}
                         onChange={(e) => setNewLead({ ...newLead, source: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -1068,15 +1374,15 @@ export default function CRM() {
                       placeholder="Additional notes..."
                       value={newLead.notes}
                       onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => setIsNewLeadOpen(false)} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewLeadOpen(false)} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateLead} className="border-2" disabled={createLead.isPending}>
+                  <Button onClick={handleCreateLead} className="border" disabled={createLead.isPending}>
                     {createLead.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Add Lead
                   </Button>
@@ -1086,21 +1392,21 @@ export default function CRM() {
           </div>
 
           {filteredLeads.length === 0 ? (
-            <Card className="border-2 border-border">
+            <Card className="border border-border">
               <CardContent className="p-8 text-center">
                 <UserPlus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Leads Yet</h3>
                 <p className="text-muted-foreground mb-4">Add your first lead to start tracking potential customers.</p>
-                <Button onClick={() => setIsNewLeadOpen(true)} className="border-2">
+                <Button onClick={() => setIsNewLeadOpen(true)} className="border">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Lead
                 </Button>
               </CardContent>
             </Card>
-          ) : (
+          ) : leadsView === "cards" ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredLeads.map((lead) => (
-                <Card key={lead.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
+              {sortedLeads.map((lead) => (
+                <Card key={lead.id} className="border border-border shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -1129,7 +1435,7 @@ export default function CRM() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-2">
+                        <DropdownMenuContent align="end" className="border">
                           <DropdownMenuItem onClick={() => updateLead.mutate({ id: lead.id, status: "contacted" })}>
                             Mark as Contacted
                           </DropdownMenuItem>
@@ -1151,6 +1457,97 @@ export default function CRM() {
                 </Card>
               ))}
             </div>
+          ) : (
+            <Card className="border border-border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="name" label="Lead" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="status" label="Status" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="contact_name" label="Contact" className="hidden md:table-cell" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="contact_email" label="Email" className="hidden lg:table-cell" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="source" label="Source" className="hidden xl:table-cell" />
+                    <SortableTh sort={leadSort} onSort={toggleLeadSort} id="created_at" label="Created" className="hidden lg:table-cell" />
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedLeads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell>
+                        <div className="font-medium leading-tight">{lead.name}</div>
+                        <div className="font-mono text-xs text-muted-foreground">{lead.display_id}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={lead.status}
+                          onValueChange={(v) => updateLead.mutate({ id: lead.id, status: v as LeadStatus })}
+                        >
+                          <SelectTrigger
+                            className={cn(
+                              "h-7 w-[120px] border-transparent px-2 text-xs font-semibold shadow-none",
+                              leadStatusStyles[lead.status]
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {leadStatusOptions.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{lead.contact_name || "—"}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {lead.contact_email || "—"}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell text-muted-foreground">
+                        {lead.source || "—"}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground whitespace-nowrap">
+                        {formatDate(lead.created_at)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs hidden sm:inline-flex"
+                            onClick={() => convertLead.mutate(lead.id)}
+                          >
+                            <UserPlus className="h-3.5 w-3.5 mr-1" />
+                            Convert
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="border">
+                              <DropdownMenuItem onClick={() => convertLead.mutate(lead.id)}>
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Convert to Client
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => deleteLead.mutate(lead.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Lead
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
           )}
         </TabsContent>
 
@@ -1159,13 +1556,13 @@ export default function CRM() {
           <div className="flex justify-end">
             <Dialog open={isNewClientOpen} onOpenChange={setIsNewClientOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2">
+                <Button className="border">
                   <Building className="h-4 w-4 mr-2" />
                   New Client
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[600px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[600px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Add New Client</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1175,7 +1572,7 @@ export default function CRM() {
                       placeholder="Company name"
                       value={newClient.name}
                       onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
 
@@ -1215,10 +1612,10 @@ export default function CRM() {
                       value=""
                       onValueChange={handleSelectContact}
                     >
-                      <SelectTrigger className="border-2">
+                      <SelectTrigger className="border">
                         <SelectValue placeholder="Select contacts to add..." />
                       </SelectTrigger>
-                      <SelectContent className="border-2 max-h-60">
+                      <SelectContent className="border max-h-60">
                         {contacts?.filter(c => !selectedContactIds.includes(c.id)).map((contact) => (
                           <SelectItem key={contact.id} value={contact.id}>
                             <div className="flex items-center gap-2">
@@ -1239,7 +1636,7 @@ export default function CRM() {
                     </Select>
                   </div>
 
-                  <div className="border-t-2 border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <p className="text-sm font-medium mb-3">Primary Contact Details</p>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
@@ -1248,7 +1645,7 @@ export default function CRM() {
                           placeholder="Contact name"
                           value={newClient.contact_name}
                           onChange={(e) => setNewClient({ ...newClient, contact_name: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -1258,7 +1655,7 @@ export default function CRM() {
                           placeholder="email@company.com"
                           value={newClient.contact_email}
                           onChange={(e) => setNewClient({ ...newClient, contact_email: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                     </div>
@@ -1269,7 +1666,7 @@ export default function CRM() {
                           placeholder="+1 234 567 8900"
                           value={newClient.contact_phone}
                           onChange={(e) => setNewClient({ ...newClient, contact_phone: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -1278,17 +1675,17 @@ export default function CRM() {
                           placeholder="e.g., Technology"
                           value={newClient.industry}
                           onChange={(e) => setNewClient({ ...newClient, industry: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => { setIsNewClientOpen(false); setSelectedContactIds([]); }} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => { setIsNewClientOpen(false); setSelectedContactIds([]); }} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateClient} className="border-2" disabled={createClient.isPending || bulkAddClientContacts.isPending}>
+                  <Button onClick={handleCreateClient} className="border" disabled={createClient.isPending || bulkAddClientContacts.isPending}>
                     {(createClient.isPending || bulkAddClientContacts.isPending) ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Add Client
                   </Button>
@@ -1298,12 +1695,12 @@ export default function CRM() {
           </div>
 
           {filteredClients.length === 0 ? (
-            <Card className="border-2 border-border">
+            <Card className="border border-border">
               <CardContent className="p-8 text-center">
                 <Building className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Clients Yet</h3>
                 <p className="text-muted-foreground mb-4">Add your first client or convert a lead.</p>
-                <Button onClick={() => setIsNewClientOpen(true)} className="border-2">
+                <Button onClick={() => setIsNewClientOpen(true)} className="border">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Client
                 </Button>
@@ -1316,7 +1713,7 @@ export default function CRM() {
                 {filteredClients.map((client) => (
                   <Card
                     key={client.id}
-                    className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    className="border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => navigateOrg(`/clients/${client.display_id}`)}
                   >
                     <CardContent className="p-4">
@@ -1352,7 +1749,7 @@ export default function CRM() {
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuContent align="end" className="border">
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
                               <ChevronRight className="h-4 w-4 mr-2" />
                               View Details
@@ -1375,92 +1772,105 @@ export default function CRM() {
 
               {/* Desktop Table View */}
               <div className="hidden md:block">
-                <Card className="border-2 border-border">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b-2 border-border bg-muted/50">
-                          <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Client Name</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Contact</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Email</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Phone</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Industry</th>
-                          <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredClients.map((client) => (
-                          <tr
-                            key={client.id}
-                            className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                            onClick={() => navigateOrg(`/clients/${client.display_id}`)}
-                          >
-                            <td className="py-3 px-4">
-                              <Badge className="bg-emerald-600 text-white text-xs">
-                                {client.status}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="font-mono text-xs text-muted-foreground">{client.display_id}</span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <Building className="h-4 w-4 text-primary" />
-                                </div>
-                                <span className="font-medium truncate max-w-[200px]" title={client.name}>{client.name}</span>
+                <Card className="border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="name" label="Client" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="status" label="Status" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="contact_name" label="Contact" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="contact_email" label="Email" className="hidden lg:table-cell" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="contact_phone" label="Phone" className="hidden xl:table-cell" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="industry" label="Industry" className="hidden xl:table-cell" />
+                        <SortableTh sort={clientSort} onSort={toggleClientSort} id="total_revenue" label="Revenue" className="text-right" />
+                        <TableHead className="w-10" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedClients.map((client) => (
+                        <TableRow
+                          key={client.id}
+                          className="cursor-pointer"
+                          onClick={() => navigateOrg(`/clients/${client.display_id}`)}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <Building className="h-4 w-4 text-primary" />
                               </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[150px] block" title={client.contact_name || ""}>
-                                {client.contact_name || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={client.contact_email || ""}>
-                                {client.contact_email || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground">
-                                {client.contact_phone || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={client.industry || ""}>
-                                {client.industry || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="border-2">
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/clients/${client.display_id}`); }}>
-                                    <ChevronRight className="h-4 w-4 mr-2" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingClient(client); }}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Quick Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteClient.mutate(client.id); }} className="text-destructive">
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete Client
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                              <div className="min-w-0">
+                                <div className="font-medium truncate max-w-[200px]" title={client.name}>{client.name}</div>
+                                <div className="font-mono text-xs text-muted-foreground">{client.display_id}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Select
+                              value={client.status}
+                              onValueChange={(v) =>
+                                updateClient.mutate({ id: client.id, status: v as CrmClient["status"] })
+                              }
+                            >
+                              <SelectTrigger
+                                className={cn(
+                                  "h-7 w-[110px] border-transparent px-2 text-xs font-semibold shadow-none",
+                                  client.status === "active" ? "bg-emerald-600 text-white" : "bg-slate-400 text-black"
+                                )}
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground truncate max-w-[150px] block" title={client.contact_name || ""}>
+                              {client.contact_name || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={client.contact_email || ""}>
+                              {client.contact_email || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
+                            {client.contact_phone || "—"}
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell">
+                            <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={client.industry || ""}>
+                              {client.industry || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right font-mono">{formatValue(client.total_revenue)}</TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="border">
+                                <DropdownMenuItem onClick={() => navigateOrg(`/clients/${client.display_id}`)}>
+                                  <ChevronRight className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditingClient(client)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Quick Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => deleteClient.mutate(client.id)} className="text-destructive">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Client
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </Card>
               </div>
             </>
@@ -1472,13 +1882,13 @@ export default function CRM() {
           <div className="flex justify-end">
             <Dialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen}>
               <DialogTrigger asChild>
-                <Button className="border-2">
+                <Button className="border">
                   <CheckSquare className="h-4 w-4 mr-2" />
                   New Task
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[500px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Create New Task</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1488,7 +1898,7 @@ export default function CRM() {
                       placeholder="e.g., Follow up with client"
                       value={newTask.title}
                       onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -1497,7 +1907,7 @@ export default function CRM() {
                       placeholder="Task details..."
                       value={newTask.description}
                       onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1507,16 +1917,16 @@ export default function CRM() {
                         type="date"
                         value={newTask.due_date}
                         onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
                       <Label>Related Deal</Label>
                       <Select value={newTask.quote_id} onValueChange={(value) => setNewTask({ ...newTask, quote_id: value })}>
-                        <SelectTrigger className="border-2">
+                        <SelectTrigger className="border">
                           <SelectValue placeholder="Select deal (optional)" />
                         </SelectTrigger>
-                        <SelectContent className="border-2">
+                        <SelectContent className="border">
                           {quotes?.map((quote) => (
                             <SelectItem key={quote.id} value={quote.id}>
                               {quote.title}
@@ -1527,11 +1937,11 @@ export default function CRM() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => setIsNewTaskOpen(false)} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => setIsNewTaskOpen(false)} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateTask} className="border-2" disabled={createTask.isPending}>
+                  <Button onClick={handleCreateTask} className="border" disabled={createTask.isPending}>
                     {createTask.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Create Task
                   </Button>
@@ -1542,8 +1952,8 @@ export default function CRM() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Pending Tasks */}
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
                   Pending Tasks ({pendingTasks.length})
@@ -1591,8 +2001,8 @@ export default function CRM() {
             </Card>
 
             {/* Completed Tasks */}
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <CheckSquare className="h-5 w-5" />
                   Completed ({completedTasks.length})
@@ -1636,11 +2046,11 @@ export default function CRM() {
             <div className="flex items-center gap-2">
               {tags && tags.length > 0 && (
                 <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="border-2 w-40">
+                  <SelectTrigger className="border w-40">
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="All Tags" />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="all">All Tags</SelectItem>
                     {tags.map((tag) => (
                       <SelectItem key={tag.id} value={tag.id}>
@@ -1660,7 +2070,7 @@ export default function CRM() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="border-2"
+                className="border"
                 onClick={() => setIsImportDialogOpen(true)}
               >
                 <Upload className="h-4 w-4 mr-2" />
@@ -1668,7 +2078,7 @@ export default function CRM() {
               </Button>
               <Button
                 variant="outline"
-                className="border-2"
+                className="border"
                 onClick={() => contacts && exportContacts.mutate(contacts)}
                 disabled={exportContacts.isPending || !contacts?.length}
               >
@@ -1677,13 +2087,13 @@ export default function CRM() {
               </Button>
               <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
                 <DialogTrigger asChild>
-                  <Button className="border-2">
+                  <Button className="border">
                     <User className="h-4 w-4 mr-2" />
                     New Contact
                   </Button>
                 </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[500px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[500px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Add New Contact</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1693,7 +2103,7 @@ export default function CRM() {
                       placeholder="Contact name"
                       value={newContact.name}
                       onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1704,7 +2114,7 @@ export default function CRM() {
                         placeholder="email@company.com"
                         value={newContact.email}
                         onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -1713,7 +2123,7 @@ export default function CRM() {
                         placeholder="+1 234 567 8900"
                         value={newContact.phone}
                         onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -1724,16 +2134,16 @@ export default function CRM() {
                         placeholder="e.g., Project Manager"
                         value={newContact.job_title}
                         onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
                       <Label>Company</Label>
                       <Select value={newContact.company_id} onValueChange={(value) => setNewContact({ ...newContact, company_id: value })}>
-                        <SelectTrigger className="border-2">
+                        <SelectTrigger className="border">
                           <SelectValue placeholder="Select company (optional)" />
                         </SelectTrigger>
-                        <SelectContent className="border-2">
+                        <SelectContent className="border">
                           {clients?.map((client) => (
                             <SelectItem key={client.id} value={client.id}>
                               {client.name}
@@ -1745,20 +2155,20 @@ export default function CRM() {
                   </div>
                   {/* Add New Company Section */}
                   {isCreatingCompanyInline ? (
-                    <div className="grid gap-2 p-3 border-2 border-dashed border-border rounded-md bg-muted/30">
+                    <div className="grid gap-2 p-3 border border-dashed border-border rounded-md bg-muted/30">
                       <Label className="text-sm font-medium">Create New Company</Label>
                       <div className="flex gap-2">
                         <Input
                           placeholder="Enter company name"
                           value={inlineCompanyName}
                           onChange={(e) => setInlineCompanyName(e.target.value)}
-                          className="border-2 flex-1"
+                          className="border flex-1"
                           autoFocus
                         />
                         <Button
                           onClick={handleCreateInlineCompany}
                           disabled={createClient.isPending || !inlineCompanyName.trim()}
-                          className="border-2"
+                          className="border"
                         >
                           {createClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
                           Create
@@ -1766,7 +2176,7 @@ export default function CRM() {
                         <Button
                           variant="outline"
                           onClick={() => { setIsCreatingCompanyInline(false); setInlineCompanyName(""); }}
-                          className="border-2"
+                          className="border"
                         >
                           Cancel
                         </Button>
@@ -1777,7 +2187,7 @@ export default function CRM() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsCreatingCompanyInline(true)}
-                      className="border-2 w-fit"
+                      className="border w-fit"
                     >
                       <PlusCircle className="h-4 w-4 mr-2" />
                       Add New Company
@@ -1789,7 +2199,7 @@ export default function CRM() {
                       placeholder="Mailing/billing address..."
                       value={newContact.address}
                       onChange={(e) => setNewContact({ ...newContact, address: e.target.value })}
-                      className="border-2"
+                      className="border"
                       rows={2}
                     />
                   </div>
@@ -1799,15 +2209,15 @@ export default function CRM() {
                       placeholder="Additional notes..."
                       value={newContact.notes}
                       onChange={(e) => setNewContact({ ...newContact, notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-                  <Button variant="outline" onClick={() => { setIsNewContactOpen(false); setIsCreatingCompanyInline(false); setInlineCompanyName(""); }} className="border-2">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => { setIsNewContactOpen(false); setIsCreatingCompanyInline(false); setInlineCompanyName(""); }} className="border">
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateContact} className="border-2" disabled={createContact.isPending}>
+                  <Button onClick={handleCreateContact} className="border" disabled={createContact.isPending}>
                     {createContact.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Add Contact
                   </Button>
@@ -1818,12 +2228,12 @@ export default function CRM() {
           </div>
 
           {filteredContacts.length === 0 ? (
-            <Card className="border-2 border-border">
+            <Card className="border border-border">
               <CardContent className="p-8 text-center">
                 <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Contacts Yet</h3>
                 <p className="text-muted-foreground mb-4">Add contacts to easily link them to deals, quotes, and projects.</p>
-                <Button onClick={() => setIsNewContactOpen(true)} className="border-2">
+                <Button onClick={() => setIsNewContactOpen(true)} className="border">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Contact
                 </Button>
@@ -1836,7 +2246,7 @@ export default function CRM() {
                 {filteredContacts.map((contact) => (
                   <Card
                     key={contact.id}
-                    className="border-2 border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    className="border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
                   >
                     <CardContent className="p-4">
@@ -1901,7 +2311,7 @@ export default function CRM() {
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-2">
+                          <DropdownMenuContent align="end" className="border">
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
                               <ChevronRight className="h-4 w-4 mr-2" />
                               View Details
@@ -1924,113 +2334,112 @@ export default function CRM() {
 
               {/* Desktop Table View */}
               <div className="hidden md:block">
-                <Card className="border-2 border-border">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b-2 border-border bg-muted/50">
-                          <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Job Title</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Company</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Email</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Phone</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm">Tags</th>
-                          <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredContacts.map((contact) => (
-                          <tr
-                            key={contact.id}
-                            className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                            onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
-                          >
-                            <td className="py-3 px-4">
-                              <span className="font-mono text-xs text-muted-foreground">{contact.display_id}</span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <User className="h-4 w-4 text-primary" />
-                                </div>
-                                <span className="font-medium truncate max-w-[150px]" title={contact.name}>{contact.name}</span>
+                <Card className="border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="name" label="Name" />
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="job_title" label="Job Title" className="hidden lg:table-cell" />
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="company" label="Company" />
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="email" label="Email" />
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="phone" label="Phone" className="hidden xl:table-cell" />
+                        <TableHead>Tags</TableHead>
+                        <SortableTh sort={contactSort} onSort={toggleContactSort} id="created_at" label="Created" className="hidden xl:table-cell" />
+                        <TableHead className="w-10" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedContacts.map((contact) => (
+                        <TableRow
+                          key={contact.id}
+                          className="cursor-pointer"
+                          onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <User className="h-4 w-4 text-primary" />
                               </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={contact.job_title || ""}>
-                                {contact.job_title || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={contact.company?.name || ""}>
-                                {contact.company?.name || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={contact.email || ""}>
-                                {contact.email || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="text-sm text-muted-foreground">
-                                {contact.phone || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              {contact.tags && contact.tags.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {contact.tags.slice(0, 2).map((ct) => {
-                                    const tag = tags?.find((t) => t.id === ct.tag_id);
-                                    return tag ? (
-                                      <Badge
-                                        key={ct.tag_id}
-                                        variant="secondary"
-                                        className="text-xs px-1.5 py-0"
-                                        style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
-                                      >
-                                        {tag.name}
-                                      </Badge>
-                                    ) : null;
-                                  })}
-                                  {contact.tags.length > 2 && (
-                                    <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                      +{contact.tags.length - 2}
+                              <div className="min-w-0">
+                                <div className="font-medium truncate max-w-[160px]" title={contact.name}>{contact.name}</div>
+                                <div className="font-mono text-xs text-muted-foreground">{contact.display_id}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <span className="text-sm text-muted-foreground truncate max-w-[120px] block" title={contact.job_title || ""}>
+                              {contact.job_title || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground truncate max-w-[140px] block" title={contact.company?.name || ""}>
+                              {contact.company?.name || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground truncate max-w-[180px] block" title={contact.email || ""}>
+                              {contact.email || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
+                            {contact.phone || "—"}
+                          </TableCell>
+                          <TableCell>
+                            {contact.tags && contact.tags.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {contact.tags.slice(0, 2).map((ct) => {
+                                  const tag = tags?.find((t) => t.id === ct.tag_id);
+                                  return tag ? (
+                                    <Badge
+                                      key={ct.tag_id}
+                                      variant="secondary"
+                                      className="text-xs px-1.5 py-0"
+                                      style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
+                                    >
+                                      {tag.name}
                                     </Badge>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">-</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="border-2">
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigateOrg(`/contacts/${contact.display_id}`); }}>
-                                    <ChevronRight className="h-4 w-4 mr-2" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingContact(contact); }}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Quick Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); deleteContact.mutate(contact.id); }} className="text-destructive">
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete Contact
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                                  ) : null;
+                                })}
+                                {contact.tags.length > 2 && (
+                                  <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                    +{contact.tags.length - 2}
+                                  </Badge>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell text-sm text-muted-foreground whitespace-nowrap">
+                            {formatDate(contact.created_at)}
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="border">
+                                <DropdownMenuItem onClick={() => navigateOrg(`/contacts/${contact.display_id}`)}>
+                                  <ChevronRight className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditingContact(contact)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Quick Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => deleteContact.mutate(contact.id)} className="text-destructive">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Contact
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </Card>
               </div>
             </>
@@ -2040,8 +2449,8 @@ export default function CRM() {
 
       {/* Edit Contact Dialog */}
       <Dialog open={!!editingContact} onOpenChange={(open) => !open && setEditingContact(null)}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[500px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Contact</DialogTitle>
           </DialogHeader>
           {editingContact && (
@@ -2052,7 +2461,7 @@ export default function CRM() {
                   placeholder="Contact name"
                   value={editingContact.name}
                   onChange={(e) => setEditingContact({ ...editingContact, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -2063,7 +2472,7 @@ export default function CRM() {
                     placeholder="email@company.com"
                     value={editingContact.email || ""}
                     onChange={(e) => setEditingContact({ ...editingContact, email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -2072,7 +2481,7 @@ export default function CRM() {
                     placeholder="+1 234 567 8900"
                     value={editingContact.phone || ""}
                     onChange={(e) => setEditingContact({ ...editingContact, phone: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -2083,7 +2492,7 @@ export default function CRM() {
                     placeholder="e.g., Project Manager"
                     value={editingContact.job_title || ""}
                     onChange={(e) => setEditingContact({ ...editingContact, job_title: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -2092,10 +2501,10 @@ export default function CRM() {
                     value={editingContact.company_id || ""}
                     onValueChange={(value) => setEditingContact({ ...editingContact, company_id: value })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select company (optional)" />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {clients?.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
@@ -2107,20 +2516,20 @@ export default function CRM() {
               </div>
               {/* Add New Company Section */}
               {isCreatingCompanyInlineEdit ? (
-                <div className="grid gap-2 p-3 border-2 border-dashed border-border rounded-md bg-muted/30">
+                <div className="grid gap-2 p-3 border border-dashed border-border rounded-md bg-muted/30">
                   <Label className="text-sm font-medium">Create New Company</Label>
                   <div className="flex gap-2">
                     <Input
                       placeholder="Enter company name"
                       value={inlineCompanyNameEdit}
                       onChange={(e) => setInlineCompanyNameEdit(e.target.value)}
-                      className="border-2 flex-1"
+                      className="border flex-1"
                       autoFocus
                     />
                     <Button
                       onClick={handleCreateInlineCompanyEdit}
                       disabled={createClient.isPending || !inlineCompanyNameEdit.trim()}
-                      className="border-2"
+                      className="border"
                     >
                       {createClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
                       Create
@@ -2128,7 +2537,7 @@ export default function CRM() {
                     <Button
                       variant="outline"
                       onClick={() => { setIsCreatingCompanyInlineEdit(false); setInlineCompanyNameEdit(""); }}
-                      className="border-2"
+                      className="border"
                     >
                       Cancel
                     </Button>
@@ -2139,7 +2548,7 @@ export default function CRM() {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsCreatingCompanyInlineEdit(true)}
-                  className="border-2 w-fit"
+                  className="border w-fit"
                 >
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Add New Company
@@ -2151,7 +2560,7 @@ export default function CRM() {
                   placeholder="Mailing/billing address..."
                   value={editingContact.address || ""}
                   onChange={(e) => setEditingContact({ ...editingContact, address: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={2}
                 />
               </div>
@@ -2161,16 +2570,16 @@ export default function CRM() {
                   placeholder="Additional notes..."
                   value={editingContact.notes || ""}
                   onChange={(e) => setEditingContact({ ...editingContact, notes: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => { setEditingContact(null); setIsCreatingCompanyInlineEdit(false); setInlineCompanyNameEdit(""); }} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => { setEditingContact(null); setIsCreatingCompanyInlineEdit(false); setInlineCompanyNameEdit(""); }} className="border">
               Cancel
             </Button>
-            <Button onClick={handleUpdateContact} className="border-2" disabled={updateContact.isPending}>
+            <Button onClick={handleUpdateContact} className="border" disabled={updateContact.isPending}>
               {updateContact.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes
             </Button>
@@ -2180,18 +2589,18 @@ export default function CRM() {
 
       {/* Log Activity Dialog */}
       <Dialog open={isActivityDialogOpen} onOpenChange={setIsActivityDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[400px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[400px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Log Activity</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Activity Type</Label>
               <Select value={newActivity.type} onValueChange={(value: ActivityType) => setNewActivity({ ...newActivity, type: value })}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="call">
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4" /> Call
@@ -2221,7 +2630,7 @@ export default function CRM() {
                 placeholder="Describe the activity..."
                 value={newActivity.description}
                 onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
-                className="border-2"
+                className="border"
               />
             </div>
             <div className="grid gap-2">
@@ -2230,15 +2639,15 @@ export default function CRM() {
                 placeholder="e.g., 30 min"
                 value={newActivity.duration}
                 onChange={(e) => setNewActivity({ ...newActivity, duration: e.target.value })}
-                className="border-2"
+                className="border"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsActivityDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsActivityDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleLogActivity} className="border-2" disabled={createActivity.isPending}>
+            <Button onClick={handleLogActivity} className="border" disabled={createActivity.isPending}>
               {createActivity.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Log Activity
             </Button>
@@ -2248,8 +2657,8 @@ export default function CRM() {
 
       {/* Edit Client Dialog */}
       <Dialog open={!!editingClient} onOpenChange={(open) => !open && setEditingClient(null)}>
-        <DialogContent className="border-2 sm:max-w-[500px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[500px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Client</DialogTitle>
           </DialogHeader>
           {editingClient && (
@@ -2260,7 +2669,7 @@ export default function CRM() {
                   placeholder="Company name"
                   value={editingClient.name}
                   onChange={(e) => setEditingClient({ ...editingClient, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -2270,7 +2679,7 @@ export default function CRM() {
                     placeholder="Contact name"
                     value={editingClient.contact_name || ""}
                     onChange={(e) => setEditingClient({ ...editingClient, contact_name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -2280,7 +2689,7 @@ export default function CRM() {
                     placeholder="email@company.com"
                     value={editingClient.contact_email || ""}
                     onChange={(e) => setEditingClient({ ...editingClient, contact_email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -2291,7 +2700,7 @@ export default function CRM() {
                     placeholder="+1 234 567 8900"
                     value={editingClient.contact_phone || ""}
                     onChange={(e) => setEditingClient({ ...editingClient, contact_phone: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -2300,17 +2709,17 @@ export default function CRM() {
                     placeholder="e.g., Technology"
                     value={editingClient.industry || ""}
                     onChange={(e) => setEditingClient({ ...editingClient, industry: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setEditingClient(null)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setEditingClient(null)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleUpdateClient} className="border-2" disabled={updateClient.isPending}>
+            <Button onClick={handleUpdateClient} className="border" disabled={updateClient.isPending}>
               {updateClient.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes
             </Button>
@@ -2326,8 +2735,8 @@ export default function CRM() {
           setImportPreview([]);
         }
       }}>
-        <DialogContent className="border-2 sm:max-w-[600px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[600px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Import Contacts</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -2349,7 +2758,7 @@ export default function CRM() {
                     reader.readAsText(file);
                   }
                 }}
-                className="border-2"
+                className="border"
               />
               <p className="text-xs text-muted-foreground">
                 Upload a CSV file with columns: Name, Email, Phone, Job Title, Company, Address, Notes, Tags
@@ -2359,7 +2768,7 @@ export default function CRM() {
             {importPreview.length > 0 && (
               <div className="grid gap-2">
                 <Label>Preview (first 5 rows)</Label>
-                <div className="border-2 border-border rounded-md overflow-x-auto">
+                <div className="border border-border rounded-md overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-muted">
                       <tr>
@@ -2387,7 +2796,7 @@ export default function CRM() {
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button
               variant="outline"
               onClick={() => {
@@ -2395,7 +2804,7 @@ export default function CRM() {
                 setImportFile(null);
                 setImportPreview([]);
               }}
-              className="border-2"
+              className="border"
             >
               Cancel
             </Button>
@@ -2424,7 +2833,7 @@ export default function CRM() {
                 };
                 reader.readAsText(importFile);
               }}
-              className="border-2"
+              className="border"
               disabled={importContacts.isPending || !importFile}
             >
               {importContacts.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}

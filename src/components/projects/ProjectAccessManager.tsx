@@ -169,7 +169,7 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
 
   if (isLoading) {
     return (
-      <Card className="border-2 border-border shadow-sm">
+      <Card className="border border-border shadow-sm">
         <CardContent className="p-6 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </CardContent>
@@ -179,8 +179,8 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
 
   return (
     <>
-      <Card className="border-2 border-border shadow-sm">
-        <CardHeader className="border-b-2 border-border">
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="border-b border-border">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -193,13 +193,13 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="border-2" disabled={!availableMembers?.length}>
+                <Button size="sm" className="border" disabled={!availableMembers?.length}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Grant Access
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 sm:max-w-[425px]">
-                <DialogHeader className="border-b-2 border-border pb-4">
+              <DialogContent className="border sm:max-w-[425px]">
+                <DialogHeader className="border-b border-border pb-4">
                   <DialogTitle>Grant Project Access</DialogTitle>
                   <DialogDescription>
                     Give a team member access to "{projectName}"
@@ -214,7 +214,7 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
                           variant="outline"
                           role="combobox"
                           aria-expanded={isComboboxOpen}
-                          className="w-full justify-between border-2"
+                          className="w-full justify-between border"
                         >
                           {selectedMember
                             ? availableMembers?.find((m) => m.id === selectedMember)?.name
@@ -271,10 +271,10 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
                     </div>
                   )}
 
-                  <div className="flex justify-end gap-2 pt-4 border-t-2 border-border">
+                  <div className="flex justify-end gap-2 pt-4 border-t border-border">
                     <Button
                       variant="outline"
-                      className="border-2"
+                      className="border"
                       onClick={() => setIsAddDialogOpen(false)}
                     >
                       Cancel
@@ -298,25 +298,25 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
         </CardHeader>
 
         {/* Access Summary */}
-        <div className="grid grid-cols-3 gap-4 p-4 border-b-2 border-border bg-muted/30">
+        <div className="grid grid-cols-3 gap-4 p-4 border-b border-border bg-muted/30">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-chart-2" />
             <div>
-              <div className="text-lg font-bold">{fullAccessCount}</div>
+              <div className="text-lg font-semibold">{fullAccessCount}</div>
               <div className="text-xs text-muted-foreground">Full Access</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-chart-1" />
             <div>
-              <div className="text-lg font-bold">{projectAccessCount}</div>
+              <div className="text-lg font-semibold">{projectAccessCount}</div>
               <div className="text-xs text-muted-foreground">Project Only</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             <div>
-              <div className="text-lg font-bold">{teamAssignedCount}</div>
+              <div className="text-lg font-semibold">{teamAssignedCount}</div>
               <div className="text-xs text-muted-foreground">Team Assigned</div>
             </div>
           </div>
@@ -325,12 +325,12 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-b-2 hover:bg-transparent">
-                <TableHead className="font-bold uppercase text-xs">User</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Role</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Access Level</TableHead>
-                <TableHead className="font-bold uppercase text-xs">Source</TableHead>
-                <TableHead className="font-bold uppercase text-xs w-[80px]">Actions</TableHead>
+              <TableRow className="border-b hover:bg-transparent">
+                <TableHead className="font-semibold uppercase text-xs">User</TableHead>
+                <TableHead className="font-semibold uppercase text-xs">Role</TableHead>
+                <TableHead className="font-semibold uppercase text-xs">Access Level</TableHead>
+                <TableHead className="font-semibold uppercase text-xs">Source</TableHead>
+                <TableHead className="font-semibold uppercase text-xs w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -342,10 +342,10 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
                 </TableRow>
               ) : (
                 accessList?.map((user) => (
-                  <TableRow key={user.id} className="border-b-2">
+                  <TableRow key={user.id} className="border-b">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8 border-2 border-border">
+                        <Avatar className="h-8 w-8 border border-border">
                           <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                             {getInitials(user.name)}
                           </AvatarFallback>
@@ -390,7 +390,7 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
 
       {/* Revoke Access Confirmation */}
       <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
-        <AlertDialogContent className="border-2">
+        <AlertDialogContent className="border">
           <AlertDialogHeader>
             <AlertDialogTitle>Revoke Project Access</AlertDialogTitle>
             <AlertDialogDescription>
@@ -399,7 +399,7 @@ export function ProjectAccessManager({ projectId, projectName }: ProjectAccessMa
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleRevokeAccess}

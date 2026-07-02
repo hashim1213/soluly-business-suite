@@ -306,7 +306,7 @@ export default function Settings() {
 
       <Tabs defaultValue="profile" className="space-y-4 sm:space-y-6">
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
-          <TabsList className="border-2 inline-flex w-auto min-w-full sm:min-w-0">
+          <TabsList className="border inline-flex w-auto min-w-full sm:min-w-0">
             <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
             <TabsTrigger value="appearance" className="text-xs sm:text-sm">Appearance</TabsTrigger>
             {canManageOrg && <TabsTrigger value="organization" className="text-xs sm:text-sm">Org</TabsTrigger>}
@@ -320,10 +320,10 @@ export default function Settings() {
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                   <User className="h-5 w-5" />
                 </div>
                 <div>
@@ -340,7 +340,7 @@ export default function Settings() {
                     id="name"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="space-y-2">
@@ -350,7 +350,7 @@ export default function Settings() {
                     type="email"
                     value={member?.email || ""}
                     disabled
-                    className="border-2 bg-muted"
+                    className="border bg-muted"
                   />
                 </div>
               </div>
@@ -362,7 +362,7 @@ export default function Settings() {
                     value={profilePhone}
                     onChange={(e) => setProfilePhone(e.target.value)}
                     placeholder="(555) 123-4567"
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="space-y-2">
@@ -370,11 +370,11 @@ export default function Settings() {
                   <Input
                     value={role?.name || member?.role || "Member"}
                     disabled
-                    className="border-2 bg-muted"
+                    className="border bg-muted"
                   />
                 </div>
               </div>
-              <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="border-2">
+              <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="border">
                 {isSavingProfile ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -390,10 +390,10 @@ export default function Settings() {
 
         {/* Appearance Tab */}
         <TabsContent value="appearance" className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                   <Palette className="h-5 w-5" />
                 </div>
                 <div>
@@ -418,7 +418,7 @@ export default function Settings() {
                     <button
                       key={value}
                       onClick={() => setMode(value)}
-                      className={`flex flex-col items-center gap-2 p-4 border-2 rounded-lg transition-colors ${
+                      className={`flex flex-col items-center gap-2 p-4 border rounded-lg transition-colors ${
                         mode === value
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
@@ -443,6 +443,12 @@ export default function Settings() {
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {[
+                    {
+                      value: "fluent" as ThemeStyle,
+                      label: "Fluent",
+                      description: "Microsoft Fluent design (default)",
+                      colors: ["#0F6CBD", "#479EF5", "#B4D6FA"],
+                    },
                     {
                       value: "default" as ThemeStyle,
                       label: "Neobrutalist",
@@ -531,7 +537,7 @@ export default function Settings() {
                     <button
                       key={value}
                       onClick={() => setStyle(value)}
-                      className={`flex flex-col items-start gap-2 p-4 border-2 rounded-lg transition-colors text-left ${
+                      className={`flex flex-col items-start gap-2 p-4 border rounded-lg transition-colors text-left ${
                         style === value
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
@@ -565,7 +571,7 @@ export default function Settings() {
               {/* Preview */}
               <div className="space-y-3">
                 <Label className="text-base font-medium">Preview</Label>
-                <div className="p-4 border-2 rounded-lg bg-card">
+                <div className="p-4 border rounded-lg bg-card">
                   <div className="flex items-center justify-between mb-4">
                     <div className="font-medium">Sample Card</div>
                     <Badge>Active</Badge>
@@ -591,10 +597,10 @@ export default function Settings() {
         {/* Organization Tab */}
         {canManageOrg && (
           <TabsContent value="organization" className="space-y-6">
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                     <Building2 className="h-5 w-5" />
                   </div>
                   <div>
@@ -612,7 +618,7 @@ export default function Settings() {
                   </p>
                   <div className="flex items-start gap-4">
                     {/* Logo/Icon Preview */}
-                    <div className="h-16 w-16 bg-primary flex items-center justify-center rounded-lg border-2 overflow-hidden shrink-0">
+                    <div className="h-16 w-16 bg-primary flex items-center justify-center rounded-lg border overflow-hidden shrink-0">
                       {organization?.logo_url ? (
                         <img
                           src={organization.logo_url}
@@ -622,7 +628,7 @@ export default function Settings() {
                       ) : orgIcon ? (
                         <span className="text-3xl">{orgIcon}</span>
                       ) : (
-                        <span className="text-primary-foreground font-bold text-xl">
+                        <span className="text-primary-foreground font-semibold text-xl">
                           {orgName?.[0]?.toUpperCase() || "S"}
                         </span>
                       )}
@@ -639,7 +645,7 @@ export default function Settings() {
                       />
                       <Button
                         variant="outline"
-                        className="border-2"
+                        className="border"
                         onClick={() => logoInputRef.current?.click()}
                         disabled={uploadOrgLogo.isPending}
                       >
@@ -690,22 +696,22 @@ export default function Settings() {
                     Choose an emoji to show when no logo is uploaded
                   </p>
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-secondary flex items-center justify-center rounded-md border-2">
+                    <div className="h-10 w-10 bg-secondary flex items-center justify-center rounded-md border">
                       {orgIcon ? (
                         <span className="text-xl">{orgIcon}</span>
                       ) : (
-                        <span className="font-bold">
+                        <span className="font-semibold">
                           {orgName?.[0]?.toUpperCase() || "S"}
                         </span>
                       )}
                     </div>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="border-2">
+                        <Button variant="outline" size="sm" className="border">
                           Choose Emoji
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80 border-2" align="start">
+                      <PopoverContent className="w-80 border" align="start">
                         <div className="space-y-3">
                           <div className="font-medium">Select an icon</div>
                           <div className="grid grid-cols-8 gap-1">
@@ -731,7 +737,7 @@ export default function Settings() {
                               placeholder="Or type any emoji..."
                               value={orgIcon}
                               onChange={(e) => setOrgIcon(e.target.value.slice(-2))}
-                              className="border-2 flex-1"
+                              className="border flex-1"
                               maxLength={2}
                             />
                             {orgIcon && (
@@ -760,7 +766,7 @@ export default function Settings() {
                       id="orgName"
                       value={orgName}
                       onChange={(e) => setOrgName(e.target.value)}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="space-y-2">
@@ -771,7 +777,7 @@ export default function Settings() {
                         id="orgSlug"
                         value={orgSlug}
                         onChange={(e) => setOrgSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -779,22 +785,22 @@ export default function Settings() {
 
                 {orgStats && (
                   <div className="grid gap-4 sm:grid-cols-3 pt-4">
-                    <div className="p-4 border-2 rounded-lg">
-                      <div className="text-2xl font-bold">{orgStats.memberCount}</div>
+                    <div className="p-4 border rounded-lg">
+                      <div className="text-2xl font-semibold">{orgStats.memberCount}</div>
                       <div className="text-sm text-muted-foreground">Team Members</div>
                     </div>
-                    <div className="p-4 border-2 rounded-lg">
-                      <div className="text-2xl font-bold">{orgStats.projectCount}</div>
+                    <div className="p-4 border rounded-lg">
+                      <div className="text-2xl font-semibold">{orgStats.projectCount}</div>
                       <div className="text-sm text-muted-foreground">Projects</div>
                     </div>
-                    <div className="p-4 border-2 rounded-lg">
-                      <div className="text-2xl font-bold">{orgStats.pendingInvitations}</div>
+                    <div className="p-4 border rounded-lg">
+                      <div className="text-2xl font-semibold">{orgStats.pendingInvitations}</div>
                       <div className="text-sm text-muted-foreground">Pending Invites</div>
                     </div>
                   </div>
                 )}
 
-                <Button onClick={handleSaveOrg} disabled={isSavingOrg} className="border-2">
+                <Button onClick={handleSaveOrg} disabled={isSavingOrg} className="border">
                   {isSavingOrg ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -812,10 +818,10 @@ export default function Settings() {
         {/* Billing Tab */}
         {canManageOrg && (
           <TabsContent value="billing" className="space-y-6">
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                     <FileText className="h-5 w-5" />
                   </div>
                   <div>
@@ -836,7 +842,7 @@ export default function Settings() {
                         value={billingName}
                         onChange={(e) => setBillingName(e.target.value)}
                         placeholder={organization?.name || "Your Company Name"}
-                        className="border-2"
+                        className="border"
                       />
                       <p className="text-xs text-muted-foreground">Defaults to organization name if not set</p>
                     </div>
@@ -847,7 +853,7 @@ export default function Settings() {
                         value={taxNumber}
                         onChange={(e) => setTaxNumber(e.target.value)}
                         placeholder="e.g., 123456789RT0001"
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -866,7 +872,7 @@ export default function Settings() {
                         value={billingAddress}
                         onChange={(e) => setBillingAddress(e.target.value)}
                         placeholder="123 Business Street"
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
@@ -877,7 +883,7 @@ export default function Settings() {
                           value={billingCity}
                           onChange={(e) => setBillingCity(e.target.value)}
                           placeholder="City"
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="space-y-2">
@@ -887,7 +893,7 @@ export default function Settings() {
                           value={billingState}
                           onChange={(e) => setBillingState(e.target.value)}
                           placeholder="Province"
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="space-y-2">
@@ -897,7 +903,7 @@ export default function Settings() {
                           value={billingPostalCode}
                           onChange={(e) => setBillingPostalCode(e.target.value)}
                           placeholder="A1A 1A1"
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="space-y-2">
@@ -907,7 +913,7 @@ export default function Settings() {
                           value={billingCountry}
                           onChange={(e) => setBillingCountry(e.target.value)}
                           placeholder="Canada"
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                     </div>
@@ -927,7 +933,7 @@ export default function Settings() {
                         value={billingPhone}
                         onChange={(e) => setBillingPhone(e.target.value)}
                         placeholder="(555) 123-4567"
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="space-y-2">
@@ -938,7 +944,7 @@ export default function Settings() {
                         value={billingEmail}
                         onChange={(e) => setBillingEmail(e.target.value)}
                         placeholder="billing@yourcompany.com"
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                   </div>
@@ -957,7 +963,7 @@ export default function Settings() {
                         value={defaultInvoiceTerms}
                         onChange={(e) => setDefaultInvoiceTerms(e.target.value)}
                         placeholder="Payment is due within 30 days..."
-                        className="border-2 min-h-[100px]"
+                        className="border min-h-[100px]"
                       />
                       <p className="text-xs text-muted-foreground">These terms will appear on all invoices by default</p>
                     </div>
@@ -968,14 +974,14 @@ export default function Settings() {
                         value={defaultInvoiceNotes}
                         onChange={(e) => setDefaultInvoiceNotes(e.target.value)}
                         placeholder="Thank you for your business!"
-                        className="border-2 min-h-[80px]"
+                        className="border min-h-[80px]"
                       />
                       <p className="text-xs text-muted-foreground">Optional notes to include on all invoices</p>
                     </div>
                   </div>
                 </div>
 
-                <Button onClick={handleSaveBilling} disabled={isSavingBilling} className="border-2">
+                <Button onClick={handleSaveBilling} disabled={isSavingBilling} className="border">
                   {isSavingBilling ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -993,11 +999,11 @@ export default function Settings() {
         {/* Team Tab */}
         {canManageUsers && (
           <TabsContent value="team" className="space-y-6">
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                    <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                       <Users className="h-5 w-5" />
                     </div>
                     <div>
@@ -1007,12 +1013,12 @@ export default function Settings() {
                   </div>
                   <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="border-2">
+                      <Button className="border">
                         <Plus className="mr-2 h-4 w-4" />
                         Invite Member
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="border-2">
+                    <DialogContent className="border">
                       <DialogHeader>
                         <DialogTitle>Invite Team Member</DialogTitle>
                         <DialogDescription>
@@ -1028,13 +1034,13 @@ export default function Settings() {
                             placeholder="colleague@company.com"
                             value={inviteEmail}
                             onChange={(e) => setInviteEmail(e.target.value)}
-                            className="border-2"
+                            className="border"
                           />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="inviteRole">Role</Label>
                           <Select value={inviteRoleId} onValueChange={setInviteRoleId}>
-                            <SelectTrigger className="border-2">
+                            <SelectTrigger className="border">
                               <SelectValue placeholder="Select a role" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1049,7 +1055,7 @@ export default function Settings() {
                         <Button
                           onClick={handleSendInvite}
                           disabled={createInvitation.isPending}
-                          className="w-full border-2"
+                          className="w-full border"
                         >
                           {createInvitation.isPending ? (
                             <>
@@ -1072,7 +1078,7 @@ export default function Settings() {
                   <div className="overflow-x-auto -mx-6 px-6">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-b-2">
+                        <TableRow className="border-b">
                           <TableHead>Member</TableHead>
                           <TableHead className="hidden sm:table-cell">Role</TableHead>
                           <TableHead className="hidden md:table-cell">Status</TableHead>
@@ -1081,7 +1087,7 @@ export default function Settings() {
                       </TableHeader>
                       <TableBody>
                         {teamMembers?.map((tm) => (
-                          <TableRow key={tm.id} className="border-b-2">
+                          <TableRow key={tm.id} className="border-b">
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8 shrink-0">
@@ -1106,7 +1112,7 @@ export default function Settings() {
                                 onValueChange={(value) => handleUpdateMemberRole(tm.id, value)}
                                 disabled={tm.is_owner}
                               >
-                                <SelectTrigger className="w-[120px] sm:w-[140px] border-2">
+                                <SelectTrigger className="w-[120px] sm:w-[140px] border">
                                   <SelectValue placeholder={tm.role} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1154,7 +1160,7 @@ export default function Settings() {
                     <div className="overflow-x-auto -mx-6 px-6">
                       <Table>
                         <TableHeader>
-                          <TableRow className="border-b-2">
+                          <TableRow className="border-b">
                             <TableHead>Email</TableHead>
                             <TableHead className="hidden sm:table-cell">Role</TableHead>
                             <TableHead className="hidden md:table-cell">Invited By</TableHead>
@@ -1163,7 +1169,7 @@ export default function Settings() {
                         </TableHeader>
                         <TableBody>
                           {invitations.map((inv) => (
-                            <TableRow key={inv.id} className="border-b-2">
+                            <TableRow key={inv.id} className="border-b">
                               <TableCell>
                                 <span className="truncate block max-w-[150px] sm:max-w-none">{inv.email}</span>
                                 <span className="sm:hidden text-xs text-muted-foreground">{inv.role?.name || "Member"}</span>
@@ -1211,10 +1217,10 @@ export default function Settings() {
         {/* Email Accounts Tab */}
         {hasPermission("emails", "edit") && (
           <TabsContent value="email-accounts" className="space-y-6">
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                     <Mail className="h-5 w-5" />
                   </div>
                   <div>
@@ -1232,10 +1238,10 @@ export default function Settings() {
 
         {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-secondary">
+                <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
                   <Bell className="h-5 w-5" />
                 </div>
                 <div>

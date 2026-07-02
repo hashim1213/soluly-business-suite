@@ -338,13 +338,13 @@ export default function TeamMemberDetail() {
   if (error || !member) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigateOrg("/team")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/team")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Team
         </Button>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-bold mb-2">Team Member Not Found</h2>
+            <h2 className="text-xl font-semibold mb-2">Team Member Not Found</h2>
             <p className="text-muted-foreground">This team member doesn't exist or was deleted.</p>
           </CardContent>
         </Card>
@@ -413,7 +413,7 @@ export default function TeamMemberDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigateOrg("/team")} className="border-2 border-transparent hover:border-border">
+        <Button variant="ghost" onClick={() => navigateOrg("/team")} className="border border-transparent hover:border-border">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -422,39 +422,39 @@ export default function TeamMemberDetail() {
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-3 sm:gap-4">
-          <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-border shrink-0">
+          <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border border-border shrink-0">
             <AvatarFallback className="bg-primary text-primary-foreground text-base sm:text-xl">
               {member.avatar || member.name.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold truncate">{member.name}</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold truncate">{member.name}</h1>
               <Badge className={`text-xs ${member.status === "active" ? "bg-chart-2 text-background" : "bg-muted text-muted-foreground"}`}>
                 {member.status}
               </Badge>
-              <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border-2 border-border text-xs hidden sm:inline-flex">
+              <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border border-border text-xs hidden sm:inline-flex">
                 {member.contract_type}
               </Badge>
             </div>
             <p className="text-sm sm:text-base text-muted-foreground">{member.role} • {member.department}</p>
-            <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border-2 border-border text-xs sm:hidden mt-1">
+            <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border border-border text-xs sm:hidden mt-1">
               {member.contract_type}
             </Badge>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button className="border-2 flex-1 sm:flex-none" onClick={handleStartEdit}>
+          <Button className="border flex-1 sm:flex-none" onClick={handleStartEdit}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Profile
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="border-2 border-transparent hover:border-border shrink-0">
+              <Button variant="ghost" size="icon" className="border border-transparent hover:border-border shrink-0">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="border-2">
+            <DropdownMenuContent align="end" className="border">
               <DropdownMenuItem onClick={handleToggleStatus}>
                 <Users className="h-4 w-4 mr-2" />
                 {member.status === "active" ? "Deactivate" : "Activate"}
@@ -478,53 +478,53 @@ export default function TeamMemberDetail() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-chart-1 shrink-0">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border border-border flex items-center justify-center bg-chart-1 shrink-0">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold font-mono truncate">{totalHours}h</div>
+                <div className="text-lg sm:text-2xl font-semibold font-mono truncate">{totalHours}h</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Hours</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-chart-2 shrink-0">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border border-border flex items-center justify-center bg-chart-2 shrink-0">
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold font-mono truncate">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</div>
+                <div className="text-lg sm:text-2xl font-semibold font-mono truncate">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Earned</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center bg-primary shrink-0">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 border border-border flex items-center justify-center bg-primary shrink-0">
                 <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg sm:text-2xl font-bold font-mono text-chart-2 truncate">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</div>
+                <div className="text-lg sm:text-2xl font-semibold font-mono text-chart-2 truncate">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Paid</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className={`h-8 w-8 sm:h-10 sm:w-10 border-2 border-border flex items-center justify-center shrink-0 ${outstanding > 0 ? "bg-chart-4" : "bg-muted"}`}>
+              <div className={`h-8 w-8 sm:h-10 sm:w-10 border border-border flex items-center justify-center shrink-0 ${outstanding > 0 ? "bg-chart-4" : "bg-muted"}`}>
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div className="min-w-0">
-                <div className={`text-lg sm:text-2xl font-bold font-mono truncate ${outstanding > 0 ? "text-chart-4" : ""}`}>
+                <div className={`text-lg sm:text-2xl font-semibold font-mono truncate ${outstanding > 0 ? "text-chart-4" : ""}`}>
                   {canViewAmounts ? `$${outstanding.toLocaleString()}` : "••••••"}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Outstanding</div>
@@ -535,7 +535,7 @@ export default function TeamMemberDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="border-2 border-border p-1 bg-background w-full flex flex-wrap sm:w-auto">
+        <TabsList className="border border-border p-1 bg-background w-full flex flex-wrap sm:w-auto">
           <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex-1 sm:flex-none text-xs sm:text-sm">
             Overview
           </TabsTrigger>
@@ -554,8 +554,8 @@ export default function TeamMemberDetail() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Contact Info */}
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
@@ -575,38 +575,38 @@ export default function TeamMemberDetail() {
             </Card>
 
             {/* Payment Info */}
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Compensation</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Hourly Rate</span>
-                  <span className="font-mono font-bold">{canViewAmounts ? `$${member.hourly_rate}/hr` : "••••••"}</span>
+                  <span className="font-mono font-semibold">{canViewAmounts ? `$${member.hourly_rate}/hr` : "••••••"}</span>
                 </div>
                 {member.salary > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Annual Salary</span>
-                    <span className="font-mono font-bold">{canViewAmounts ? `$${member.salary.toLocaleString()}` : "••••••"}</span>
+                    <span className="font-mono font-semibold">{canViewAmounts ? `$${member.salary.toLocaleString()}` : "••••••"}</span>
                   </div>
                 )}
-                <div className="border-t-2 border-border pt-4">
+                <div className="border-t border-border pt-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Billable Hours</span>
-                    <span className="font-mono font-bold">{billableHours}h</span>
+                    <span className="font-mono font-semibold">{billableHours}h</span>
                   </div>
                   <div className="flex justify-between mt-2">
                     <span className="text-muted-foreground">Total Earned</span>
-                    <span className="font-mono font-bold">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</span>
+                    <span className="font-mono font-semibold">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</span>
                   </div>
                   <div className="flex justify-between mt-2">
                     <span className="text-muted-foreground">Total Paid</span>
-                    <span className="font-mono font-bold text-chart-2">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</span>
+                    <span className="font-mono font-semibold text-chart-2">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</span>
                   </div>
                   {outstanding > 0 && (
                     <div className="flex justify-between mt-2">
                       <span className="text-muted-foreground">Outstanding</span>
-                      <span className="font-mono font-bold text-chart-4">{canViewAmounts ? `$${outstanding.toLocaleString()}` : "••••••"}</span>
+                      <span className="font-mono font-semibold text-chart-4">{canViewAmounts ? `$${outstanding.toLocaleString()}` : "••••••"}</span>
                     </div>
                   )}
                 </div>
@@ -614,8 +614,8 @@ export default function TeamMemberDetail() {
             </Card>
 
             {/* Employment Info */}
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Employment Details</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
@@ -633,7 +633,7 @@ export default function TeamMemberDetail() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Contract Type</span>
-                  <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border-2 border-border">
+                  <Badge variant={member.contract_type === "Full-time" ? "default" : "secondary"} className="border border-border">
                     {member.contract_type}
                   </Badge>
                 </div>
@@ -647,22 +647,22 @@ export default function TeamMemberDetail() {
             </Card>
 
             {/* Quick Stats */}
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Performance</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Active Projects</span>
-                  <span className="font-bold">{projectCount}</span>
+                  <span className="font-semibold">{projectCount}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Time Entries</span>
-                  <span className="font-bold">{timeEntries?.length || 0}</span>
+                  <span className="font-semibold">{timeEntries?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Effective Rate</span>
-                  <span className="font-mono font-bold">{canViewAmounts ? `$${member.hourly_rate}/hr` : "••••••"}</span>
+                  <span className="font-mono font-semibold">{canViewAmounts ? `$${member.hourly_rate}/hr` : "••••••"}</span>
                 </div>
               </CardContent>
             </Card>
@@ -671,8 +671,8 @@ export default function TeamMemberDetail() {
 
         {/* Time Entries Tab */}
         <TabsContent value="hours" className="space-y-6">
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="text-base sm:text-lg">Time Entries</CardTitle>
@@ -680,7 +680,7 @@ export default function TeamMemberDetail() {
                     {billableHours} billable • {totalHours - billableHours} non-billable
                   </p>
                 </div>
-                <Button className="border-2 w-full sm:w-auto" onClick={() => setIsTimeEntryDialogOpen(true)}>
+                <Button className="border w-full sm:w-auto" onClick={() => setIsTimeEntryDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Log Time
                 </Button>
@@ -695,7 +695,7 @@ export default function TeamMemberDetail() {
                 <div className="p-8 text-center text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No time entries yet.</p>
-                  <Button variant="outline" className="mt-4 border-2" onClick={() => setIsTimeEntryDialogOpen(true)}>
+                  <Button variant="outline" className="mt-4 border" onClick={() => setIsTimeEntryDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Log First Entry
                   </Button>
@@ -710,7 +710,7 @@ export default function TeamMemberDetail() {
                         <div key={entry.id} className="p-4 space-y-2">
                           <div className="flex items-start justify-between">
                             <div>
-                              <div className="font-mono font-bold text-lg">{entry.hours}h</div>
+                              <div className="font-mono font-semibold text-lg">{entry.hours}h</div>
                               <div className="text-xs text-muted-foreground">
                                 {format(new Date(entry.date), "MMM d, yyyy")}
                               </div>
@@ -739,7 +739,7 @@ export default function TeamMemberDetail() {
                               {entry.billable ? (
                                 <Badge className="bg-chart-2 text-background text-xs">Billable</Badge>
                               ) : (
-                                <Badge variant="secondary" className="border-2 border-border text-xs">Non-billable</Badge>
+                                <Badge variant="secondary" className="border border-border text-xs">Non-billable</Badge>
                               )}
                               <Button
                                 variant="ghost"
@@ -767,21 +767,21 @@ export default function TeamMemberDetail() {
                   <div className="hidden sm:block overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-b-2 hover:bg-transparent">
-                          <TableHead className="font-bold uppercase text-xs">Date</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Project</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Description</TableHead>
-                          <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Type</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Logged By</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                        <TableRow className="border-b hover:bg-transparent">
+                          <TableHead className="font-semibold uppercase text-xs">Date</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Project</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Description</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs text-right">Hours</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Type</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Logged By</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {timeEntries.map((entry) => {
                           const isSelfLogged = !entry.logged_by || entry.logged_by === entry.team_member_id;
                           return (
-                            <TableRow key={entry.id} className="border-b-2">
+                            <TableRow key={entry.id} className="border-b">
                               <TableCell className="text-muted-foreground">
                                 {format(new Date(entry.date), "MMM d, yyyy")}
                               </TableCell>
@@ -795,12 +795,12 @@ export default function TeamMemberDetail() {
                                 )}
                               </TableCell>
                               <TableCell>{entry.description || "-"}</TableCell>
-                              <TableCell className="text-right font-mono font-bold">{entry.hours}h</TableCell>
+                              <TableCell className="text-right font-mono font-semibold">{entry.hours}h</TableCell>
                               <TableCell>
                                 {entry.billable ? (
                                   <Badge className="bg-chart-2 text-background">Billable</Badge>
                                 ) : (
-                                  <Badge variant="secondary" className="border-2 border-border">Non-billable</Badge>
+                                  <Badge variant="secondary" className="border border-border">Non-billable</Badge>
                                 )}
                               </TableCell>
                               <TableCell>
@@ -850,33 +850,33 @@ export default function TeamMemberDetail() {
         {/* Payments Tab */}
         <TabsContent value="payments" className="space-y-6">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-3 sm:p-4">
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Earned</div>
-                <div className="text-xl sm:text-2xl font-bold font-mono">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</div>
+                <div className="text-xl sm:text-2xl font-semibold font-mono">{canViewAmounts ? `$${totalEarned.toLocaleString()}` : "••••••"}</div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-3 sm:p-4">
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Paid</div>
-                <div className="text-xl sm:text-2xl font-bold font-mono text-chart-2">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</div>
+                <div className="text-xl sm:text-2xl font-semibold font-mono text-chart-2">{canViewAmounts ? `$${totalPaid.toLocaleString()}` : "••••••"}</div>
               </CardContent>
             </Card>
-            <Card className="border-2 border-border shadow-sm">
+            <Card className="border border-border shadow-sm">
               <CardContent className="p-3 sm:p-4">
                 <div className="text-xs sm:text-sm text-muted-foreground">Outstanding</div>
-                <div className={`text-xl sm:text-2xl font-bold font-mono ${outstanding > 0 ? "text-chart-4" : "text-chart-2"}`}>
+                <div className={`text-xl sm:text-2xl font-semibold font-mono ${outstanding > 0 ? "text-chart-4" : "text-chart-2"}`}>
                   {canViewAmounts ? `$${outstanding.toLocaleString()}` : "••••••"}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle className="text-base sm:text-lg">Payment History</CardTitle>
-                <Button className="border-2 w-full sm:w-auto" onClick={() => setIsPaymentDialogOpen(true)}>
+                <Button className="border w-full sm:w-auto" onClick={() => setIsPaymentDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Record Payment
                 </Button>
@@ -891,7 +891,7 @@ export default function TeamMemberDetail() {
                 <div className="p-8 text-center text-muted-foreground">
                   <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No payment history.</p>
-                  <Button variant="outline" className="mt-4 border-2" onClick={() => setIsPaymentDialogOpen(true)}>
+                  <Button variant="outline" className="mt-4 border" onClick={() => setIsPaymentDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Record First Payment
                   </Button>
@@ -904,7 +904,7 @@ export default function TeamMemberDetail() {
                       <div key={payment.id} className="p-4 space-y-2">
                         <div className="flex items-start justify-between">
                           <div>
-                            <div className="font-mono font-bold text-lg">{canViewAmounts ? `$${payment.amount.toLocaleString()}` : "••••••"}</div>
+                            <div className="font-mono font-semibold text-lg">{canViewAmounts ? `$${payment.amount.toLocaleString()}` : "••••••"}</div>
                             <div className="text-xs text-muted-foreground">
                               {format(new Date(payment.payment_date), "MMM d, yyyy")}
                             </div>
@@ -952,18 +952,18 @@ export default function TeamMemberDetail() {
                   <div className="hidden sm:block overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-b-2 hover:bg-transparent">
-                          <TableHead className="font-bold uppercase text-xs">Date</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Period</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Method</TableHead>
-                          <TableHead className="font-bold uppercase text-xs text-right">Amount</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Status</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                        <TableRow className="border-b hover:bg-transparent">
+                          <TableHead className="font-semibold uppercase text-xs">Date</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Period</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Method</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs text-right">Amount</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Status</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {payments.map((payment) => (
-                          <TableRow key={payment.id} className="border-b-2">
+                          <TableRow key={payment.id} className="border-b">
                             <TableCell className="font-medium">
                               {format(new Date(payment.payment_date), "MMM d, yyyy")}
                             </TableCell>
@@ -975,7 +975,7 @@ export default function TeamMemberDetail() {
                             <TableCell>
                               {paymentMethods.find(m => m.value === payment.payment_method)?.label || payment.payment_method}
                             </TableCell>
-                            <TableCell className="text-right font-mono font-bold">
+                            <TableCell className="text-right font-mono font-semibold">
                               {canViewAmounts ? `$${payment.amount.toLocaleString()}` : "••••••"}
                             </TableCell>
                             <TableCell>
@@ -1019,8 +1019,8 @@ export default function TeamMemberDetail() {
         {/* Projects Tab */}
         <TabsContent value="projects" className="space-y-6">
           {projectBreakdown.length > 0 && (
-            <Card className="border-2 border-border shadow-sm">
-              <CardHeader className="border-b-2 border-border">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Project Hours Breakdown</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
@@ -1036,7 +1036,7 @@ export default function TeamMemberDetail() {
                         ) : (
                           <span className="text-muted-foreground">{project.name}</span>
                         )}
-                        <span className="font-mono font-bold">{project.hours}h ({percentage}%)</span>
+                        <span className="font-mono font-semibold">{project.hours}h ({percentage}%)</span>
                       </div>
                       <Progress value={percentage} className="h-2" />
                     </div>
@@ -1046,19 +1046,19 @@ export default function TeamMemberDetail() {
             </Card>
           )}
 
-          <Card className="border-2 border-border shadow-sm">
-            <CardHeader className="border-b-2 border-border">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle className="text-base sm:text-lg">Assigned Projects</CardTitle>
                 <Dialog open={isAssignProjectDialogOpen} onOpenChange={setIsAssignProjectDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="border-2 w-full sm:w-auto">
+                    <Button className="border w-full sm:w-auto">
                       <Plus className="h-4 w-4 mr-2" />
                       Assign to Project
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="border-2 sm:max-w-[400px]">
-                    <DialogHeader className="border-b-2 border-border pb-4">
+                  <DialogContent className="border sm:max-w-[400px]">
+                    <DialogHeader className="border-b border-border pb-4">
                       <DialogTitle>Assign to Project</DialogTitle>
                     </DialogHeader>
                     <div className="py-4 space-y-2 max-h-[300px] overflow-y-auto">
@@ -1068,7 +1068,7 @@ export default function TeamMemberDetail() {
                         availableProjects.map((project) => (
                           <div
                             key={project.id}
-                            className="flex items-center justify-between p-3 border-2 border-border hover:bg-accent/50 cursor-pointer"
+                            className="flex items-center justify-between p-3 border border-border hover:bg-accent/50 cursor-pointer"
                             onClick={() => handleAssignProject(project.id)}
                           >
                             <div>
@@ -1091,7 +1091,7 @@ export default function TeamMemberDetail() {
                 <div className="p-8 text-center text-muted-foreground">
                   <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No projects assigned yet.</p>
-                  <Button variant="outline" className="mt-4 border-2" onClick={() => setIsAssignProjectDialogOpen(true)}>
+                  <Button variant="outline" className="mt-4 border" onClick={() => setIsAssignProjectDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Assign First Project
                   </Button>
@@ -1124,7 +1124,7 @@ export default function TeamMemberDetail() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Hours: <span className="font-mono">{project.hours}h</span></span>
-                          <span className="font-mono font-bold">{canViewAmounts ? `$${project.earnings.toLocaleString()}` : "••••••"}</span>
+                          <span className="font-mono font-semibold">{canViewAmounts ? `$${project.earnings.toLocaleString()}` : "••••••"}</span>
                         </div>
                       </div>
                     ))}
@@ -1133,16 +1133,16 @@ export default function TeamMemberDetail() {
                   <div className="hidden sm:block">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-b-2 hover:bg-transparent">
-                          <TableHead className="font-bold uppercase text-xs">Project</TableHead>
-                          <TableHead className="font-bold uppercase text-xs text-right">Hours</TableHead>
-                          <TableHead className="font-bold uppercase text-xs text-right">Earnings</TableHead>
-                          <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                        <TableRow className="border-b hover:bg-transparent">
+                          <TableHead className="font-semibold uppercase text-xs">Project</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs text-right">Hours</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs text-right">Earnings</TableHead>
+                          <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {projectBreakdown.map((project) => (
-                          <TableRow key={project.project_id} className="border-b-2">
+                          <TableRow key={project.project_id} className="border-b">
                             <TableCell>
                               {project.display_id ? (
                                 <Link to={getOrgPath(`/projects/${project.display_id}`)} className="font-medium text-primary hover:underline">
@@ -1153,14 +1153,14 @@ export default function TeamMemberDetail() {
                               )}
                             </TableCell>
                             <TableCell className="text-right font-mono">{project.hours}h</TableCell>
-                            <TableCell className="text-right font-mono font-bold">
+                            <TableCell className="text-right font-mono font-semibold">
                               {canViewAmounts ? `$${project.earnings.toLocaleString()}` : "••••••"}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 {project.display_id && (
                                   <Link to={getOrgPath(`/projects/${project.display_id}`)}>
-                                    <Button variant="ghost" size="sm" className="border-2 border-transparent hover:border-border">
+                                    <Button variant="ghost" size="sm" className="border border-transparent hover:border-border">
                                       View
                                     </Button>
                                   </Link>
@@ -1189,8 +1189,8 @@ export default function TeamMemberDetail() {
 
       {/* Edit Profile Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Team Member</DialogTitle>
           </DialogHeader>
           {editData && (
@@ -1201,7 +1201,7 @@ export default function TeamMemberDetail() {
                   <Input
                     value={editData.name}
                     onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1210,7 +1210,7 @@ export default function TeamMemberDetail() {
                     type="email"
                     value={editData.email}
                     onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -1220,7 +1220,7 @@ export default function TeamMemberDetail() {
                   <Input
                     value={editData.phone}
                     onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1228,7 +1228,7 @@ export default function TeamMemberDetail() {
                   <Input
                     value={editData.role}
                     onChange={(e) => setEditData({ ...editData, role: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -1236,10 +1236,10 @@ export default function TeamMemberDetail() {
                 <div className="grid gap-2">
                   <Label>Department</Label>
                   <Select value={editData.department} onValueChange={(value) => setEditData({ ...editData, department: value })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {departments.map((dept) => (
                         <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
@@ -1249,10 +1249,10 @@ export default function TeamMemberDetail() {
                 <div className="grid gap-2">
                   <Label>Contract Type</Label>
                   <Select value={editData.contract_type} onValueChange={(value: ContractType) => setEditData({ ...editData, contract_type: value })}>
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {contractTypes.map((type) => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
@@ -1267,7 +1267,7 @@ export default function TeamMemberDetail() {
                     type="number"
                     value={editData.hourly_rate}
                     onChange={(e) => setEditData({ ...editData, hourly_rate: parseFloat(e.target.value) || 0 })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1276,17 +1276,17 @@ export default function TeamMemberDetail() {
                     type="number"
                     value={editData.salary}
                     onChange={(e) => setEditData({ ...editData, salary: parseFloat(e.target.value) || 0 })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
               <div className="grid gap-2">
                 <Label>Status</Label>
                 <Select value={editData.status} onValueChange={(value: MemberStatus) => setEditData({ ...editData, status: value })}>
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
@@ -1294,11 +1294,11 @@ export default function TeamMemberDetail() {
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit} className="border-2" disabled={updateTeamMember.isPending}>
+            <Button onClick={handleSaveEdit} className="border" disabled={updateTeamMember.isPending}>
               {updateTeamMember.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
             </Button>
@@ -1308,18 +1308,18 @@ export default function TeamMemberDetail() {
 
       {/* Log Time Entry Dialog */}
       <Dialog open={isTimeEntryDialogOpen} onOpenChange={setIsTimeEntryDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[425px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[425px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Log Time Entry</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Project</Label>
               <Select value={newTimeEntry.project_id || "none"} onValueChange={(value) => setNewTimeEntry({ ...newTimeEntry, project_id: value === "none" ? "" : value })}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue placeholder="Select project (optional)" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="none">No project</SelectItem>
                   {projects?.map((project) => (
                     <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
@@ -1334,7 +1334,7 @@ export default function TeamMemberDetail() {
                   type="date"
                   value={newTimeEntry.date}
                   onChange={(e) => setNewTimeEntry({ ...newTimeEntry, date: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -1347,7 +1347,7 @@ export default function TeamMemberDetail() {
                   placeholder="0.00"
                   value={newTimeEntry.hours}
                   onChange={(e) => setNewTimeEntry({ ...newTimeEntry, hours: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
             </div>
@@ -1357,7 +1357,7 @@ export default function TeamMemberDetail() {
                 placeholder="What did you work on?"
                 value={newTimeEntry.description}
                 onChange={(e) => setNewTimeEntry({ ...newTimeEntry, description: e.target.value })}
-                className="border-2"
+                className="border"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -1369,11 +1369,11 @@ export default function TeamMemberDetail() {
               <Label htmlFor="billable" className="cursor-pointer">Billable hours</Label>
             </div>
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsTimeEntryDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsTimeEntryDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleAddTimeEntry} className="border-2" disabled={createTimeEntry.isPending}>
+            <Button onClick={handleAddTimeEntry} className="border" disabled={createTimeEntry.isPending}>
               {createTimeEntry.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               Log Time
             </Button>
@@ -1383,8 +1383,8 @@ export default function TeamMemberDetail() {
 
       {/* Record Payment Dialog */}
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[425px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[425px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Record Payment</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -1396,7 +1396,7 @@ export default function TeamMemberDetail() {
                   placeholder="0.00"
                   value={newPayment.amount}
                   onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -1405,7 +1405,7 @@ export default function TeamMemberDetail() {
                   type="date"
                   value={newPayment.payment_date}
                   onChange={(e) => setNewPayment({ ...newPayment, payment_date: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
             </div>
@@ -1416,7 +1416,7 @@ export default function TeamMemberDetail() {
                   type="date"
                   value={newPayment.period_start}
                   onChange={(e) => setNewPayment({ ...newPayment, period_start: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -1425,17 +1425,17 @@ export default function TeamMemberDetail() {
                   type="date"
                   value={newPayment.period_end}
                   onChange={(e) => setNewPayment({ ...newPayment, period_end: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
             </div>
             <div className="grid gap-2">
               <Label>Payment Method</Label>
               <Select value={newPayment.payment_method} onValueChange={(value: PaymentMethod) => setNewPayment({ ...newPayment, payment_method: value })}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   {paymentMethods.map((method) => (
                     <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
                   ))}
@@ -1448,7 +1448,7 @@ export default function TeamMemberDetail() {
                 placeholder="Check #, transaction ID, etc."
                 value={newPayment.reference_number}
                 onChange={(e) => setNewPayment({ ...newPayment, reference_number: e.target.value })}
-                className="border-2"
+                className="border"
               />
             </div>
             <div className="grid gap-2">
@@ -1457,15 +1457,15 @@ export default function TeamMemberDetail() {
                 placeholder="Additional notes..."
                 value={newPayment.notes}
                 onChange={(e) => setNewPayment({ ...newPayment, notes: e.target.value })}
-                className="border-2"
+                className="border"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleAddPayment} className="border-2" disabled={createPayment.isPending}>
+            <Button onClick={handleAddPayment} className="border" disabled={createPayment.isPending}>
               {createPayment.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               Record Payment
             </Button>

@@ -251,7 +251,7 @@ export function OrgRedirect() {
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               required
-              className="w-full px-3 py-2 border-2 rounded-md bg-background"
+              className="w-full px-3 py-2 border rounded-md bg-background"
             />
           </div>
 
@@ -266,7 +266,7 @@ export function OrgRedirect() {
               value={orgName}
               onChange={(e) => handleOrgNameChange(e.target.value)}
               required
-              className="w-full px-3 py-2 border-2 rounded-md bg-background"
+              className="w-full px-3 py-2 border rounded-md bg-background"
             />
           </div>
 
@@ -284,7 +284,7 @@ export function OrgRedirect() {
                 onChange={(e) => setOrgSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                 required
                 minLength={3}
-                className="flex-1 px-3 py-2 border-2 rounded-md bg-background"
+                className="flex-1 px-3 py-2 border rounded-md bg-background"
               />
             </div>
           </div>

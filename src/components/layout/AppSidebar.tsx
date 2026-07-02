@@ -103,13 +103,13 @@ export function AppSidebar() {
       <NavLink
         to={getFullUrl(item.path)}
         end={item.path === ""}
-        className={`flex items-center border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all ${
+        className={`relative flex items-center rounded-sm text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-sidebar-primary before:opacity-0 before:transition-opacity ${
           collapsed ? "justify-center p-2" : "gap-3 px-3 py-2"
         }`}
-        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
+        activeClassName="bg-sidebar-accent/60 font-semibold text-sidebar-primary before:opacity-100"
       >
         <item.icon className="h-5 w-5 shrink-0" />
-        {!collapsed && <span className="font-medium">{item.title}</span>}
+        {!collapsed && <span>{item.title}</span>}
       </NavLink>
     );
 
@@ -119,7 +119,7 @@ export function AppSidebar() {
           <TooltipTrigger asChild>
             {content}
           </TooltipTrigger>
-          <TooltipContent side="right" className="border-2">
+          <TooltipContent side="right" className="border">
             {item.title}
           </TooltipContent>
         </Tooltip>
@@ -130,15 +130,15 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r-2 border-sidebar-border">
-      <SidebarHeader className="h-14 border-b-2 border-sidebar-border px-2 flex items-center">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <SidebarHeader className="h-14 border-b border-sidebar-border px-2 flex items-center">
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
       <SidebarContent className="p-2">
         {visibleMainItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2">
+            <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/70 px-3 mb-1">
               {!collapsed && "Main"}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -155,7 +155,7 @@ export function AppSidebar() {
 
         {visibleSystemItems.length > 0 && (
           <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2">
+            <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/70 px-3 mb-1">
               {!collapsed && "System"}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -171,14 +171,14 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t-2 border-sidebar-border p-2">
+      <SidebarFooter className="border-t border-sidebar-border p-2">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleSidebar}
-              className={`w-full border-2 border-transparent hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+              className={`w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
                 collapsed ? "justify-center p-2" : "justify-start gap-3 px-3"
               }`}
             >
@@ -193,7 +193,7 @@ export function AppSidebar() {
             </Button>
           </TooltipTrigger>
           {collapsed && (
-            <TooltipContent side="right" className="border-2">
+            <TooltipContent side="right" className="border">
               Expand sidebar
             </TooltipContent>
           )}

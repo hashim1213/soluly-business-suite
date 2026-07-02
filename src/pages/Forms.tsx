@@ -165,7 +165,7 @@ export default function Forms() {
   if (error) {
     return (
       <div className="p-8">
-        <Card className="border-2 border-red-200 bg-red-50">
+        <Card className="border border-red-200 bg-red-50">
           <CardContent className="p-6">
             <p className="text-red-600">Error loading forms: {error.message}</p>
           </CardContent>
@@ -184,12 +184,12 @@ export default function Forms() {
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="border-2 border-border">
+            <Button className="border border-border">
               <Plus className="mr-2 h-4 w-4" />
               New Form
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px] border-2 border-border">
+          <DialogContent className="sm:max-w-[500px] border border-border">
             <DialogHeader>
               <DialogTitle className="text-xl">Create New Form</DialogTitle>
             </DialogHeader>
@@ -201,7 +201,7 @@ export default function Forms() {
                   value={newForm.title}
                   onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
                   placeholder="Customer Feedback Survey"
-                  className="border-2 border-border"
+                  className="border border-border"
                 />
               </div>
               <div className="space-y-2">
@@ -211,7 +211,7 @@ export default function Forms() {
                   value={newForm.description}
                   onChange={(e) => setNewForm({ ...newForm, description: e.target.value })}
                   placeholder="Optional description for your form..."
-                  className="border-2 border-border min-h-[100px]"
+                  className="border border-border min-h-[100px]"
                 />
               </div>
               <div className="space-y-2">
@@ -225,7 +225,7 @@ export default function Forms() {
                     })
                   }
                 >
-                  <SelectTrigger className="border-2 border-border">
+                  <SelectTrigger className="border border-border">
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
@@ -246,14 +246,14 @@ export default function Forms() {
               <Button
                 variant="outline"
                 onClick={() => setIsCreateDialogOpen(false)}
-                className="border-2 border-border"
+                className="border border-border"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreateForm}
                 disabled={createForm.isPending}
-                className="border-2 border-border"
+                className="border border-border"
               >
                 {createForm.isPending ? (
                   <>
@@ -271,43 +271,43 @@ export default function Forms() {
 
       {/* Stats Cards */}
       <div className="grid gap-2 sm:gap-4 grid-cols-2 md:grid-cols-4">
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Draft</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.draft}</div>
+            <div className="text-2xl font-semibold">{stats.draft}</div>
             <p className="text-xs text-muted-foreground">Forms in progress</p>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Published</CardTitle>
             <ExternalLink className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.published}</div>
+            <div className="text-2xl font-semibold">{stats.published}</div>
             <p className="text-xs text-muted-foreground">Accepting responses</p>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Closed</CardTitle>
             <Archive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.closed}</div>
+            <div className="text-2xl font-semibold">{stats.closed}</div>
             <p className="text-xs text-muted-foreground">No longer accepting</p>
           </CardContent>
         </Card>
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
             <BarChart3 className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalResponses}</div>
+            <div className="text-2xl font-semibold">{stats.totalResponses}</div>
             <p className="text-xs text-muted-foreground">Across all forms</p>
           </CardContent>
         </Card>
@@ -321,11 +321,11 @@ export default function Forms() {
             placeholder="Search forms..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 border-2 border-border"
+            className="pl-9 border border-border"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[150px] border-2 border-border">
+          <SelectTrigger className="w-full sm:w-[150px] border border-border">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -339,7 +339,7 @@ export default function Forms() {
       </div>
 
       {/* Forms Table */}
-      <Card className="border-2 border-border">
+      <Card className="border border-border">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -352,7 +352,7 @@ export default function Forms() {
               <p className="text-muted-foreground mb-4">
                 Create your first form to start collecting feedback
               </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)} className="border-2 border-border">
+              <Button onClick={() => setIsCreateDialogOpen(true)} className="border border-border">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Form
               </Button>
@@ -361,12 +361,12 @@ export default function Forms() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b-2 border-border">
-                    <TableHead className="font-bold">Form</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
-                    <TableHead className="font-bold hidden sm:table-cell">Responses</TableHead>
-                    <TableHead className="font-bold hidden md:table-cell">Projects</TableHead>
-                    <TableHead className="font-bold hidden lg:table-cell">Created</TableHead>
+                  <TableRow className="border-b border-border">
+                    <TableHead className="font-semibold">Form</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold hidden sm:table-cell">Responses</TableHead>
+                    <TableHead className="font-semibold hidden md:table-cell">Projects</TableHead>
+                    <TableHead className="font-semibold hidden lg:table-cell">Created</TableHead>
                     <TableHead className="w-[60px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -412,13 +412,13 @@ export default function Forms() {
                               <Badge
                                 key={project.id}
                                 variant="outline"
-                                className="text-xs border-2"
+                                className="text-xs border"
                               >
                                 {project.name}
                               </Badge>
                             ))}
                             {form.projects.length > 2 && (
-                              <Badge variant="outline" className="text-xs border-2">
+                              <Badge variant="outline" className="text-xs border">
                                 +{form.projects.length - 2}
                               </Badge>
                             )}
@@ -440,7 +440,7 @@ export default function Forms() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-2 border-border">
+                        <DropdownMenuContent align="end" className="border border-border">
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();

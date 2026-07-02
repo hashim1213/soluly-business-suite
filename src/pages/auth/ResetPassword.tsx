@@ -107,7 +107,7 @@ export default function ResetPassword() {
   if (isValidating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-2">
+        <Card className="w-full max-w-md border">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
@@ -122,7 +122,7 @@ export default function ResetPassword() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-2">
+        <Card className="w-full max-w-md border">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="flex justify-center">
@@ -130,7 +130,7 @@ export default function ResetPassword() {
                   <CheckCircle className="h-6 w-6 text-chart-2" />
                 </div>
               </div>
-              <h2 className="text-xl font-bold">Password updated</h2>
+              <h2 className="text-xl font-semibold">Password updated</h2>
               <p className="text-muted-foreground">
                 Your password has been successfully reset. Redirecting...
               </p>
@@ -146,7 +146,7 @@ export default function ResetPassword() {
   if (!hasValidSession && error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-2">
+        <Card className="w-full max-w-md border">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="flex justify-center">
@@ -154,7 +154,7 @@ export default function ResetPassword() {
                   <AlertCircle className="h-6 w-6 text-destructive" />
                 </div>
               </div>
-              <h2 className="text-xl font-bold">Reset Link Invalid</h2>
+              <h2 className="text-xl font-semibold">Reset Link Invalid</h2>
               <p className="text-muted-foreground">{error}</p>
               <div className="space-y-2">
                 <Link to="/forgot-password" className="block">
@@ -173,14 +173,14 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-2">
+      <Card className="w-full max-w-md border">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="h-12 w-12 bg-primary flex items-center justify-center">
               <Building2 className="h-6 w-6 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Set new password</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Set new password</CardTitle>
           <CardDescription>
             Enter your new password below
           </CardDescription>
@@ -204,7 +204,7 @@ export default function ResetPassword() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="new-password"
-                className="border-2"
+                className="border"
               />
               {password && (
                 <div className="space-y-1">
@@ -234,11 +234,11 @@ export default function ResetPassword() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 autoComplete="new-password"
-                className="border-2"
+                className="border"
               />
             </div>
 
-            <Button type="submit" className="w-full border-2" disabled={isLoading}>
+            <Button type="submit" className="w-full border" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

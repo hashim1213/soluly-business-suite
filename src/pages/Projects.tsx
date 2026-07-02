@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench, Archive } from "lucide-react";
+import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench, Archive, Search, LayoutGrid, List, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,14 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "sonner";
 import { useProjects, useCreateProject, useDeleteProject, useUpdateProject, Project } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
@@ -190,6 +198,36 @@ export default function Projects() {
   const [isAddingNewContact, setIsAddingNewContact] = useState(false);
   const [newContactName, setNewContactName] = useState("");
   const [showArchivedProjects, setShowArchivedProjects] = useState(false);
+  const [viewMode, setViewModeState] = useState<"table" | "cards">(() => {
+    try {
+      const saved = localStorage.getItem("soluly-projects-view");
+      return saved === "cards" ? "cards" : "table";
+    } catch {
+      return "table";
+    }
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<keyof Project>("created_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const setViewMode = (mode: "table" | "cards") => {
+    setViewModeState(mode);
+    try {
+      localStorage.setItem("soluly-projects-view", mode);
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  const toggleSort = (key: keyof Project) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "created_at" || key === "value" || key === "progress" ? "desc" : "asc");
+    }
+  };
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -224,13 +262,47 @@ export default function Projects() {
     return tickets?.filter(t => t.project_id === projectId && t.status !== "closed").length || 0;
   };
 
-  // Filter projects - hide completed/cancelled unless user wants to see them
+  // Filter + search + sort projects. Completed/cancelled stay hidden
+  // unless the user opts into archived projects.
   const filteredProjects = useMemo(() => {
     if (!projects) return [];
-    if (showArchivedProjects) return projects;
+    let list = projects;
+    if (!showArchivedProjects) {
+      list = list.filter(p => p.status !== "completed" && p.status !== "cancelled");
+    }
+    if (statusFilter !== "all") {
+      list = list.filter(p => p.status === statusFilter);
+    }
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        p =>
+          p.name.toLowerCase().includes(q) ||
+          p.client_name.toLowerCase().includes(q) ||
+          p.display_id.toLowerCase().includes(q)
+      );
+    }
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...list].sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }, [projects, showArchivedProjects, statusFilter, searchQuery, sortKey, sortDir]);
 
-    return projects.filter(p => p.status !== "completed" && p.status !== "cancelled");
-  }, [projects, showArchivedProjects]);
+  // Change status directly from the list without opening the edit sheet
+  const handleInlineStatusChange = async (project: Project, status: ProjectStatus) => {
+    try {
+      await updateProject.mutateAsync({ id: project.id, status });
+      toast.success(`${project.display_id} moved to ${status.replace("_", " ")}`);
+    } catch {
+      // Error toast handled by the hook
+    }
+  };
 
   // Handle contact selection
   const handleSelectContact = (contact: Contact) => {
@@ -405,6 +477,59 @@ export default function Projects() {
     });
   };
 
+  const SortableHead = ({
+    label,
+    sortId,
+    className,
+  }: {
+    label: string;
+    sortId: keyof Project;
+    className?: string;
+  }) => (
+    <TableHead
+      className={cn("cursor-pointer select-none whitespace-nowrap", className)}
+      onClick={() => toggleSort(sortId)}
+      aria-sort={sortKey === sortId ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {sortKey === sortId ? (
+          sortDir === "asc" ? (
+            <ArrowUp className="h-3 w-3" />
+          ) : (
+            <ArrowDown className="h-3 w-3" />
+          )
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </span>
+    </TableHead>
+  );
+
+  const statusSelect = (project: Project) => (
+    <Select
+      value={project.status}
+      onValueChange={(v) => handleInlineStatusChange(project, v as ProjectStatus)}
+    >
+      <SelectTrigger
+        className={cn(
+          "h-7 w-[130px] border-transparent px-2 text-xs font-semibold uppercase shadow-none",
+          projectStatusStyles[project.status as keyof typeof projectStatusStyles] || "bg-slate-400 text-black"
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="pending">Pending</SelectItem>
+        <SelectItem value="active">Active</SelectItem>
+        <SelectItem value="on_hold">On Hold</SelectItem>
+        <SelectItem value="completed">Completed</SelectItem>
+        <SelectItem value="cancelled">Cancelled</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -431,24 +556,68 @@ export default function Projects() {
           <p className="text-sm text-muted-foreground">Manage your consulting projects</p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-44 sm:w-56 pl-8"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[130px] hidden sm:flex">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="on_hold">On Hold</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center rounded-sm border border-input overflow-hidden shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode("table")}
+              className={cn("rounded-none h-8 px-2.5", viewMode === "table" && "bg-accent text-accent-foreground")}
+              aria-label="Table view"
+              title="Table view"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode("cards")}
+              className={cn("rounded-none h-8 px-2.5", viewMode === "cards" && "bg-accent text-accent-foreground")}
+              aria-label="Card view"
+              title="Card view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowArchivedProjects(!showArchivedProjects)}
-            className="border-2"
+            className="border hidden md:inline-flex"
           >
             <Archive className="h-4 w-4 mr-2" />
             {showArchivedProjects ? "Hide Archived" : "Show Archived"}
           </Button>
           <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
             <SheetTrigger asChild>
-              <Button className="border-2 shadow-sm hover:shadow-md transition-shadow">
+              <Button className="border shadow-sm hover:shadow-md transition-shadow">
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
               </Button>
             </SheetTrigger>
           <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-            <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+            <SheetHeader className="border-b border-border pb-4 mb-4">
               <SheetTitle>Create New Project</SheetTitle>
             </SheetHeader>
             <div className="grid gap-4 py-4">
@@ -459,7 +628,7 @@ export default function Projects() {
                   placeholder="Enter project name"
                   value={newProject.name}
                   onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
               <div className="grid gap-2">
@@ -469,7 +638,7 @@ export default function Projects() {
                   placeholder="Brief description of the project"
                   value={newProject.description}
                   onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
 
@@ -482,7 +651,7 @@ export default function Projects() {
                       variant="outline"
                       role="combobox"
                       aria-expanded={contactPopoverOpen}
-                      className="justify-between border-2 w-full"
+                      className="justify-between border w-full"
                     >
                       {selectedContactId
                         ? contacts?.find((c) => c.id === selectedContactId)?.name || newProject.client
@@ -490,7 +659,7 @@ export default function Projects() {
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 border-2" align="start">
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 border" align="start">
                     <Command>
                       <CommandInput placeholder="Search contacts..." />
                       <CommandList>
@@ -501,7 +670,7 @@ export default function Projects() {
                                 placeholder="Enter contact name"
                                 value={newContactName}
                                 onChange={(e) => setNewContactName(e.target.value)}
-                                className="border-2"
+                                className="border"
                                 autoFocus
                               />
                               <Input
@@ -509,7 +678,7 @@ export default function Projects() {
                                 type="email"
                                 value={newProject.clientEmail}
                                 onChange={(e) => setNewProject({ ...newProject, clientEmail: e.target.value })}
-                                className="border-2"
+                                className="border"
                               />
                               <div className="flex gap-2">
                                 <Button
@@ -601,7 +770,7 @@ export default function Projects() {
                     placeholder="client@example.com"
                     value={newProject.clientEmail}
                     onChange={(e) => setNewProject({ ...newProject, clientEmail: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               )}
@@ -614,7 +783,7 @@ export default function Projects() {
                     placeholder="0"
                     value={newProject.value}
                     onChange={(e) => setNewProject({ ...newProject, value: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -624,7 +793,7 @@ export default function Projects() {
                     placeholder="0"
                     value={newProject.budget}
                     onChange={(e) => setNewProject({ ...newProject, budget: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -635,10 +804,10 @@ export default function Projects() {
                   value={newProject.status}
                   onValueChange={(value: ProjectStatus) => setNewProject({ ...newProject, status: value })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                   </SelectContent>
@@ -657,7 +826,7 @@ export default function Projects() {
                     type="date"
                     value={newProject.startDate}
                     onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -670,16 +839,16 @@ export default function Projects() {
                     type="date"
                     value={newProject.endDate}
                     onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => handleDialogOpenChange(false)} className="border-2">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
+              <Button variant="outline" onClick={() => handleDialogOpenChange(false)} className="border">
                 Cancel
               </Button>
-              <Button onClick={handleCreateProject} className="border-2" disabled={createProject.isPending}>
+              <Button onClick={handleCreateProject} className="border" disabled={createProject.isPending}>
                 {createProject.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -696,7 +865,7 @@ export default function Projects() {
       </div>
 
       {projects?.length === 0 ? (
-        <Card className="border-2 border-dashed">
+        <Card className="border border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground mb-4">No projects yet</p>
             <Button onClick={() => setIsDialogOpen(true)}>
@@ -706,41 +875,121 @@ export default function Projects() {
           </CardContent>
         </Card>
       ) : filteredProjects.length === 0 ? (
-        <Card className="border-2 border-dashed">
+        <Card className="border border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Archive className="h-8 w-8 text-muted-foreground mb-3" />
-            <p className="text-muted-foreground mb-2">All projects are archived</p>
+            <p className="text-muted-foreground mb-2">No projects match your filters</p>
             <p className="text-sm text-muted-foreground mb-4">
-              Click "Show Archived" to view completed or cancelled projects
+              Adjust the search or status filter, or click "Show Archived" to include completed and cancelled projects
             </p>
           </CardContent>
+        </Card>
+      ) : viewMode === "table" ? (
+        <Card className="border border-border shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <SortableHead label="Project" sortId="name" />
+                <SortableHead label="Client" sortId="client_name" className="hidden md:table-cell" />
+                <SortableHead label="Status" sortId="status" />
+                <SortableHead label="Progress" sortId="progress" className="hidden sm:table-cell" />
+                <SortableHead label="Value" sortId="value" className="hidden lg:table-cell text-right" />
+                <TableHead className="hidden xl:table-cell whitespace-nowrap">Open Tickets</TableHead>
+                <SortableHead label="Start" sortId="start_date" className="hidden lg:table-cell" />
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProjects.map((project) => (
+                <TableRow
+                  key={project.id}
+                  className="cursor-pointer"
+                  onClick={() => navigateOrg(`/projects/${project.display_id}`)}
+                >
+                  <TableCell>
+                    <div className="font-medium leading-tight">{project.name}</div>
+                    <div className="font-mono text-xs text-muted-foreground">{project.display_id}</div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">{project.client_name}</TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    {statusSelect(project)}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <div className="flex items-center gap-2">
+                      <Progress value={project.progress} className="h-1.5 w-20" />
+                      <span className="text-xs font-mono w-9 text-right">{project.progress}%</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-right font-mono">
+                    {formatValue(project.value)}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Ticket className="h-3.5 w-3.5 text-muted-foreground" />
+                      {getOpenTicketCount(project.id)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-muted-foreground whitespace-nowrap">
+                    {formatDate(project.start_date)}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="border">
+                        <DropdownMenuItem onClick={() => navigateOrg(`/projects/${project.display_id}`)}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => openEditSheet(project, e)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Project
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => generateProjectPDF(project, tickets || [])}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Export PDF Report
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigateOrg("/tickets")}>
+                          <Ticket className="h-4 w-4 mr-2" />
+                          View Tickets
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deleteProject.mutate(project.id)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </Card>
       ) : (
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
           {filteredProjects.map((project) => (
-            <Card key={project.id} className="border-2 border-border shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="border-b-2 border-border pb-3">
+            <Card key={project.id} className="border border-border shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="border-b border-border pb-3">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-xs text-muted-foreground">{project.display_id}</span>
-                      <span
-                        className={`inline-block px-2 py-0.5 text-xs font-bold uppercase ${
-                          projectStatusStyles[project.status as keyof typeof projectStatusStyles] || "bg-slate-400 text-black"
-                        }`}
-                      >
-                        {project.status.replace("_", " ")}
-                      </span>
+                      {statusSelect(project)}
                     </div>
                     <CardTitle className="text-lg">{project.name}</CardTitle>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 border-2 border-transparent hover:border-border">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 border border-transparent hover:border-border">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="border-2">
+                    <DropdownMenuContent align="end" className="border">
                       <DropdownMenuItem onClick={() => navigateOrg(`/projects/${project.display_id}`)}>
                         <FileText className="h-4 w-4 mr-2" />
                         View Details
@@ -779,7 +1028,7 @@ export default function Projects() {
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <span>{project.client_name}</span>
                     </div>
-                    <span className="font-mono font-bold">{formatValue(project.value)}</span>
+                    <span className="font-mono font-semibold">{formatValue(project.value)}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
@@ -804,12 +1053,12 @@ export default function Projects() {
       {/* Edit Project Sheet */}
       <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-          <SheetHeader className="border-b-2 border-border pb-4 mb-4">
+          <SheetHeader className="border-b border-border pb-4 mb-4">
             <SheetTitle>Edit Project</SheetTitle>
           </SheetHeader>
           {selectedProject && (
             <div className="grid gap-4 py-4">
-              <div className="p-3 bg-secondary rounded border-2 border-border">
+              <div className="p-3 bg-secondary rounded border border-border">
                 <p className="font-mono text-xs text-muted-foreground">{selectedProject.display_id}</p>
               </div>
 
@@ -819,7 +1068,7 @@ export default function Projects() {
                   id="edit-name"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
 
@@ -829,7 +1078,7 @@ export default function Projects() {
                   id="edit-description"
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={3}
                 />
               </div>
@@ -841,7 +1090,7 @@ export default function Projects() {
                     id="edit-client"
                     value={editForm.client_name}
                     onChange={(e) => setEditForm({ ...editForm, client_name: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -851,7 +1100,7 @@ export default function Projects() {
                     type="email"
                     value={editForm.client_email}
                     onChange={(e) => setEditForm({ ...editForm, client_email: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -863,7 +1112,7 @@ export default function Projects() {
                     id="edit-value"
                     value={editForm.value}
                     onChange={(e) => setEditForm({ ...editForm, value: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -872,7 +1121,7 @@ export default function Projects() {
                     id="edit-budget"
                     value={editForm.budget}
                     onChange={(e) => setEditForm({ ...editForm, budget: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -884,10 +1133,10 @@ export default function Projects() {
                     value={editForm.status}
                     onValueChange={(value: ProjectStatus) => setEditForm({ ...editForm, status: value })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="on_hold">On Hold</SelectItem>
@@ -905,7 +1154,7 @@ export default function Projects() {
                     max="100"
                     value={editForm.progress}
                     onChange={(e) => setEditForm({ ...editForm, progress: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -921,7 +1170,7 @@ export default function Projects() {
                     type="date"
                     value={editForm.start_date}
                     onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -934,7 +1183,7 @@ export default function Projects() {
                     type="date"
                     value={editForm.end_date}
                     onChange={(e) => setEditForm({ ...editForm, end_date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -960,7 +1209,7 @@ export default function Projects() {
                 </p>
 
                 {editForm.has_maintenance && (
-                  <div className="space-y-4 p-4 border-2 rounded-lg bg-muted/30">
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="edit-maintenance-amount">Amount ($)</Label>
@@ -969,7 +1218,7 @@ export default function Projects() {
                           placeholder="500"
                           value={editForm.maintenance_amount}
                           onChange={(e) => setEditForm({ ...editForm, maintenance_amount: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -978,10 +1227,10 @@ export default function Projects() {
                           value={editForm.maintenance_frequency}
                           onValueChange={(value) => setEditForm({ ...editForm, maintenance_frequency: value })}
                         >
-                          <SelectTrigger className="border-2">
+                          <SelectTrigger className="border">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="border-2">
+                          <SelectContent className="border">
                             <SelectItem value="monthly">Monthly</SelectItem>
                             <SelectItem value="quarterly">Quarterly</SelectItem>
                             <SelectItem value="yearly">Yearly</SelectItem>
@@ -996,7 +1245,7 @@ export default function Projects() {
                         type="date"
                         value={editForm.maintenance_start_date}
                         onChange={(e) => setEditForm({ ...editForm, maintenance_start_date: e.target.value })}
-                        className="border-2"
+                        className="border"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -1006,7 +1255,7 @@ export default function Projects() {
                         placeholder="Details about what's included in maintenance..."
                         value={editForm.maintenance_notes}
                         onChange={(e) => setEditForm({ ...editForm, maintenance_notes: e.target.value })}
-                        className="border-2"
+                        className="border"
                         rows={2}
                       />
                     </div>
@@ -1015,20 +1264,20 @@ export default function Projects() {
               </div>
             </div>
           )}
-          <div className="flex justify-between gap-3 border-t-2 border-border pt-4 mt-4">
+          <div className="flex justify-between gap-3 border-t border-border pt-4 mt-4">
             <Button
               variant="outline"
               onClick={() => selectedProject && generateProjectPDF(selectedProject, tickets || [])}
-              className="border-2"
+              className="border"
             >
               <Download className="h-4 w-4 mr-2" />
               Export PDF
             </Button>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setIsEditSheetOpen(false)} className="border-2">
+              <Button variant="outline" onClick={() => setIsEditSheetOpen(false)} className="border">
                 Cancel
               </Button>
-              <Button onClick={handleUpdateProject} className="border-2" disabled={updateProject.isPending}>
+              <Button onClick={handleUpdateProject} className="border" disabled={updateProject.isPending}>
                 {updateProject.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

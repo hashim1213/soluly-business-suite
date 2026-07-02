@@ -258,31 +258,31 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950/30">
                       <div className="text-sm text-muted-foreground">Total Invoiced</div>
-                      <div className="text-2xl font-bold text-green-600">{formatCurrency(kpis.totalRevenue)}</div>
+                      <div className="text-2xl font-semibold text-green-600">{formatCurrency(kpis.totalRevenue)}</div>
                       <p className="text-xs text-muted-foreground">Last {kpiPeriod} months</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Paid</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.paidRevenue)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.paidRevenue)}</div>
                       <p className="text-xs text-muted-foreground">Collected</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Outstanding</div>
-                      <div className={`text-2xl font-bold ${kpis.outstandingRevenue > 0 ? "text-orange-600" : "text-green-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.outstandingRevenue > 0 ? "text-orange-600" : "text-green-600"}`}>
                         {formatCurrency(kpis.outstandingRevenue)}
                       </div>
                       <p className="text-xs text-muted-foreground">Sent + Overdue</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Revenue per Employee</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.revenuePerEmployee)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.revenuePerEmployee)}</div>
                       <p className="text-xs text-muted-foreground">Per team member</p>
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-4">
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Gross Profit</div>
-                      <div className={`text-2xl font-bold ${kpis.grossProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.grossProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
                         {formatCurrency(kpis.grossProfit)}
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -291,7 +291,7 @@ export default function Projections() {
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Net Profit</div>
-                      <div className={`text-2xl font-bold ${kpis.netProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.netProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
                         {formatCurrency(kpis.netProfit)}
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -300,12 +300,12 @@ export default function Projections() {
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Avg Project Value</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.avgProjectValue)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.avgProjectValue)}</div>
                       <p className="text-xs text-muted-foreground">Per completed project</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Collection Rate</div>
-                      <div className={`text-2xl font-bold ${kpis.totalRevenue > 0 && (kpis.paidRevenue / kpis.totalRevenue) >= 0.8 ? "text-green-600" : "text-yellow-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.totalRevenue > 0 && (kpis.paidRevenue / kpis.totalRevenue) >= 0.8 ? "text-green-600" : "text-yellow-600"}`}>
                         {kpis.totalRevenue > 0 ? ((kpis.paidRevenue / kpis.totalRevenue) * 100).toFixed(0) : 0}%
                       </div>
                       <p className="text-xs text-muted-foreground">Paid / Total Invoiced</p>
@@ -326,17 +326,17 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/30">
                       <div className="text-sm text-muted-foreground">Customer Lifetime Value</div>
-                      <div className="text-2xl font-bold text-blue-600">{formatCurrency(kpis.customerLifetimeValue)}</div>
+                      <div className="text-2xl font-semibold text-blue-600">{formatCurrency(kpis.customerLifetimeValue)}</div>
                       <p className="text-xs text-muted-foreground">Avg revenue per client</p>
                     </div>
                     <div className="p-4 border rounded-lg bg-orange-50 dark:bg-orange-950/30">
                       <div className="text-sm text-muted-foreground">Customer Acquisition Cost</div>
-                      <div className="text-2xl font-bold text-orange-600">{formatCurrency(kpis.customerAcquisitionCost)}</div>
+                      <div className="text-2xl font-semibold text-orange-600">{formatCurrency(kpis.customerAcquisitionCost)}</div>
                       <p className="text-xs text-muted-foreground">Marketing/sales cost per client</p>
                     </div>
                     <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950/30">
                       <div className="text-sm text-muted-foreground">LTV:CAC Ratio</div>
-                      <div className={`text-2xl font-bold ${kpis.ltvCacRatio >= 3 ? "text-green-600" : kpis.ltvCacRatio >= 1 ? "text-yellow-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.ltvCacRatio >= 3 ? "text-green-600" : kpis.ltvCacRatio >= 1 ? "text-yellow-600" : "text-red-600"}`}>
                         {kpis.ltvCacRatio.toFixed(1)}x
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -345,7 +345,7 @@ export default function Projections() {
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Client Concentration</div>
-                      <div className={`text-2xl font-bold ${kpis.clientConcentration <= 20 ? "text-green-600" : kpis.clientConcentration <= 40 ? "text-yellow-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.clientConcentration <= 20 ? "text-green-600" : kpis.clientConcentration <= 40 ? "text-yellow-600" : "text-red-600"}`}>
                         {kpis.clientConcentration.toFixed(0)}%
                       </div>
                       <p className="text-xs text-muted-foreground">Top client % of revenue</p>
@@ -354,15 +354,15 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-3 mt-4">
                     <div className="p-3 bg-muted rounded-lg flex justify-between">
                       <span className="text-sm">Total Clients</span>
-                      <span className="font-bold">{kpis.totalClients}</span>
+                      <span className="font-semibold">{kpis.totalClients}</span>
                     </div>
                     <div className="p-3 bg-muted rounded-lg flex justify-between">
                       <span className="text-sm">New Clients ({kpiPeriod}mo)</span>
-                      <span className="font-bold">{kpis.newClientsThisPeriod}</span>
+                      <span className="font-semibold">{kpis.newClientsThisPeriod}</span>
                     </div>
                     <div className="p-3 bg-muted rounded-lg flex justify-between">
                       <span className="text-sm">Repeat Client Rate</span>
-                      <span className="font-bold">{kpis.repeatClientRate.toFixed(0)}%</span>
+                      <span className="font-semibold">{kpis.repeatClientRate.toFixed(0)}%</span>
                     </div>
                   </div>
                 </CardContent>
@@ -380,24 +380,24 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Win Rate</div>
-                      <div className={`text-2xl font-bold ${kpis.winRate >= 30 ? "text-green-600" : "text-yellow-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.winRate >= 30 ? "text-green-600" : "text-yellow-600"}`}>
                         {kpis.winRate.toFixed(0)}%
                       </div>
                       <p className="text-xs text-muted-foreground">Quotes won / decided</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Average Deal Size</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.avgDealSize)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.avgDealSize)}</div>
                       <p className="text-xs text-muted-foreground">Per won quote</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Pipeline Value</div>
-                      <div className="text-2xl font-bold text-purple-600">{formatCurrency(kpis.pipelineValue)}</div>
+                      <div className="text-2xl font-semibold text-purple-600">{formatCurrency(kpis.pipelineValue)}</div>
                       <p className="text-xs text-muted-foreground">Active quotes</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Quote Conversion</div>
-                      <div className="text-2xl font-bold">{kpis.quoteConversionRate.toFixed(0)}%</div>
+                      <div className="text-2xl font-semibold">{kpis.quoteConversionRate.toFixed(0)}%</div>
                       <p className="text-xs text-muted-foreground">Quotes → Projects</p>
                     </div>
                   </div>
@@ -416,24 +416,24 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Billable Utilization</div>
-                      <div className={`text-2xl font-bold ${kpis.billableUtilization >= 70 ? "text-green-600" : kpis.billableUtilization >= 50 ? "text-yellow-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.billableUtilization >= 70 ? "text-green-600" : kpis.billableUtilization >= 50 ? "text-yellow-600" : "text-red-600"}`}>
                         {kpis.billableUtilization.toFixed(0)}%
                       </div>
                       <Progress value={kpis.billableUtilization} className="h-2 mt-2" />
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Avg Hourly Rate</div>
-                      <div className="text-2xl font-bold">${kpis.avgHourlyRate.toFixed(0)}/hr</div>
+                      <div className="text-2xl font-semibold">${kpis.avgHourlyRate.toFixed(0)}/hr</div>
                       <p className="text-xs text-muted-foreground">Revenue / billable hours</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Team Size</div>
-                      <div className="text-2xl font-bold">{kpis.totalEmployees}</div>
+                      <div className="text-2xl font-semibold">{kpis.totalEmployees}</div>
                       <p className="text-xs text-muted-foreground">Active members</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Cost per Employee</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.costPerEmployee)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.costPerEmployee)}</div>
                       <p className="text-xs text-muted-foreground">Avg salary</p>
                     </div>
                   </div>
@@ -441,7 +441,7 @@ export default function Projections() {
                     <div className="p-3 bg-muted rounded-lg">
                       <div className="flex justify-between mb-1">
                         <span className="text-sm">Billable Hours</span>
-                        <span className="font-bold">{kpis.totalBillableHours.toLocaleString()}</span>
+                        <span className="font-semibold">{kpis.totalBillableHours.toLocaleString()}</span>
                       </div>
                       <Progress
                         value={(kpis.totalBillableHours / (kpis.totalBillableHours + kpis.totalNonBillableHours || 1)) * 100}
@@ -451,7 +451,7 @@ export default function Projections() {
                     <div className="p-3 bg-muted rounded-lg">
                       <div className="flex justify-between mb-1">
                         <span className="text-sm">Non-Billable Hours</span>
-                        <span className="font-bold">{kpis.totalNonBillableHours.toLocaleString()}</span>
+                        <span className="font-semibold">{kpis.totalNonBillableHours.toLocaleString()}</span>
                       </div>
                       <Progress
                         value={(kpis.totalNonBillableHours / (kpis.totalBillableHours + kpis.totalNonBillableHours || 1)) * 100}
@@ -474,24 +474,24 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Avg Project Duration</div>
-                      <div className="text-2xl font-bold">{kpis.avgProjectDuration.toFixed(0)} days</div>
+                      <div className="text-2xl font-semibold">{kpis.avgProjectDuration.toFixed(0)} days</div>
                       <p className="text-xs text-muted-foreground">Start to completion</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">On-Time Delivery</div>
-                      <div className={`text-2xl font-bold ${kpis.onTimeDeliveryRate >= 80 ? "text-green-600" : "text-yellow-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.onTimeDeliveryRate >= 80 ? "text-green-600" : "text-yellow-600"}`}>
                         {kpis.onTimeDeliveryRate.toFixed(0)}%
                       </div>
                       <p className="text-xs text-muted-foreground">Delivered by deadline</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Backlog</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.backlogValue)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.backlogValue)}</div>
                       <p className="text-xs text-muted-foreground">~{kpis.backlogMonths.toFixed(1)} months of work</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Capacity Utilization</div>
-                      <div className={`text-2xl font-bold ${kpis.capacityUtilization >= 80 ? "text-green-600" : kpis.capacityUtilization >= 50 ? "text-yellow-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.capacityUtilization >= 80 ? "text-green-600" : kpis.capacityUtilization >= 50 ? "text-yellow-600" : "text-red-600"}`}>
                         {kpis.capacityUtilization.toFixed(0)}%
                       </div>
                       <p className="text-xs text-muted-foreground">Total hours tracked</p>
@@ -500,15 +500,15 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-3 mt-4">
                     <div className="p-3 bg-muted rounded-lg flex justify-between">
                       <span className="text-sm">Total Projects</span>
-                      <span className="font-bold">{kpis.totalProjects}</span>
+                      <span className="font-semibold">{kpis.totalProjects}</span>
                     </div>
                     <div className="p-3 bg-muted rounded-lg flex justify-between">
                       <span className="text-sm">Active</span>
-                      <span className="font-bold text-blue-600">{kpis.activeProjects}</span>
+                      <span className="font-semibold text-blue-600">{kpis.activeProjects}</span>
                     </div>
                     <div className="p-3 bg-muted rounded-lg flex justify-between">
                       <span className="text-sm">Completed</span>
-                      <span className="font-bold text-green-600">{kpis.completedProjects}</span>
+                      <span className="font-semibold text-green-600">{kpis.completedProjects}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -529,12 +529,12 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Gross Burn Rate</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.grossBurnRate)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.grossBurnRate)}</div>
                       <p className="text-xs text-muted-foreground">Total monthly expenses</p>
                     </div>
                     <div className={`p-4 border rounded-lg ${kpis.netBurnRate <= 0 ? "bg-green-50 dark:bg-green-950/30" : "bg-red-50 dark:bg-red-950/30"}`}>
                       <div className="text-sm text-muted-foreground">Net Burn Rate</div>
-                      <div className={`text-2xl font-bold ${kpis.netBurnRate <= 0 ? "text-green-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.netBurnRate <= 0 ? "text-green-600" : "text-red-600"}`}>
                         {kpis.netBurnRate <= 0 ? "+" : ""}{formatCurrency(Math.abs(kpis.netBurnRate))}
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -543,12 +543,12 @@ export default function Projections() {
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Monthly Revenue</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.totalRevenue / 12)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.totalRevenue / 12)}</div>
                       <p className="text-xs text-muted-foreground">Avg over period</p>
                     </div>
                     <div className={`p-4 border rounded-lg ${kpis.runwayMonths >= 12 ? "bg-green-50 dark:bg-green-950/30" : kpis.runwayMonths >= 6 ? "bg-yellow-50 dark:bg-yellow-950/30" : "bg-red-50 dark:bg-red-950/30"}`}>
                       <div className="text-sm text-muted-foreground">Runway</div>
-                      <div className={`text-2xl font-bold ${kpis.runwayMonths >= 12 ? "text-green-600" : kpis.runwayMonths >= 6 ? "text-yellow-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.runwayMonths >= 12 ? "text-green-600" : kpis.runwayMonths >= 6 ? "text-yellow-600" : "text-red-600"}`}>
                         {kpis.runwayMonths >= 999 ? "∞" : `${kpis.runwayMonths.toFixed(1)} mo`}
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -623,7 +623,7 @@ export default function Projections() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Overhead Ratio</div>
-                      <div className={`text-2xl font-bold ${kpis.overheadRatio <= 20 ? "text-green-600" : kpis.overheadRatio <= 35 ? "text-yellow-600" : "text-red-600"}`}>
+                      <div className={`text-2xl font-semibold ${kpis.overheadRatio <= 20 ? "text-green-600" : kpis.overheadRatio <= 35 ? "text-yellow-600" : "text-red-600"}`}>
                         {kpis.overheadRatio.toFixed(1)}%
                       </div>
                       <p className="text-xs text-muted-foreground">Of revenue (target: &lt;20%)</p>
@@ -632,19 +632,19 @@ export default function Projections() {
                       <div className="text-sm text-muted-foreground flex items-center gap-1">
                         <RefreshCw className="h-3 w-3" /> Recurring Revenue
                       </div>
-                      <div className="text-2xl font-bold text-green-600">{formatCurrency(kpis.recurringRevenue)}</div>
+                      <div className="text-2xl font-semibold text-green-600">{formatCurrency(kpis.recurringRevenue)}</div>
                       <p className="text-xs text-muted-foreground">
                         {kpis.recurringRevenueRatio.toFixed(0)}% of total
                       </p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Cash Reserves</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.cashReserves)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.cashReserves)}</div>
                       <p className="text-xs text-muted-foreground">From recurring revenue</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Monthly Recurring</div>
-                      <div className="text-2xl font-bold">{formatCurrency(kpis.recurringRevenue / 12)}</div>
+                      <div className="text-2xl font-semibold">{formatCurrency(kpis.recurringRevenue / 12)}</div>
                       <p className="text-xs text-muted-foreground">Predictable income</p>
                     </div>
                   </div>
@@ -731,7 +731,7 @@ export default function Projections() {
                       placeholder="1,000,000"
                       value={targetRevenue}
                       onChange={(e) => setTargetRevenue(e.target.value)}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -748,7 +748,7 @@ export default function Projections() {
                       placeholder={summary?.avgProjectValue ? formatCurrency(summary.avgProjectValue) : "50,000"}
                       value={avgProjectValue}
                       onChange={(e) => setAvgProjectValue(e.target.value)}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -758,7 +758,7 @@ export default function Projections() {
                       placeholder="30"
                       value={profitMargin}
                       onChange={(e) => setProfitMargin(e.target.value)}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
                 </div>
@@ -770,7 +770,7 @@ export default function Projections() {
                   <div className="grid gap-2 text-sm">
                     <div className="flex justify-between p-2 bg-muted rounded">
                       <span>Projects Needed:</span>
-                      <span className="font-bold text-lg">
+                      <span className="font-semibold text-lg">
                         {projectionResult.projectsNeeded.toLocaleString()}
                       </span>
                     </div>
@@ -788,7 +788,7 @@ export default function Projections() {
                     </div>
                     <div className="flex justify-between p-2 bg-green-100 dark:bg-green-900/30 rounded">
                       <span>Gross Profit:</span>
-                      <span className="font-bold text-green-600 dark:text-green-400">
+                      <span className="font-semibold text-green-600 dark:text-green-400">
                         {formatCurrency(projectionResult.grossProfit)}
                       </span>
                     </div>
@@ -817,7 +817,7 @@ export default function Projections() {
                       placeholder="50,000"
                       value={fixedCosts}
                       onChange={(e) => setFixedCosts(e.target.value)}
-                      className="border-2"
+                      className="border"
                     />
                     <p className="text-xs text-muted-foreground">
                       Salaries, rent, software, etc.
@@ -830,7 +830,7 @@ export default function Projections() {
                       placeholder="40"
                       value={variableCostPercent}
                       onChange={(e) => setVariableCostPercent(e.target.value)}
-                      className="border-2"
+                      className="border"
                     />
                     <p className="text-xs text-muted-foreground">
                       % of project value spent on delivery
@@ -845,7 +845,7 @@ export default function Projections() {
                   <div className="grid gap-2 text-sm">
                     <div className="flex justify-between p-2 bg-orange-100 dark:bg-orange-900/30 rounded">
                       <span>Projects to Breakeven:</span>
-                      <span className="font-bold text-lg text-orange-600 dark:text-orange-400">
+                      <span className="font-semibold text-lg text-orange-600 dark:text-orange-400">
                         {breakevenResult.breakevenProjects.toLocaleString()}
                       </span>
                     </div>
@@ -898,7 +898,7 @@ export default function Projections() {
                       className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() => setTargetRevenue(scenario.target.toString())}
                     >
-                      <div className="text-2xl font-bold">{scenario.label}</div>
+                      <div className="text-2xl font-semibold">{scenario.label}</div>
                       <div className="text-sm text-muted-foreground mt-1">
                         {result.projectsNeeded} projects
                       </div>
@@ -989,7 +989,7 @@ export default function Projections() {
                       placeholder="250,000"
                       value={goalForm.revenue_target}
                       onChange={(e) => setGoalForm({ ...goalForm, revenue_target: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
 
@@ -1000,7 +1000,7 @@ export default function Projections() {
                       placeholder="5"
                       value={goalForm.projects_target}
                       onChange={(e) => setGoalForm({ ...goalForm, projects_target: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
 
@@ -1011,7 +1011,7 @@ export default function Projections() {
                       placeholder="3"
                       value={goalForm.new_clients_target}
                       onChange={(e) => setGoalForm({ ...goalForm, new_clients_target: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
 
@@ -1022,7 +1022,7 @@ export default function Projections() {
                       placeholder="30"
                       value={goalForm.profit_margin_target}
                       onChange={(e) => setGoalForm({ ...goalForm, profit_margin_target: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
 
@@ -1032,7 +1032,7 @@ export default function Projections() {
                       placeholder="Key initiatives, focus areas..."
                       value={goalForm.notes}
                       onChange={(e) => setGoalForm({ ...goalForm, notes: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   </div>
 
@@ -1064,7 +1064,7 @@ export default function Projections() {
                 return (
                   <Card
                     key={quarter}
-                    className={isCurrentQuarter ? "border-primary border-2" : ""}
+                    className={isCurrentQuarter ? "border-primary border" : ""}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
@@ -1169,25 +1169,25 @@ export default function Projections() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="p-4 border rounded-lg">
                     <div className="text-sm text-muted-foreground">Total Revenue Target</div>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-semibold">
                       {formatCurrency(goals.reduce((sum, g) => sum + g.revenue_target, 0))}
                     </div>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <div className="text-sm text-muted-foreground">Total Projects Target</div>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-semibold">
                       {goals.reduce((sum, g) => sum + g.projects_target, 0)}
                     </div>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <div className="text-sm text-muted-foreground">Total New Clients Target</div>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-semibold">
                       {goals.reduce((sum, g) => sum + g.new_clients_target, 0)}
                     </div>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <div className="text-sm text-muted-foreground">Avg Profit Margin Target</div>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-semibold">
                       {(
                         goals.reduce((sum, g) => sum + g.profit_margin_target, 0) / goals.length
                       ).toFixed(1)}
@@ -1210,7 +1210,7 @@ export default function Projections() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(maintenanceTotal.monthly)}</div>
+                <div className="text-2xl font-semibold">{formatCurrency(maintenanceTotal.monthly)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Recurring from {maintenanceProjects.length} projects
                 </p>
@@ -1223,7 +1223,7 @@ export default function Projections() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-semibold text-green-600">
                   {formatCurrency(maintenanceTotal.yearly)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Projected yearly total</p>
@@ -1236,7 +1236,7 @@ export default function Projections() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{maintenanceProjects.length}</div>
+                <div className="text-2xl font-semibold">{maintenanceProjects.length}</div>
                 <p className="text-xs text-muted-foreground mt-1">Active maintenance contracts</p>
               </CardContent>
             </Card>
@@ -1304,7 +1304,7 @@ export default function Projections() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-semibold">
                       {formatCurrency(summary.totalRevenue)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -1320,7 +1320,7 @@ export default function Projections() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-semibold">
                       {formatCurrency(summary.avgProjectValue)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -1336,7 +1336,7 @@ export default function Projections() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className={`text-2xl font-bold ${summary.avgProfitMargin >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    <div className={`text-2xl font-semibold ${summary.avgProfitMargin >= 0 ? "text-green-600" : "text-red-600"}`}>
                       {summary.avgProfitMargin.toFixed(1)}%
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -1352,7 +1352,7 @@ export default function Projections() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-blue-600">
+                    <div className="text-2xl font-semibold text-blue-600">
                       {formatCurrency(summary.pipelineValue)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -1370,23 +1370,23 @@ export default function Projections() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <span>Total Projects</span>
-                      <span className="font-bold">{summary.totalProjects}</span>
+                      <span className="font-semibold">{summary.totalProjects}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <span>Active Projects</span>
-                      <span className="font-bold">{summary.activeProjects}</span>
+                      <span className="font-semibold">{summary.activeProjects}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <span>Completed Projects</span>
-                      <span className="font-bold">{summary.completedProjects}</span>
+                      <span className="font-semibold">{summary.completedProjects}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <span>Total Clients</span>
-                      <span className="font-bold">{summary.totalClients}</span>
+                      <span className="font-semibold">{summary.totalClients}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
                       <span>Monthly Maintenance</span>
-                      <span className="font-bold text-green-600">
+                      <span className="font-semibold text-green-600">
                         {formatCurrency(summary.monthlyMaintenanceRevenue)}
                       </span>
                     </div>

@@ -68,7 +68,7 @@ function SessionCard({
 
   return (
     <div
-      className={`flex items-start gap-4 p-4 rounded-lg border-2 ${
+      className={`flex items-start gap-4 p-4 rounded-lg border ${
         session.is_current
           ? "border-primary/30 bg-primary/5"
           : "border-border bg-card"
@@ -168,7 +168,7 @@ export function ActiveSessions() {
 
   if (isLoading) {
     return (
-      <Card className="border-2">
+      <Card className="border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
@@ -184,7 +184,7 @@ export function ActiveSessions() {
 
   return (
     <>
-      <Card className="border-2">
+      <Card className="border">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>

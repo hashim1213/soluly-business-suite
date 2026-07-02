@@ -77,18 +77,18 @@ export function EmailFilterBar({ filters, onFiltersChange }: EmailFilterBarProps
     filters.search;
 
   return (
-    <div className="space-y-4 p-4 border-2 rounded-lg bg-card">
+    <div className="space-y-4 p-4 border rounded-lg bg-card">
       <div className="flex flex-wrap gap-3">
         {/* Date Range */}
         <div className="flex items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("w-[130px] border-2", !filters.fromDate && "text-muted-foreground")}>
+              <Button variant="outline" className={cn("w-[130px] border", !filters.fromDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {filters.fromDate ? format(filters.fromDate, "MMM d, yy") : "From"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 border-2" align="start">
+            <PopoverContent className="w-auto p-0 border" align="start">
               <Calendar
                 mode="single"
                 selected={filters.fromDate}
@@ -100,12 +100,12 @@ export function EmailFilterBar({ filters, onFiltersChange }: EmailFilterBarProps
           <span className="text-muted-foreground">to</span>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("w-[130px] border-2", !filters.toDate && "text-muted-foreground")}>
+              <Button variant="outline" className={cn("w-[130px] border", !filters.toDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {filters.toDate ? format(filters.toDate, "MMM d, yy") : "To"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 border-2" align="start">
+            <PopoverContent className="w-auto p-0 border" align="start">
               <Calendar
                 mode="single"
                 selected={filters.toDate}
@@ -122,7 +122,7 @@ export function EmailFilterBar({ filters, onFiltersChange }: EmailFilterBarProps
             value={filters.emailAccountId || "all"}
             onValueChange={(value) => onFiltersChange({ ...filters, emailAccountId: value === "all" ? undefined : value })}
           >
-            <SelectTrigger className="w-[180px] border-2">
+            <SelectTrigger className="w-[180px] border">
               <SelectValue placeholder="All Accounts" />
             </SelectTrigger>
             <SelectContent>
@@ -141,7 +141,7 @@ export function EmailFilterBar({ filters, onFiltersChange }: EmailFilterBarProps
           value={filters.category || "all"}
           onValueChange={(value) => onFiltersChange({ ...filters, category: value === "all" ? undefined : value as EmailCategory })}
         >
-          <SelectTrigger className="w-[160px] border-2">
+          <SelectTrigger className="w-[160px] border">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
@@ -158,7 +158,7 @@ export function EmailFilterBar({ filters, onFiltersChange }: EmailFilterBarProps
           value={filters.status || "all"}
           onValueChange={(value) => onFiltersChange({ ...filters, status: value === "all" ? undefined : value as EmailStatus })}
         >
-          <SelectTrigger className="w-[140px] border-2">
+          <SelectTrigger className="w-[140px] border">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -175,7 +175,7 @@ export function EmailFilterBar({ filters, onFiltersChange }: EmailFilterBarProps
           value={filters.reviewStatus || "all"}
           onValueChange={(value) => onFiltersChange({ ...filters, reviewStatus: value === "all" ? undefined : value as "pending" | "approved" | "dismissed" })}
         >
-          <SelectTrigger className="w-[160px] border-2">
+          <SelectTrigger className="w-[160px] border">
             <SelectValue placeholder="All Review Status" />
           </SelectTrigger>
           <SelectContent>
@@ -204,10 +204,10 @@ export function EmailFilterBar({ filters, onFiltersChange }: EmailFilterBarProps
             placeholder="Search by subject, sender..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 border-2"
+            className="pl-10 border"
           />
         </div>
-        <Button type="submit" variant="secondary" className="border-2">
+        <Button type="submit" variant="secondary" className="border">
           Search
         </Button>
       </form>

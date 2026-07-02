@@ -18,17 +18,17 @@ interface StatsCardProps {
 export function StatsCard({ title, value, description, icon: Icon, href, trend }: StatsCardProps) {
   const { getOrgPath } = useOrgNavigation();
   const cardContent = (
-    <Card className={`border-2 border-border shadow-sm hover:shadow-md transition-shadow ${href ? "cursor-pointer hover:border-primary" : ""}`}>
+    <Card className={`border border-border shadow-sm hover:shadow-md transition-shadow ${href ? "cursor-pointer hover:border-primary" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           {title}
         </CardTitle>
-        <div className="h-8 w-8 border-2 border-border flex items-center justify-center bg-secondary">
+        <div className="h-8 w-8 border border-border flex items-center justify-center bg-secondary">
           <Icon className="h-4 w-4" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold tracking-tight">{value}</div>
+        <div className="text-3xl font-semibold tracking-tight">{value}</div>
         {description && (
           <p className="text-sm text-muted-foreground mt-1">{description}</p>
         )}

@@ -217,7 +217,7 @@ export default function Landing() {
           </div>
 
           <h1
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 animate-fade-in-up"
             style={{ animationDelay: "0.3s" }}
           >
             Your consulting business,
@@ -309,7 +309,7 @@ export default function Landing() {
                         <stat.icon className={cn("h-5 w-5", stat.color)} />
                         <span className="text-sm text-muted-foreground">{stat.label}</span>
                       </div>
-                      <div className="text-3xl font-bold">{stat.value}</div>
+                      <div className="text-3xl font-semibold">{stat.value}</div>
                     </div>
                   ))}
                 </div>
@@ -375,7 +375,7 @@ export default function Landing() {
               <Mountain className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium tracking-wider">YOUR WORKFLOW</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold mb-6 leading-tight">
               From first call
               <br />
               <span className="text-muted-foreground">to final invoice</span>
@@ -466,7 +466,7 @@ export default function Landing() {
                   <circle cx="360" cy="80" r="12" className="fill-primary/20" />
                   <circle cx="360" cy="80" r="6" className="fill-primary" />
                   <path d="M 360,80 L 360,45 L 390,57 L 360,69" className="fill-primary" />
-                  <text x="360" y="30" textAnchor="middle" className="fill-primary text-[12px] font-bold">Paid!</text>
+                  <text x="360" y="30" textAnchor="middle" className="fill-primary text-[12px] font-semibold">Paid!</text>
                 </g>
               </svg>
             </div>
@@ -496,7 +496,7 @@ export default function Landing() {
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium tracking-wider">FEATURES</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold mb-6">
               Everything consultants need
               <br />
               <span className="text-muted-foreground">to run their practice</span>
@@ -546,7 +546,7 @@ export default function Landing() {
               <Users className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium tracking-wider">BUILT FOR CONSULTANTS</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold mb-6">
               Stop juggling tools.
               <br />
               <span className="text-muted-foreground">Start delivering results.</span>
@@ -573,7 +573,7 @@ export default function Landing() {
                 )}
                 style={{ transitionDelay: `${i * 100}ms` }}
               >
-                <div className="text-4xl md:text-5xl font-bold text-primary mb-2">{stat.value}</div>
+                <div className="text-4xl md:text-5xl font-semibold text-primary mb-2">{stat.value}</div>
                 <div className="font-medium">{stat.label}</div>
                 <div className="text-sm text-muted-foreground">{stat.sublabel}</div>
               </div>
@@ -640,7 +640,7 @@ export default function Landing() {
               <DollarSign className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium tracking-wider">PRICING</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold mb-6">
               One price, everything included
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -651,7 +651,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Pro Plan */}
             <div className={cn(
-              "relative rounded-2xl border-2 border-primary bg-card p-8 transition-all duration-700",
+              "relative rounded-2xl border border-primary bg-card p-8 transition-all duration-700",
               activeSection >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}>
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -660,10 +660,10 @@ export default function Landing() {
                 </span>
               </div>
               <div className="text-center mb-8">
-                <h3 className="text-xl font-bold mb-2">Professional</h3>
+                <h3 className="text-xl font-semibold mb-2">Professional</h3>
                 <p className="text-sm text-muted-foreground mb-4">For independent consultants & small teams</p>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-bold">$19.99</span>
+                  <span className="text-5xl font-semibold">$19.99</span>
                   <span className="text-muted-foreground">/user/month</span>
                 </div>
                 <p className="text-sm text-primary mt-2 font-medium">1 month free trial</p>
@@ -701,10 +701,10 @@ export default function Landing() {
               activeSection >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}>
               <div className="text-center mb-8">
-                <h3 className="text-xl font-bold mb-2">Consulting Firm</h3>
+                <h3 className="text-xl font-semibold mb-2">Consulting Firm</h3>
                 <p className="text-sm text-muted-foreground mb-4">For larger consulting practices</p>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-bold">Custom</span>
+                  <span className="text-5xl font-semibold">Custom</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">Contact us for pricing</p>
               </div>
@@ -756,7 +756,7 @@ export default function Landing() {
           activeSection >= 5 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
         )}>
           <img src="/logo.png" alt="Soluly" className="h-16 md:h-20 w-auto mx-auto mb-6" />
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-4">
             Ready to grow your practice?
           </h2>
           <p className="text-muted-foreground mb-8 max-w-md mx-auto">

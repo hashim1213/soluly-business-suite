@@ -165,7 +165,7 @@ export default function Signup() {
               <CheckCircle2 className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Check your email</h1>
+          <h1 className="text-2xl font-semibold mb-2">Check your email</h1>
           <p className="text-muted-foreground mb-8">
             We've sent a confirmation link to <strong>{email}</strong>
           </p>
@@ -205,7 +205,7 @@ export default function Signup() {
           <Link to="/" className="inline-block mb-6">
             <img src="/logo.png" alt="Soluly" className="h-12 w-auto mx-auto" />
           </Link>
-          <h1 className="text-2xl font-bold mb-2">Create your account</h1>
+          <h1 className="text-2xl font-semibold mb-2">Create your account</h1>
           <p className="text-muted-foreground text-sm">
             Start your free 1-month trial
           </p>

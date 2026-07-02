@@ -42,38 +42,78 @@ const routeTitles: Record<string, string> = {
   'tickets/issues': 'Issues',
 };
 
-function usePageTitle(): string {
-  const location = useLocation();
-  const path = location.pathname;
-  const pathWithoutOrg = path.replace(/^\/org\/[^/]+\/?/, '');
+type Crumb = { label: string; path?: string };
 
-  if (routeTitles[pathWithoutOrg]) {
-    return routeTitles[pathWithoutOrg];
+// Detail routes map to the section they live under so the
+// breadcrumb can offer a one-click way back up the hierarchy.
+const detailParents: Record<string, { label: string; path: string }> = {
+  projects: { label: 'Projects', path: 'projects' },
+  tickets: { label: 'Tickets', path: 'tickets' },
+  team: { label: 'Team', path: 'team' },
+  contacts: { label: 'CRM', path: 'crm' },
+  clients: { label: 'CRM', path: 'crm' },
+  features: { label: 'Tickets', path: 'tickets' },
+  quotes: { label: 'Tickets', path: 'tickets' },
+  feedback: { label: 'Tickets', path: 'tickets' },
+};
+
+const detailTitles: Record<string, string> = {
+  projects: 'Project Details',
+  tickets: 'Ticket Details',
+  team: 'Team Member',
+  contacts: 'Contact Details',
+  clients: 'Client Details',
+  features: 'Feature Request',
+  quotes: 'Quote Details',
+  feedback: 'Feedback Details',
+};
+
+function useBreadcrumbs(): Crumb[] {
+  const location = useLocation();
+  const pathWithoutOrg = location.pathname.replace(/^\/org\/[^/]+\/?/, '');
+  const segments = pathWithoutOrg.split('/').filter(Boolean);
+
+  if (segments.length === 0) {
+    return [{ label: 'Dashboard' }];
   }
 
-  const segments = pathWithoutOrg.split('/').filter(Boolean);
+  if (routeTitles[pathWithoutOrg]) {
+    // Ticket sub-pages like tickets/features keep Tickets as parent
+    if (segments.length > 1 && routeTitles[segments[0]]) {
+      return [
+        { label: routeTitles[segments[0]], path: segments[0] },
+        { label: routeTitles[pathWithoutOrg] },
+      ];
+    }
+    return [{ label: routeTitles[pathWithoutOrg] }];
+  }
 
   if (segments.length >= 2) {
     const baseRoute = segments[0];
-    if (baseRoute === 'projects') return 'Project Details';
-    if (baseRoute === 'tickets') return 'Ticket Details';
-    if (baseRoute === 'team') return 'Team Member';
-    if (baseRoute === 'contacts') return 'Contact Details';
-    if (baseRoute === 'clients') return 'Client Details';
-    if (baseRoute === 'features') return 'Feature Request';
-    if (baseRoute === 'quotes') return 'Quote Details';
-    if (baseRoute === 'feedback') return 'Feedback Details';
     if (baseRoute === 'forms') {
-      if (segments[2] === 'responses') return 'Form Responses';
-      return 'Form Builder';
+      const crumbs: Crumb[] = [{ label: 'Forms', path: 'forms' }];
+      if (segments[2] === 'responses') {
+        crumbs.push({ label: 'Form Builder', path: `forms/${segments[1]}` });
+        crumbs.push({ label: 'Responses' });
+      } else {
+        crumbs.push({ label: 'Form Builder' });
+      }
+      return crumbs;
+    }
+    const parent = detailParents[baseRoute];
+    if (parent) {
+      return [
+        { label: parent.label, path: parent.path },
+        { label: detailTitles[baseRoute] || 'Details' },
+      ];
     }
   }
 
   if (segments.length === 1 && routeTitles[segments[0]]) {
-    return routeTitles[segments[0]];
+    return [{ label: routeTitles[segments[0]] }];
   }
 
-  return 'Soluly';
+  return [{ label: 'Soluly' }];
 }
 
 function getNotificationIcon(type: Notification["type"]) {
@@ -110,7 +150,7 @@ export function AppHeader() {
   const navigate = useNavigate();
   const { navigateOrg } = useOrgNavigation();
   const { member, organization, role, signOut } = useAuth();
-  const pageTitle = usePageTitle();
+  const crumbs = useBreadcrumbs();
 
   const { data: notifications = [] } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
@@ -140,17 +180,36 @@ export function AppHeader() {
     .slice(0, 2) || "??";
 
   return (
-    <header className="h-14 border-b-2 border-border bg-background flex items-center justify-between px-2 sm:px-4">
-      {/* Page Title */}
-      <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
-        {pageTitle}
-      </h1>
+    <header className="h-12 border-b border-border bg-card flex items-center justify-between px-2 sm:px-4 shrink-0">
+      {/* Breadcrumb trail (Fluent command bar) */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1 min-w-0 text-sm">
+        {crumbs.map((crumb, i) => {
+          const isLast = i === crumbs.length - 1;
+          return (
+            <span key={`${crumb.label}-${i}`} className="flex items-center gap-1 min-w-0">
+              {i > 0 && <span className="text-muted-foreground/70 px-0.5">/</span>}
+              {isLast || !crumb.path ? (
+                <h1 className={`truncate ${isLast ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+                  {crumb.label}
+                </h1>
+              ) : (
+                <button
+                  onClick={() => navigateOrg(`/${crumb.path}`)}
+                  className="truncate rounded-sm px-1 py-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  {crumb.label}
+                </button>
+              )}
+            </span>
+          );
+        })}
+      </nav>
 
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative border-2 border-transparent hover:border-border">
+            <Button variant="ghost" size="icon" className="relative border border-transparent hover:border-border">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-medium">
@@ -159,7 +218,7 @@ export function AppHeader() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 p-0 border-2">
+          <PopoverContent align="end" className="w-80 p-0 border">
             <div className="flex items-center justify-between p-4 border-b">
               <h4 className="font-semibold">Notifications</h4>
               {unreadCount > 0 && (
@@ -234,7 +293,7 @@ export function AppHeader() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="border-2 border-transparent hover:border-border gap-2 px-2">
+            <Button variant="ghost" className="border border-transparent hover:border-border gap-2 px-2">
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {initials}
@@ -249,7 +308,7 @@ export function AppHeader() {
               <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 border-2">
+          <DropdownMenuContent align="end" className="w-56 border">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{member?.name}</p>

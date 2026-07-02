@@ -16,7 +16,8 @@ export type StatCardType =
   | "closedTicketsWeek"
   | "completedTasksWeek"
   | "totalClients"
-  | "activeQuotes";
+  | "activeQuotes"
+  | "hoursThisWeek";
 
 // Available widget types
 export type WidgetType =
@@ -27,7 +28,8 @@ export type WidgetType =
   | "teamWorkload"
   | "quickActions"
   | "recentActivity"
-  | "tasksList";
+  | "tasksList"
+  | "sprintOverview";
 
 export interface DashboardLayout {
   statsCards: StatCardType[];
@@ -64,6 +66,7 @@ export const AVAILABLE_STAT_CARDS: StatCardConfig[] = [
   { id: "completedTasksWeek", title: "Tasks Completed", description: "Tasks completed this week", category: "tasks" },
   { id: "totalClients", title: "Total Clients", description: "All clients in CRM", category: "crm" },
   { id: "activeQuotes", title: "Active Quotes", description: "Quotes in progress", category: "crm" },
+  { id: "hoursThisWeek", title: "My Hours This Week", description: "Your hours logged this week", category: "team" },
 ];
 
 // All available widgets
@@ -76,6 +79,7 @@ export const AVAILABLE_WIDGETS: WidgetConfig[] = [
   { id: "quickActions", title: "Quick Actions", description: "Common actions shortcuts", category: "projects" },
   { id: "recentActivity", title: "Recent Activity", description: "Latest activity across the system", category: "projects" },
   { id: "tasksList", title: "My Tasks", description: "Your assigned tasks", category: "tasks" },
+  { id: "sprintOverview", title: "Active Sprint", description: "Current sprint progress", category: "tickets" },
 ];
 
 const DEFAULT_LAYOUT: DashboardLayout = {

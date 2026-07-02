@@ -150,7 +150,7 @@ export function SessionTracker() {
 
   return (
     <>
-      <Card className="border-2 border-border bg-gradient-to-br from-primary/5 to-transparent">
+      <Card className="border border-border bg-gradient-to-br from-primary/5 to-transparent">
         <CardContent className="p-4">
           <div className="flex flex-col lg:flex-row lg:items-center gap-4">
             {/* Timer Display */}
@@ -166,7 +166,7 @@ export function SessionTracker() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl font-mono font-bold tracking-tight">
+                  <span className="text-3xl font-mono font-semibold tracking-tight">
                     {formatDuration(elapsed)}
                   </span>
                   {session.isRunning && (
@@ -192,10 +192,10 @@ export function SessionTracker() {
                 value={session.projectId || "none"}
                 onValueChange={(value) => setSession((prev) => ({ ...prev, projectId: value === "none" ? "" : value }))}
               >
-                <SelectTrigger className="border-2 w-full sm:w-[180px]">
+                <SelectTrigger className="border w-full sm:w-[180px]">
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="none">No Project</SelectItem>
                   {projects?.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
@@ -208,25 +208,25 @@ export function SessionTracker() {
                 placeholder="What are you working on?"
                 value={session.description}
                 onChange={(e) => setSession((prev) => ({ ...prev, description: e.target.value }))}
-                className="border-2 flex-1"
+                className="border flex-1"
               />
             </div>
 
             {/* Controls */}
             <div className="flex items-center gap-2">
               {!session.isRunning && elapsed === 0 && (
-                <Button onClick={handleStart} className="border-2 bg-green-600 hover:bg-green-700">
+                <Button onClick={handleStart} className="border bg-green-600 hover:bg-green-700">
                   <Play className="h-4 w-4 mr-2" />
                   Start
                 </Button>
               )}
               {session.isRunning && (
                 <>
-                  <Button onClick={handlePause} variant="outline" className="border-2">
+                  <Button onClick={handlePause} variant="outline" className="border">
                     <Pause className="h-4 w-4 mr-2" />
                     Pause
                   </Button>
-                  <Button onClick={handleStop} variant="destructive" className="border-2">
+                  <Button onClick={handleStop} variant="destructive" className="border">
                     <Square className="h-4 w-4 mr-2" />
                     Stop
                   </Button>
@@ -234,15 +234,15 @@ export function SessionTracker() {
               )}
               {!session.isRunning && elapsed > 0 && (
                 <>
-                  <Button onClick={handleStart} className="border-2 bg-green-600 hover:bg-green-700">
+                  <Button onClick={handleStart} className="border bg-green-600 hover:bg-green-700">
                     <Play className="h-4 w-4 mr-2" />
                     Resume
                   </Button>
-                  <Button onClick={handleStop} variant="default" className="border-2">
+                  <Button onClick={handleStop} variant="default" className="border">
                     <Square className="h-4 w-4 mr-2" />
                     Save
                   </Button>
-                  <Button onClick={handleReset} variant="ghost" size="icon" className="border-2 border-transparent hover:border-border">
+                  <Button onClick={handleReset} variant="ghost" size="icon" className="border border-transparent hover:border-border">
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </>
@@ -254,14 +254,14 @@ export function SessionTracker() {
 
       {/* Save Dialog */}
       <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[425px]">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[425px]">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Save Session</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="bg-muted/50 rounded-lg p-4 text-center">
               <p className="text-sm text-muted-foreground">Total Time</p>
-              <p className="text-3xl font-mono font-bold">{formatDuration(elapsed)}</p>
+              <p className="text-3xl font-mono font-semibold">{formatDuration(elapsed)}</p>
               <p className="text-sm text-muted-foreground mt-1">{hours} hours</p>
             </div>
 
@@ -283,7 +283,7 @@ export function SessionTracker() {
                 type="date"
                 value={saveForm.date}
                 onChange={(e) => setSaveForm({ ...saveForm, date: e.target.value })}
-                className="border-2"
+                className="border"
               />
             </div>
 
@@ -298,18 +298,18 @@ export function SessionTracker() {
               />
             </div>
           </div>
-          <div className="flex justify-between gap-3 border-t-2 border-border pt-4">
+          <div className="flex justify-between gap-3 border-t border-border pt-4">
             <Button variant="ghost" onClick={handleDiscard} className="text-destructive hover:text-destructive">
               Discard
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)} className="border-2">
+              <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)} className="border">
                 Continue Timer
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={createTimeEntry.isPending || hours < 0.01}
-                className="border-2"
+                className="border"
               >
                 {createTimeEntry.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Save Entry

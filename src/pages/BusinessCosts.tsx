@@ -395,19 +395,19 @@ export default function BusinessCosts() {
         </p>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="border-2">
+            <Button className="border">
               <Plus className="h-4 w-4 mr-2" />
               Add Expense
             </Button>
           </DialogTrigger>
-          <DialogContent className="border-2 sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="border-b-2 border-border pb-4">
+          <DialogContent className="border sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="border-b border-border pb-4">
               <DialogTitle>Add Business Expense</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               {/* Quick Fill from Saved Templates */}
               {(templates && templates.length > 0) && (
-                <div className="grid gap-2 p-3 bg-primary/5 rounded-lg border-2 border-primary/20">
+                <div className="grid gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
                   <Label className="text-sm font-medium flex items-center gap-2">
                     <Star className="h-4 w-4 text-primary" />
                     Quick Fill from Saved Template
@@ -421,10 +421,10 @@ export default function BusinessCosts() {
                       }
                     }}
                   >
-                    <SelectTrigger className="border-2 bg-background">
+                    <SelectTrigger className="border bg-background">
                       <SelectValue placeholder="Select a saved template..." />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {templates.map((t) => (
                         <SelectItem key={t.id} value={t.id}>
                           <div className="flex items-center justify-between gap-4">
@@ -456,7 +456,7 @@ export default function BusinessCosts() {
 
               {/* Quick Fill from Recent Vendors (fallback if no templates) */}
               {(!templates || templates.length === 0) && savedVendors.length > 0 && (
-                <div className="grid gap-2 p-3 bg-muted/50 rounded-lg border-2 border-dashed border-border">
+                <div className="grid gap-2 p-3 bg-muted/50 rounded-lg border border-dashed border-border">
                   <Label className="text-sm font-medium flex items-center gap-2">
                     <RefreshCw className="h-4 w-4" />
                     Quick Fill from Recent Vendor
@@ -470,10 +470,10 @@ export default function BusinessCosts() {
                       }
                     }}
                   >
-                    <SelectTrigger className="border-2 bg-background">
+                    <SelectTrigger className="border bg-background">
                       <SelectValue placeholder="Select a recent vendor to auto-fill..." />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {savedVendors.map((v) => (
                         <SelectItem key={v.vendor} value={v.vendor}>
                           <div className="flex items-center justify-between gap-4">
@@ -498,10 +498,10 @@ export default function BusinessCosts() {
                   value={newCost.description}
                   onValueChange={(v) => setNewCost({ ...newCost, description: v })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue placeholder="Select or type a description..." />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     <SelectItem value="__custom__">
                       <span className="text-muted-foreground">Type custom description...</span>
                     </SelectItem>
@@ -518,7 +518,7 @@ export default function BusinessCosts() {
                     placeholder="e.g., Monthly Slack subscription"
                     value={newCost.description === "__custom__" ? "" : newCost.description}
                     onChange={(e) => setNewCost({ ...newCost, description: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 )}
               </div>
@@ -530,10 +530,10 @@ export default function BusinessCosts() {
                     value={newCost.category}
                     onValueChange={(v) => setNewCost({ ...newCost, category: v, subcategory: "" })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {Object.entries(BUSINESS_COST_CATEGORIES).map(([key, { label }]) => (
                         <SelectItem key={key} value={key}>
                           {label}
@@ -548,10 +548,10 @@ export default function BusinessCosts() {
                     value={newCost.subcategory}
                     onValueChange={(v) => setNewCost({ ...newCost, subcategory: v })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {subcategories.map((sub) => (
                         <SelectItem key={sub} value={sub}>
                           {sub}
@@ -574,7 +574,7 @@ export default function BusinessCosts() {
                       placeholder="0.00"
                       value={newCost.amount}
                       onChange={(e) => setNewCost({ ...newCost, amount: e.target.value })}
-                      className="border-2 pl-9"
+                      className="border pl-9"
                     />
                   </div>
                 </div>
@@ -585,7 +585,7 @@ export default function BusinessCosts() {
                     type="date"
                     value={newCost.date}
                     onChange={(e) => setNewCost({ ...newCost, date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -605,10 +605,10 @@ export default function BusinessCosts() {
                           }
                         }}
                       >
-                        <SelectTrigger className="border-2">
+                        <SelectTrigger className="border">
                           <SelectValue placeholder="Select or type..." />
                         </SelectTrigger>
-                        <SelectContent className="border-2">
+                        <SelectContent className="border">
                           <SelectItem value="__custom__">
                             <span className="text-muted-foreground">Type new vendor...</span>
                           </SelectItem>
@@ -625,7 +625,7 @@ export default function BusinessCosts() {
                           placeholder="e.g., Slack Technologies"
                           value={newCost.vendor}
                           onChange={(e) => setNewCost({ ...newCost, vendor: e.target.value })}
-                          className="border-2"
+                          className="border"
                         />
                       )}
                     </>
@@ -635,7 +635,7 @@ export default function BusinessCosts() {
                       placeholder="e.g., Slack Technologies"
                       value={newCost.vendor}
                       onChange={(e) => setNewCost({ ...newCost, vendor: e.target.value })}
-                      className="border-2"
+                      className="border"
                     />
                   )}
                 </div>
@@ -646,7 +646,7 @@ export default function BusinessCosts() {
                     placeholder="Invoice or receipt number"
                     value={newCost.reference}
                     onChange={(e) => setNewCost({ ...newCost, reference: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -657,10 +657,10 @@ export default function BusinessCosts() {
                   value={newCost.payment_method}
                   onValueChange={(v) => setNewCost({ ...newCost, payment_method: v })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     {PAYMENT_METHODS.map(({ value, label }) => (
                       <SelectItem key={value} value={value}>
                         {label}
@@ -670,7 +670,7 @@ export default function BusinessCosts() {
                 </Select>
               </div>
 
-              <div className="border-t-2 border-border pt-4 space-y-4">
+              <div className="border-t border-border pt-4 space-y-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="recurring"
@@ -691,10 +691,10 @@ export default function BusinessCosts() {
                       value={newCost.recurring_frequency}
                       onValueChange={(v) => setNewCost({ ...newCost, recurring_frequency: v })}
                     >
-                      <SelectTrigger className="border-2">
+                      <SelectTrigger className="border">
                         <SelectValue placeholder="Select frequency..." />
                       </SelectTrigger>
-                      <SelectContent className="border-2">
+                      <SelectContent className="border">
                         {RECURRING_FREQUENCIES.map(({ value, label }) => (
                           <SelectItem key={value} value={value}>
                             {label}
@@ -726,13 +726,13 @@ export default function BusinessCosts() {
                   placeholder="Additional details..."
                   value={newCost.notes}
                   onChange={(e) => setNewCost({ ...newCost, notes: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={2}
                 />
               </div>
 
               {/* Save as Template Option */}
-              <div className="p-3 bg-muted/30 rounded-lg border-2 border-dashed border-border">
+              <div className="p-3 bg-muted/30 rounded-lg border border-dashed border-border">
                 <div className="flex items-center gap-2 mb-2">
                   <Checkbox
                     id="save_template"
@@ -749,16 +749,16 @@ export default function BusinessCosts() {
                     placeholder="Template name (e.g., 'Slack Monthly')"
                     value={templateName}
                     onChange={(e) => setTemplateName(e.target.value)}
-                    className="border-2 mt-2"
+                    className="border mt-2"
                   />
                 )}
               </div>
             </div>
-            <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-2">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border">
                 Cancel
               </Button>
-              <Button onClick={handleAddCost} className="border-2" disabled={createCost.isPending || createTemplate.isPending}>
+              <Button onClick={handleAddCost} className="border" disabled={createCost.isPending || createTemplate.isPending}>
                 {(createCost.isPending || createTemplate.isPending) ? "Adding..." : "Add Expense"}
               </Button>
             </div>
@@ -768,13 +768,13 @@ export default function BusinessCosts() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono">
+            <div className="text-2xl font-semibold font-mono">
               {safeFormatCurrency(summary?.totalAmount || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -783,13 +783,13 @@ export default function BusinessCosts() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Recurring</CardTitle>
             <RefreshCw className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono">
+            <div className="text-2xl font-semibold font-mono">
               {safeFormatCurrency(summary?.recurringMonthlyTotal || 0)}
               <span className="text-sm font-normal text-muted-foreground">/mo</span>
             </div>
@@ -799,13 +799,13 @@ export default function BusinessCosts() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tax Deductible</CardTitle>
             <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono text-chart-2">
+            <div className="text-2xl font-semibold font-mono text-chart-2">
               {safeFormatCurrency(summary?.taxDeductibleTotal || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -814,13 +814,13 @@ export default function BusinessCosts() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Categories</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono">
+            <div className="text-2xl font-semibold font-mono">
               {Object.keys(summary?.byCategory || {}).length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -832,8 +832,8 @@ export default function BusinessCosts() {
 
       {/* Category Breakdown */}
       {categoryBreakdown.length > 0 && (
-        <Card className="border-2 border-border shadow-sm">
-          <CardHeader className="border-b-2 border-border">
+        <Card className="border border-border shadow-sm">
+          <CardHeader className="border-b border-border">
             <CardTitle>Expense Breakdown by Category</CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
@@ -859,8 +859,8 @@ export default function BusinessCosts() {
       )}
 
       {/* Filters and Search */}
-      <Card className="border-2 border-border shadow-sm">
-        <CardHeader className="border-b-2 border-border">
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="border-b border-border">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <CardTitle>All Expenses</CardTitle>
             <div className="flex flex-wrap items-center gap-3">
@@ -870,15 +870,15 @@ export default function BusinessCosts() {
                   placeholder="Search expenses..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-[200px] border-2"
+                  className="pl-9 w-[200px] border"
                 />
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[160px] border-2">
+                <SelectTrigger className="w-[160px] border">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="all">All Categories</SelectItem>
                   {Object.entries(BUSINESS_COST_CATEGORIES).map(([key, { label }]) => (
                     <SelectItem key={key} value={key}>
@@ -888,10 +888,10 @@ export default function BusinessCosts() {
                 </SelectContent>
               </Select>
               <Select value={recurringFilter} onValueChange={setRecurringFilter}>
-                <SelectTrigger className="w-[140px] border-2">
+                <SelectTrigger className="w-[140px] border">
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
-                <SelectContent className="border-2">
+                <SelectContent className="border">
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="recurring">Recurring</SelectItem>
                   <SelectItem value="one-time">One-time</SelectItem>
@@ -910,21 +910,21 @@ export default function BusinessCosts() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-b-2 hover:bg-transparent">
-                  <TableHead className="font-bold uppercase text-xs">ID</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Description</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Category</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Vendor</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Date</TableHead>
-                  <TableHead className="font-bold uppercase text-xs text-right">Amount</TableHead>
-                  <TableHead className="font-bold uppercase text-xs text-right">Total</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Type</TableHead>
-                  <TableHead className="font-bold uppercase text-xs">Actions</TableHead>
+                <TableRow className="border-b hover:bg-transparent">
+                  <TableHead className="font-semibold uppercase text-xs">ID</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Description</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Category</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Vendor</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Date</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs text-right">Amount</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs text-right">Total</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Type</TableHead>
+                  <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCosts.map((cost) => (
-                  <TableRow key={cost.id} className="border-b-2">
+                  <TableRow key={cost.id} className="border-b">
                     <TableCell className="font-mono text-sm">{cost.display_id}</TableCell>
                     <TableCell>
                       <div>
@@ -979,13 +979,13 @@ export default function BusinessCosts() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {cost.recurring && (
-                          <Badge variant="outline" className="border-2">
+                          <Badge variant="outline" className="border">
                             <RefreshCw className="h-3 w-3 mr-1" />
                             {cost.recurring_frequency || "Recurring"}
                           </Badge>
                         )}
                         {cost.tax_deductible && (
-                          <Badge variant="secondary" className="border-2">
+                          <Badge variant="secondary" className="border">
                             Tax
                           </Badge>
                         )}
@@ -998,7 +998,7 @@ export default function BusinessCosts() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-2">
+                        <DropdownMenuContent align="end" className="border">
                           <DropdownMenuItem onClick={() => openEditDialog(cost)}>
                             <Pencil className="h-4 w-4 mr-2" />
                             Edit
@@ -1023,8 +1023,8 @@ export default function BusinessCosts() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="border-2 sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle>Edit Expense</DialogTitle>
           </DialogHeader>
           {editingCost && (
@@ -1035,7 +1035,7 @@ export default function BusinessCosts() {
                   id="edit-description"
                   value={editingCost.description}
                   onChange={(e) => setEditingCost({ ...editingCost, description: e.target.value })}
-                  className="border-2"
+                  className="border"
                 />
               </div>
 
@@ -1046,10 +1046,10 @@ export default function BusinessCosts() {
                     value={editingCost.category}
                     onValueChange={(v) => setEditingCost({ ...editingCost, category: v, subcategory: null })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {Object.entries(BUSINESS_COST_CATEGORIES).map(([key, { label }]) => (
                         <SelectItem key={key} value={key}>
                           {label}
@@ -1064,10 +1064,10 @@ export default function BusinessCosts() {
                     value={editingCost.subcategory || ""}
                     onValueChange={(v) => setEditingCost({ ...editingCost, subcategory: v })}
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border">
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
-                    <SelectContent className="border-2">
+                    <SelectContent className="border">
                       {editSubcategories.map((sub) => (
                         <SelectItem key={sub} value={sub}>
                           {sub}
@@ -1089,7 +1089,7 @@ export default function BusinessCosts() {
                       step="0.01"
                       value={editingCost.amount}
                       onChange={(e) => setEditingCost({ ...editingCost, amount: parseFloat(e.target.value) || 0 })}
-                      className="border-2 pl-9"
+                      className="border pl-9"
                     />
                   </div>
                 </div>
@@ -1100,7 +1100,7 @@ export default function BusinessCosts() {
                     type="date"
                     value={editingCost.date}
                     onChange={(e) => setEditingCost({ ...editingCost, date: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -1112,7 +1112,7 @@ export default function BusinessCosts() {
                     id="edit-vendor"
                     value={editingCost.vendor || ""}
                     onChange={(e) => setEditingCost({ ...editingCost, vendor: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1121,7 +1121,7 @@ export default function BusinessCosts() {
                     id="edit-reference"
                     value={editingCost.reference || ""}
                     onChange={(e) => setEditingCost({ ...editingCost, reference: e.target.value })}
-                    className="border-2"
+                    className="border"
                   />
                 </div>
               </div>
@@ -1132,10 +1132,10 @@ export default function BusinessCosts() {
                   value={editingCost.payment_method || ""}
                   onValueChange={(v) => setEditingCost({ ...editingCost, payment_method: v })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
-                  <SelectContent className="border-2">
+                  <SelectContent className="border">
                     {PAYMENT_METHODS.map(({ value, label }) => (
                       <SelectItem key={value} value={value}>
                         {label}
@@ -1145,7 +1145,7 @@ export default function BusinessCosts() {
                 </Select>
               </div>
 
-              <div className="border-t-2 border-border pt-4 space-y-4">
+              <div className="border-t border-border pt-4 space-y-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="edit-recurring"
@@ -1166,10 +1166,10 @@ export default function BusinessCosts() {
                       value={editingCost.recurring_frequency || ""}
                       onValueChange={(v) => setEditingCost({ ...editingCost, recurring_frequency: v })}
                     >
-                      <SelectTrigger className="border-2">
+                      <SelectTrigger className="border">
                         <SelectValue placeholder="Select frequency..." />
                       </SelectTrigger>
-                      <SelectContent className="border-2">
+                      <SelectContent className="border">
                         {RECURRING_FREQUENCIES.map(({ value, label }) => (
                           <SelectItem key={value} value={value}>
                             {label}
@@ -1200,17 +1200,17 @@ export default function BusinessCosts() {
                   id="edit-notes"
                   value={editingCost.notes || ""}
                   onChange={(e) => setEditingCost({ ...editingCost, notes: e.target.value })}
-                  className="border-2"
+                  className="border"
                   rows={2}
                 />
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3 border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border-2">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="border">
               Cancel
             </Button>
-            <Button onClick={handleEditCost} className="border-2" disabled={updateCost.isPending}>
+            <Button onClick={handleEditCost} className="border" disabled={updateCost.isPending}>
               {updateCost.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>
@@ -1219,8 +1219,8 @@ export default function BusinessCosts() {
 
       {/* Manage Templates Dialog */}
       <Dialog open={isManageTemplatesOpen} onOpenChange={setIsManageTemplatesOpen}>
-        <DialogContent className="border-2 sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-          <DialogHeader className="border-b-2 border-border pb-4">
+        <DialogContent className="border sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border pb-4">
             <DialogTitle className="flex items-center gap-2">
               <Bookmark className="h-5 w-5" />
               Manage Expense Templates
@@ -1232,7 +1232,7 @@ export default function BusinessCosts() {
                 {templates.map((template) => (
                   <div
                     key={template.id}
-                    className="flex items-center justify-between p-3 border-2 rounded-lg hover:bg-muted/50"
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -1284,8 +1284,8 @@ export default function BusinessCosts() {
               </div>
             )}
           </div>
-          <div className="flex justify-end border-t-2 border-border pt-4">
-            <Button variant="outline" onClick={() => setIsManageTemplatesOpen(false)} className="border-2">
+          <div className="flex justify-end border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsManageTemplatesOpen(false)} className="border">
               Close
             </Button>
           </div>

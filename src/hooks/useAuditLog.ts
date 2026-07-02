@@ -127,7 +127,7 @@ export function useAuditLog(
       if (error) throw error;
 
       return {
-        events: (data || []) as SecurityEvent[],
+        events: (data || []) as unknown as SecurityEvent[],
         total: count || 0,
       };
     },
@@ -289,7 +289,7 @@ export async function exportAuditLogCSV(
     "Details",
   ];
 
-  const rows = (data || []).map((event: SecurityEvent) => [
+  const rows = ((data || []) as unknown as SecurityEvent[]).map((event) => [
     new Date(event.created_at).toISOString(),
     eventTypeLabels[event.event_type] || event.event_type,
     event.team_member?.name || "System",

@@ -153,7 +153,7 @@ export function EmailList({ emails, selectedId, onSelect, isLoading }: EmailList
                 {email.category && (
                   <Badge
                     variant="outline"
-                    className={cn("text-xs font-medium border-2", categoryColors[email.category])}
+                    className={cn("text-xs font-medium border", categoryColors[email.category])}
                   >
                     {categoryLabels[email.category]}
                   </Badge>

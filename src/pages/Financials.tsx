@@ -129,14 +129,14 @@ export default function Financials() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-blue-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-blue-600">
                 <DollarSign className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">
+                <div className="text-2xl font-semibold font-mono">
                   {safeFormatCurrency(financials.totalProjectValue)}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -147,14 +147,14 @@ export default function Financials() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-emerald-600">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-emerald-600">
                 <Wallet className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">
+                <div className="text-2xl font-semibold font-mono">
                   {safeFormatCurrency(financials.totalPaid)}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -165,14 +165,14 @@ export default function Financials() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-amber-500">
+              <div className="h-10 w-10 border border-border flex items-center justify-center bg-amber-500">
                 <Receipt className="h-5 w-5 text-black" />
               </div>
               <div>
-                <div className="text-2xl font-bold font-mono">
+                <div className="text-2xl font-semibold font-mono">
                   {safeFormatCurrency(financials.totalOutstanding)}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -183,11 +183,11 @@ export default function Financials() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border shadow-sm">
+        <Card className="border border-border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div
-                className={`h-10 w-10 border-2 border-border flex items-center justify-center ${
+                className={`h-10 w-10 border border-border flex items-center justify-center ${
                   financials.totalProfit >= 0 ? "bg-emerald-600" : "bg-red-600"
                 }`}
               >
@@ -199,7 +199,7 @@ export default function Financials() {
               </div>
               <div>
                 <div
-                  className={`text-2xl font-bold font-mono ${
+                  className={`text-2xl font-semibold font-mono ${
                     financials.totalProfit >= 0
                       ? "text-emerald-600"
                       : "text-red-600"
@@ -216,16 +216,16 @@ export default function Financials() {
 
       {/* Business Costs Summary */}
       {totalBusinessCosts > 0 && (
-        <Card className="border-2 border-border shadow-sm bg-muted/30">
+        <Card className="border border-border shadow-sm bg-muted/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 border-2 border-border flex items-center justify-center bg-orange-500">
+                <div className="h-10 w-10 border border-border flex items-center justify-center bg-orange-500">
                   <Briefcase className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Business Operating Costs</div>
-                  <div className="text-xl font-bold font-mono">
+                  <div className="text-xl font-semibold font-mono">
                     {safeFormatCurrency(totalBusinessCosts)}
                   </div>
                 </div>
@@ -233,11 +233,11 @@ export default function Financials() {
               <div className="flex items-center gap-6">
                 <div className="text-right">
                   <div className="text-sm text-muted-foreground">Combined Net Profit</div>
-                  <div className={`text-xl font-bold font-mono ${combinedProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                  <div className={`text-xl font-semibold font-mono ${combinedProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                     {safeFormatCurrency(combinedProfit)}
                   </div>
                 </div>
-                <Button variant="outline" className="border-2" onClick={() => navigateOrg("/expenses")}>
+                <Button variant="outline" className="border" onClick={() => navigateOrg("/expenses")}>
                   View Expenses
                 </Button>
               </div>
@@ -248,10 +248,10 @@ export default function Financials() {
 
       {/* Secondary Stats */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Project Costs</div>
-            <div className="text-xl font-bold font-mono">
+            <div className="text-xl font-semibold font-mono">
               {safeFormatCurrency(financials.totalCosts)}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
@@ -261,11 +261,11 @@ export default function Financials() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Avg. Margin</div>
             <div
-              className={`text-xl font-bold font-mono ${
+              className={`text-xl font-semibold font-mono ${
                 financials.averageMargin >= 0
                   ? "text-emerald-600"
                   : "text-red-600"
@@ -276,19 +276,19 @@ export default function Financials() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Total Invoiced</div>
-            <div className="text-xl font-bold font-mono">
+            <div className="text-xl font-semibold font-mono">
               {safeFormatCurrency(financials.totalInvoiced)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-border">
+        <Card className="border border-border">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Active Projects</div>
-            <div className="text-xl font-bold">
+            <div className="text-xl font-semibold">
               {financials.projects.filter((p) => p.status === "active").length}
             </div>
           </CardContent>
@@ -296,18 +296,18 @@ export default function Financials() {
       </div>
 
       {/* Project Table */}
-      <Card className="border-2 border-border shadow-sm">
-        <CardHeader className="border-b-2 border-border">
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="border-b border-border">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
               Project Financials
             </CardTitle>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px] border-2">
+              <SelectTrigger className="w-[150px] border">
                 <SelectValue placeholder="Filter status" />
               </SelectTrigger>
-              <SelectContent className="border-2">
+              <SelectContent className="border">
                 <SelectItem value="all">All Projects</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
@@ -326,7 +326,7 @@ export default function Financials() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b-2 border-border">
+                  <TableRow className="border-b border-border">
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("name")}
@@ -376,7 +376,7 @@ export default function Financials() {
                   {sortedProjects.map((project) => (
                     <TableRow
                       key={project.id}
-                      className="border-b-2 border-border cursor-pointer hover:bg-muted/50"
+                      className="border-b border-border cursor-pointer hover:bg-muted/50"
                       onClick={() =>
                         navigateOrg(`/projects/${project.display_id}`)
                       }
@@ -444,7 +444,7 @@ export default function Financials() {
 
         {/* Totals Row */}
         {sortedProjects.length > 0 && (
-          <div className="border-t-2 border-border bg-muted/30 p-4">
+          <div className="border-t border-border bg-muted/30 p-4">
             <div className="grid grid-cols-7 text-sm font-medium">
               <div>
                 <span className="text-muted-foreground">Total</span> (

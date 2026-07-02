@@ -207,7 +207,7 @@ export function EmailAccountsSettings() {
         {gmailAccounts.length > 0 ? (
           <div className="grid gap-4">
             {gmailAccounts.map((account) => (
-              <Card key={account.id} className="border-2">
+              <Card key={account.id} className="border">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
@@ -293,7 +293,7 @@ export function EmailAccountsSettings() {
             ))}
           </div>
         ) : (
-          <Card className="border-2 border-dashed">
+          <Card className="border border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-8">
               <div className="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center mb-4">
                 <GmailLogo />
@@ -373,7 +373,7 @@ export function EmailAccountsSettings() {
 
       {/* Edit Settings Dialog */}
       <Dialog open={!!editingAccount} onOpenChange={(open) => !open && setEditingAccount(null)}>
-        <DialogContent className="border-2">
+        <DialogContent className="border">
           <DialogHeader>
             <DialogTitle>Email Account Settings</DialogTitle>
             <DialogDescription>
@@ -448,7 +448,7 @@ export function EmailAccountsSettings() {
 
       {/* Sender Filters Dialog */}
       <Dialog open={!!filterAccount} onOpenChange={(open) => !open && setFilterAccount(null)}>
-        <DialogContent className="border-2 sm:max-w-[600px]">
+        <DialogContent className="border sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
@@ -476,7 +476,7 @@ export function EmailAccountsSettings() {
                   value={filterAccount.filter_mode}
                   onValueChange={(value) => setFilterAccount({ ...filterAccount, filter_mode: value })}
                 >
-                  <SelectTrigger className="border-2">
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -521,13 +521,13 @@ export function EmailAccountsSettings() {
                       value={newSender}
                       onChange={(e) => setNewSender(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSender("allowed"))}
-                      className="border-2"
+                      className="border"
                     />
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => addSender("allowed")}
-                      className="border-2"
+                      className="border"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -566,14 +566,14 @@ export function EmailAccountsSettings() {
                     value={filterAccount.filter_mode !== "whitelist" ? newSender : ""}
                     onChange={(e) => setNewSender(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && filterAccount.filter_mode !== "whitelist" && (e.preventDefault(), addSender("blocked"))}
-                    className="border-2"
+                    className="border"
                     disabled={filterAccount.filter_mode === "whitelist"}
                   />
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => addSender("blocked")}
-                    className="border-2"
+                    className="border"
                     disabled={filterAccount.filter_mode === "whitelist"}
                   >
                     <Plus className="h-4 w-4" />

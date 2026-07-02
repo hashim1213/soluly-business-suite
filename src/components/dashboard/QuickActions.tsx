@@ -1,4 +1,4 @@
-import { Plus, FolderPlus, Ticket, Mail, Users, FileText, Lightbulb } from "lucide-react";
+import { Plus, FolderPlus, Ticket, Mail, Users, FileText, Lightbulb, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
@@ -17,14 +17,15 @@ const actions: QuickAction[] = [
   { label: "Add Contact", icon: Users, href: "/crm?tab=contacts&new=true", color: "text-green-600" },
   { label: "New Quote", icon: FileText, href: "/crm?tab=quotes&new=true", color: "text-orange-600" },
   { label: "Feature Request", icon: Lightbulb, href: "/feature-requests?new=true", color: "text-yellow-600" },
+  { label: "Log Time", icon: Clock, href: "/my-hours?new=true", color: "text-teal-600" },
 ];
 
 export function QuickActions() {
   const { navigateOrg } = useOrgNavigation();
 
   return (
-    <Card className="border-2">
-      <CardHeader className="border-b-2 pb-3">
+    <Card className="border">
+      <CardHeader className="border-b pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Plus className="h-4 w-4" />
           Quick Actions
@@ -36,7 +37,7 @@ export function QuickActions() {
             <Button
               key={action.label}
               variant="outline"
-              className="h-auto py-3 px-3 flex flex-col items-center gap-1.5 border-2 hover:bg-accent"
+              className="h-auto py-3 px-3 flex flex-col items-center gap-1.5 border hover:bg-accent"
               onClick={() => navigateOrg(action.href)}
             >
               <action.icon className={`h-5 w-5 ${action.color}`} />
