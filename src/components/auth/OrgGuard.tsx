@@ -1,14 +1,30 @@
+import { useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, AlertTriangle, RefreshCw, Home } from "lucide-react";
 
 /**
- * Guard that validates the organization slug in the URL matches the user's org
- * This prevents users from accessing other organizations' data via URL manipulation
+ * Guard that resolves the organization slug in the URL to one of the user's
+ * memberships. Visiting another org you belong to switches the active
+ * workspace; slugs you don't belong to redirect back to your own org.
  */
 export function OrgGuard() {
   const { slug } = useParams<{ slug: string }>();
-  const { organization, isLoading, isAuthenticated, authError, clearAuthError } = useAuth();
+  const { organization, isLoading, isAuthenticated, authError, clearAuthError, switchOrganization } = useAuth();
+  const [failedSlug, setFailedSlug] = useState<string | null>(null);
+  const switchingSlug = useRef<string | null>(null);
+
+  const needsSwitch = !!organization?.slug && !!slug && slug !== organization.slug;
+
+  useEffect(() => {
+    if (!needsSwitch || !slug) return;
+    if (switchingSlug.current === slug || failedSlug === slug) return;
+    switchingSlug.current = slug;
+    switchOrganization(slug).then((ok) => {
+      switchingSlug.current = null;
+      if (!ok) setFailedSlug(slug);
+    });
+  }, [needsSwitch, slug, failedSlug, switchOrganization]);
 
   if (isLoading) {
     return (
@@ -64,10 +80,18 @@ export function OrgGuard() {
     return <Navigate to="/login" replace />;
   }
 
-  // Validate the slug matches the user's organization
-  if (organization?.slug && slug !== organization.slug) {
-    // Redirect to the user's actual organization
-    return <Navigate to={`/org/${organization.slug}`} replace />;
+  // URL points at a different org: switch to it if the user belongs there,
+  // otherwise send them back to their own workspace
+  if (needsSwitch) {
+    if (failedSlug === slug) {
+      return <Navigate to={`/org/${organization!.slug}`} replace />;
+    }
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Switching workspace...</p>
+      </div>
+    );
   }
 
   return <Outlet />;

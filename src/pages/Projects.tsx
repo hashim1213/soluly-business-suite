@@ -254,6 +254,7 @@ export default function Projects() {
     maintenance_amount: "",
     maintenance_frequency: "monthly",
     maintenance_start_date: "",
+    maintenance_end_date: "",
     maintenance_notes: "",
   });
 
@@ -383,9 +384,29 @@ export default function Projects() {
       maintenance_amount: project.maintenance_amount?.toString() || "",
       maintenance_frequency: project.maintenance_frequency || "monthly",
       maintenance_start_date: project.maintenance_start_date?.split("T")[0] || "",
+      maintenance_end_date: project.maintenance_end_date?.split("T")[0] || "",
       maintenance_notes: project.maintenance_notes || "",
     });
     setIsEditSheetOpen(true);
+  };
+
+  // One-click transition into maintenance mode: the build is done, the
+  // client now pays a recurring amount and ongoing work stays billable.
+  const handleEnterMaintenance = async (project: Project, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    try {
+      const updated = await updateProject.mutateAsync({
+        id: project.id,
+        status: "maintenance" as ProjectStatus,
+        has_maintenance: true,
+        maintenance_start_date:
+          project.maintenance_start_date || new Date().toISOString().split("T")[0],
+      });
+      toast.success(`${project.display_id} is now in maintenance mode`);
+      openEditSheet(updated);
+    } catch {
+      // Error handled by hook
+    }
   };
 
   const handleUpdateProject = async () => {
@@ -412,6 +433,7 @@ export default function Projects() {
         maintenance_amount: parseFloat(editForm.maintenance_amount.replace(/[$,]/g, "")) || 0,
         maintenance_frequency: editForm.maintenance_frequency,
         maintenance_start_date: editForm.maintenance_start_date || null,
+        maintenance_end_date: editForm.maintenance_end_date || null,
         maintenance_notes: editForm.maintenance_notes || null,
       });
 
@@ -524,6 +546,7 @@ export default function Projects() {
         <SelectItem value="pending">Pending</SelectItem>
         <SelectItem value="active">Active</SelectItem>
         <SelectItem value="on_hold">On Hold</SelectItem>
+        <SelectItem value="maintenance">Maintenance</SelectItem>
         <SelectItem value="completed">Completed</SelectItem>
         <SelectItem value="cancelled">Cancelled</SelectItem>
       </SelectContent>
@@ -574,6 +597,7 @@ export default function Projects() {
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="on_hold">On Hold</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
@@ -948,6 +972,12 @@ export default function Projects() {
                           <Edit className="h-4 w-4 mr-2" />
                           Edit Project
                         </DropdownMenuItem>
+                        {project.status !== "maintenance" && (
+                          <DropdownMenuItem onClick={(e) => handleEnterMaintenance(project, e)}>
+                            <Wrench className="h-4 w-4 mr-2" />
+                            Enter Maintenance Mode
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => generateProjectPDF(project, tickets || [])}>
                           <Download className="h-4 w-4 mr-2" />
                           Export PDF Report
@@ -998,6 +1028,12 @@ export default function Projects() {
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Project
                       </DropdownMenuItem>
+                      {project.status !== "maintenance" && (
+                        <DropdownMenuItem onClick={(e) => handleEnterMaintenance(project, e)}>
+                          <Wrench className="h-4 w-4 mr-2" />
+                          Enter Maintenance Mode
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => generateProjectPDF(project, tickets || [])}>
                         <Download className="h-4 w-4 mr-2" />
                         Export PDF Report
@@ -1140,6 +1176,7 @@ export default function Projects() {
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="on_hold">On Hold</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
@@ -1238,15 +1275,27 @@ export default function Projects() {
                         </Select>
                       </div>
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-maintenance-start">Maintenance Start Date</Label>
-                      <Input
-                        id="edit-maintenance-start"
-                        type="date"
-                        value={editForm.maintenance_start_date}
-                        onChange={(e) => setEditForm({ ...editForm, maintenance_start_date: e.target.value })}
-                        className="border"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-maintenance-start">Maintenance Start Date</Label>
+                        <Input
+                          id="edit-maintenance-start"
+                          type="date"
+                          value={editForm.maintenance_start_date}
+                          onChange={(e) => setEditForm({ ...editForm, maintenance_start_date: e.target.value })}
+                          className="border"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-maintenance-end">Maintenance End Date</Label>
+                        <Input
+                          id="edit-maintenance-end"
+                          type="date"
+                          value={editForm.maintenance_end_date}
+                          onChange={(e) => setEditForm({ ...editForm, maintenance_end_date: e.target.value })}
+                          className="border"
+                        />
+                      </div>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="edit-maintenance-notes">Maintenance Notes</Label>

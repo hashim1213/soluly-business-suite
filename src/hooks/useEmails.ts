@@ -232,7 +232,7 @@ export function useLinkEmailToProject() {
 
 export function useDismissEmail() {
   const queryClient = useQueryClient();
-  const { teamMember, organization } = useAuth();
+  const { member: teamMember, organization } = useAuth();
 
   return useMutation({
     mutationFn: async (emailId: string) => {
@@ -268,7 +268,7 @@ export function useDismissEmail() {
 
 export function useCreateRecordFromEmail() {
   const queryClient = useQueryClient();
-  const { teamMember } = useAuth();
+  const { member: teamMember } = useAuth();
 
   return useMutation({
     mutationFn: async ({
