@@ -24,6 +24,9 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  List,
+  LayoutGrid,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -59,9 +62,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -69,10 +82,12 @@ import {
 } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { useTickets, useCreateTicket, useUpdateTicket, useDeleteTicket, TicketWithProject } from "@/hooks/useTickets";
+import { useSprints, useCreateSprint, useUpdateSprint, useDeleteSprint, Sprint } from "@/hooks/useSprints";
 import { useProjects } from "@/hooks/useProjects";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Database } from "@/integrations/supabase/types";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
+import TicketsBoard from "@/components/tickets/TicketsBoard";
 
 type TicketCategory = Database["public"]["Enums"]["ticket_category"];
 type TicketPriority = Database["public"]["Enums"]["ticket_priority"];
@@ -103,6 +118,13 @@ const categoryLabels: Record<TicketCategory, string> = {
 
 import { ticketStatusStyles, ticketPriorityStyles } from "@/lib/styles";
 
+// Sprint status badge styles (matches conventions in src/lib/styles.ts)
+const sprintStatusStyles: Record<string, string> = {
+  planned: "bg-slate-400 text-black",
+  active: "bg-emerald-600 text-white",
+  completed: "bg-slate-600 text-white",
+};
+
 // Semantic sort orders (not alphabetical)
 const ticketStatusOrder: Record<string, number> = { "open": 0, "in-progress": 1, "pending": 2, "closed": 3 };
 const ticketPriorityOrder: Record<string, number> = { "high": 0, "medium": 1, "low": 2 };
@@ -118,11 +140,15 @@ export default function Tickets() {
   const { data: tickets, isLoading, error } = useTickets();
   const { data: projects } = useProjects();
   const { data: teamMembers } = useTeamMembers();
+  const { data: sprints } = useSprints();
 
   // Mutations
   const createTicket = useCreateTicket();
   const updateTicket = useUpdateTicket();
   const deleteTicket = useDeleteTicket();
+  const createSprint = useCreateSprint();
+  const updateSprint = useUpdateSprint();
+  const deleteSprint = useDeleteSprint();
 
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -131,6 +157,33 @@ export default function Tickets() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<TicketWithProject | null>(null);
   const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set());
+
+  // Board/Table view toggle (persisted)
+  const [viewMode, setViewModeState] = useState<"table" | "board">(() => {
+    try {
+      return localStorage.getItem("soluly-tickets-view") === "board" ? "board" : "table";
+    } catch {
+      return "table";
+    }
+  });
+  const setViewMode = (mode: "table" | "board") => {
+    setViewModeState(mode);
+    try {
+      localStorage.setItem("soluly-tickets-view", mode);
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  // Sprint filtering + management
+  const [sprintFilter, setSprintFilter] = useState<string>("all");
+  const [isSprintDialogOpen, setIsSprintDialogOpen] = useState(false);
+  const [newSprint, setNewSprint] = useState({
+    name: "",
+    goal: "",
+    start_date: "",
+    end_date: "",
+  });
 
   // Column sorting (null = default "smart" ordering)
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
@@ -150,6 +203,7 @@ export default function Tickets() {
     project_id: "",
     priority: "medium" as TicketPriority,
     assignee_id: "",
+    story_points: "",
   });
 
   const [editForm, setEditForm] = useState({
@@ -158,6 +212,7 @@ export default function Tickets() {
     priority: "medium" as TicketPriority,
     status: "open" as TicketStatus,
     assignee_id: "",
+    story_points: "",
   });
 
   // Sync URL with active tab
@@ -213,7 +268,11 @@ export default function Tickets() {
       const matchesProject = filterProject === "all" ||
         (filterProject === "unassigned" ? !ticket.project_id : ticket.project_id === filterProject);
 
-      return matchesSearch && matchesCategory && matchesAssignee && matchesStatus && matchesPriority && matchesProject;
+      // Sprint filter
+      const matchesSprint = sprintFilter === "all" ||
+        (sprintFilter === "backlog" ? !ticket.sprint_id : ticket.sprint_id === sprintFilter);
+
+      return matchesSearch && matchesCategory && matchesAssignee && matchesStatus && matchesPriority && matchesProject && matchesSprint;
     }) || [];
 
     if (sortKey) {
@@ -265,7 +324,18 @@ export default function Tickets() {
     }
 
     return filtered;
-  }, [tickets, searchQuery, activeTab, filterAssignee, filterStatus, filterPriority, filterProject, showClosedTickets, sortKey, sortDir]);
+  }, [tickets, searchQuery, activeTab, filterAssignee, filterStatus, filterPriority, filterProject, sprintFilter, showClosedTickets, sortKey, sortDir]);
+
+  // Count tickets per sprint (for the Manage Sprints dialog)
+  const sprintTicketCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    tickets?.forEach((ticket) => {
+      if (ticket.sprint_id) {
+        counts[ticket.sprint_id] = (counts[ticket.sprint_id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [tickets]);
 
   // Count tickets per category (excluding closed tickets unless showClosedTickets is true)
   const categoryCounts = useMemo(() => {
@@ -395,6 +465,7 @@ export default function Tickets() {
         project_id: newTicket.project_id || null,
         priority: newTicket.priority,
         assignee_id: newTicket.assignee_id || null,
+        story_points: newTicket.story_points === "" ? null : parseFloat(newTicket.story_points),
       });
 
       setNewTicket({
@@ -404,6 +475,7 @@ export default function Tickets() {
         project_id: "",
         priority: "medium",
         assignee_id: "",
+        story_points: "",
       });
       setIsDialogOpen(false);
     } catch (error) {
@@ -422,6 +494,7 @@ export default function Tickets() {
         priority: editForm.priority,
         status: editForm.status,
         assignee_id: editForm.assignee_id || null,
+        story_points: editForm.story_points === "" ? null : parseFloat(editForm.story_points),
       });
 
       toast.success("Ticket updated successfully");
@@ -470,6 +543,77 @@ export default function Tickets() {
     }
   };
 
+  // Sprint management
+  const handleMoveToSprint = async (ticketId: string, sprintId: string | null) => {
+    try {
+      await updateTicket.mutateAsync({ id: ticketId, sprint_id: sprintId });
+      toast.success(sprintId ? "Moved to sprint" : "Moved to backlog");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleCreateSprint = async () => {
+    if (!newSprint.name.trim()) {
+      toast.error("Sprint name is required");
+      return;
+    }
+
+    try {
+      await createSprint.mutateAsync({
+        name: newSprint.name.trim(),
+        goal: newSprint.goal || null,
+        start_date: newSprint.start_date || null,
+        end_date: newSprint.end_date || null,
+      });
+      setNewSprint({ name: "", goal: "", start_date: "", end_date: "" });
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleStartSprint = async (sprint: Sprint) => {
+    try {
+      const currentActive = sprints?.find((s) => s.status === "active" && s.id !== sprint.id);
+      if (currentActive) {
+        await updateSprint.mutateAsync({ id: currentActive.id, status: "completed" });
+        toast.warning(`Sprint "${currentActive.name}" was completed — only one sprint can be active at a time`);
+      }
+      await updateSprint.mutateAsync({ id: sprint.id, status: "active" });
+      toast.success(`Sprint "${sprint.name}" started`);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleCompleteSprint = async (sprint: Sprint) => {
+    try {
+      await updateSprint.mutateAsync({ id: sprint.id, status: "completed" });
+      toast.success(`Sprint "${sprint.name}" completed`);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDeleteSprint = async (sprint: Sprint) => {
+    if (!confirm(`Are you sure you want to delete sprint "${sprint.name}"? Its tickets will return to the backlog.`)) return;
+
+    try {
+      await deleteSprint.mutateAsync(sprint.id);
+      if (sprintFilter === sprint.id) {
+        setSprintFilter("all");
+      }
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const formatSprintDates = (sprint: Sprint) => {
+    if (!sprint.start_date && !sprint.end_date) return "No dates set";
+    const fmt = (d: string | null) => (d ? format(new Date(d), "MMM d, yyyy") : "—");
+    return `${fmt(sprint.start_date)} → ${fmt(sprint.end_date)}`;
+  };
+
   const openEditDialog = (ticket: TicketWithProject, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedTicket(ticket);
@@ -479,6 +623,7 @@ export default function Tickets() {
       priority: ticket.priority,
       status: ticket.status,
       assignee_id: ticket.assignee_id || "",
+      story_points: ticket.story_points != null ? String(ticket.story_points) : "",
     });
     setIsEditDialogOpen(true);
   };
@@ -621,6 +766,21 @@ export default function Tickets() {
                   </Select>
                 </div>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="story-points">Points</Label>
+                  <Input
+                    id="story-points"
+                    type="number"
+                    step={0.5}
+                    min={0}
+                    placeholder="e.g. 3"
+                    value={newTicket.story_points}
+                    onChange={(e) => setNewTicket({ ...newTicket, story_points: e.target.value })}
+                    className="border"
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex justify-end gap-3 border-t border-border pt-4">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border">
@@ -704,6 +864,34 @@ export default function Tickets() {
               </Tabs>
             </div>
 
+            {/* Sprint Bar */}
+            <div className="flex flex-wrap items-center gap-3">
+              <Select value={sprintFilter} onValueChange={setSprintFilter}>
+                <SelectTrigger className="border h-9 w-full sm:w-[240px]">
+                  <SelectValue placeholder="All tickets" />
+                </SelectTrigger>
+                <SelectContent className="border">
+                  <SelectItem value="all">All tickets</SelectItem>
+                  <SelectItem value="backlog">Backlog</SelectItem>
+                  {sprints?.map((sprint) => (
+                    <SelectItem key={sprint.id} value={sprint.id}>
+                      {sprint.name}
+                      {sprint.status === "active" ? " · Active" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border"
+                onClick={() => setIsSprintDialogOpen(true)}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Sprints
+              </Button>
+            </div>
+
             {/* Search and Filters */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
@@ -714,6 +902,28 @@ export default function Tickets() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 border"
                 />
+              </div>
+
+              {/* Board/Table View Toggle */}
+              <div className="flex items-center rounded-sm border border-input overflow-hidden self-start sm:self-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-none h-8 px-2.5 ${viewMode === "table" ? "bg-accent text-accent-foreground" : ""}`}
+                  onClick={() => setViewMode("table")}
+                  aria-label="Table view"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-none h-8 px-2.5 ${viewMode === "board" ? "bg-accent text-accent-foreground" : ""}`}
+                  onClick={() => setViewMode("board")}
+                  aria-label="Board view"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
               </div>
 
               {/* Show Closed Tickets Toggle */}
@@ -905,6 +1115,16 @@ export default function Tickets() {
                   : "No tickets match your search or filter criteria."}
               </p>
             </div>
+          ) : viewMode === "board" ? (
+            <TicketsBoard
+              tickets={filteredTickets}
+              sprints={sprints || []}
+              onTicketClick={(ticket) => navigateOrg(`/tickets/${ticket.display_id}`)}
+              onStatusChange={handleInlineStatusChange}
+              onMoveToSprint={handleMoveToSprint}
+              onEdit={openEditDialog}
+              onDelete={handleDeleteTicket}
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -1058,6 +1278,40 @@ export default function Tickets() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Ticket
                               </DropdownMenuItem>
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()}>
+                                  <ArrowRight className="h-4 w-4 mr-2" />
+                                  Move to Sprint
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                  <DropdownMenuSubContent className="border">
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMoveToSprint(ticket.id, null);
+                                      }}
+                                    >
+                                      Backlog
+                                      {!ticket.sprint_id && <Check className="h-3.5 w-3.5 ml-auto" />}
+                                    </DropdownMenuItem>
+                                    {sprints?.map((sprint) => (
+                                      <DropdownMenuItem
+                                        key={sprint.id}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleMoveToSprint(ticket.id, sprint.id);
+                                        }}
+                                      >
+                                        {sprint.name}
+                                        {sprint.status === "active" ? " · Active" : ""}
+                                        {ticket.sprint_id === sprint.id && (
+                                          <Check className="h-3.5 w-3.5 ml-auto" />
+                                        )}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                              </DropdownMenuSub>
                               <DropdownMenuSeparator />
                               {!ticket.project_id && projects && projects.length > 0 && (
                                 <>
@@ -1187,23 +1441,38 @@ export default function Tickets() {
                 </Select>
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label>Assignee</Label>
-              <Select
-                value={editForm.assignee_id}
-                onValueChange={(value) => setEditForm({ ...editForm, assignee_id: value })}
-              >
-                <SelectTrigger className="border">
-                  <SelectValue placeholder="Select assignee" />
-                </SelectTrigger>
-                <SelectContent className="border">
-                  {teamMembers?.filter(m => m.status === "active").map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Assignee</Label>
+                <Select
+                  value={editForm.assignee_id}
+                  onValueChange={(value) => setEditForm({ ...editForm, assignee_id: value })}
+                >
+                  <SelectTrigger className="border">
+                    <SelectValue placeholder="Select assignee" />
+                  </SelectTrigger>
+                  <SelectContent className="border">
+                    {teamMembers?.filter(m => m.status === "active").map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-story-points">Points</Label>
+                <Input
+                  id="edit-story-points"
+                  type="number"
+                  step={0.5}
+                  min={0}
+                  placeholder="e.g. 3"
+                  value={editForm.story_points}
+                  onChange={(e) => setEditForm({ ...editForm, story_points: e.target.value })}
+                  className="border"
+                />
+              </div>
             </div>
           </div>
           <div className="flex justify-end gap-3 border-t border-border pt-4">
@@ -1221,6 +1490,148 @@ export default function Tickets() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Manage Sprints Dialog */}
+      <Dialog open={isSprintDialogOpen} onOpenChange={setIsSprintDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Manage Sprints</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Sprint list */}
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {!sprints || sprints.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2">
+                  No sprints yet. Create your first sprint below.
+                </p>
+              ) : (
+                sprints.map((sprint) => (
+                  <div
+                    key={sprint.id}
+                    className="flex items-center justify-between gap-3 p-3 border border-border rounded"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm truncate">{sprint.name}</span>
+                        <Badge className={`${sprintStatusStyles[sprint.status] || "bg-slate-400 text-black"} text-xs`}>
+                          {sprint.status}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatSprintDates(sprint)} · {sprintTicketCounts[sprint.id] || 0} ticket(s)
+                      </p>
+                      {sprint.goal && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{sprint.goal}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {sprint.status !== "active" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border h-7 px-2 text-xs"
+                          onClick={() => handleStartSprint(sprint)}
+                          disabled={updateSprint.isPending}
+                        >
+                          <Play className="h-3 w-3 mr-1" />
+                          Start
+                        </Button>
+                      )}
+                      {sprint.status === "active" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border h-7 px-2 text-xs"
+                          onClick={() => handleCompleteSprint(sprint)}
+                          disabled={updateSprint.isPending}
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          Complete
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive"
+                        onClick={() => handleDeleteSprint(sprint)}
+                        disabled={deleteSprint.isPending}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Create sprint form */}
+            <div className="border-t border-border pt-4 space-y-3">
+              <h4 className="text-sm font-semibold">Create Sprint</h4>
+              <div className="grid gap-2">
+                <Label htmlFor="sprint-name">Name *</Label>
+                <Input
+                  id="sprint-name"
+                  placeholder="e.g. Sprint 12"
+                  value={newSprint.name}
+                  onChange={(e) => setNewSprint({ ...newSprint, name: e.target.value })}
+                  className="border"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="sprint-goal">Goal</Label>
+                <Input
+                  id="sprint-goal"
+                  placeholder="What should this sprint achieve?"
+                  value={newSprint.goal}
+                  onChange={(e) => setNewSprint({ ...newSprint, goal: e.target.value })}
+                  className="border"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="sprint-start">Start date</Label>
+                  <Input
+                    id="sprint-start"
+                    type="date"
+                    value={newSprint.start_date}
+                    onChange={(e) => setNewSprint({ ...newSprint, start_date: e.target.value })}
+                    className="border"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="sprint-end">End date</Label>
+                  <Input
+                    id="sprint-end"
+                    type="date"
+                    value={newSprint.end_date}
+                    onChange={(e) => setNewSprint({ ...newSprint, end_date: e.target.value })}
+                    className="border"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleCreateSprint}
+                  className="border"
+                  disabled={createSprint.isPending}
+                >
+                  {createSprint.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Sprint
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
