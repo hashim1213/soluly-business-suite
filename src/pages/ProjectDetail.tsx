@@ -20,6 +20,7 @@ import { useProjectContracts, useCreateProjectContract, useUpdateProjectContract
 import { useProjectExternalMembers, useAddProjectExternalMember, useRemoveProjectExternalMember, useCreateContactAndAddToProject } from "@/hooks/useProjectExternalMembers";
 import { useContacts } from "@/hooks/useContacts";
 import { ProjectAccessManager } from "@/components/projects/ProjectAccessManager";
+import { ProjectTeamTab } from "@/components/projects/ProjectTeamTab";
 import { formatDistanceToNow, format } from "date-fns";
 import { Loader2, Save } from "lucide-react";
 import {
@@ -1341,146 +1342,10 @@ export default function ProjectDetail() {
                   <h4 className="font-semibold">Client Team ({project.name})</h4>
                   <Badge variant="secondary" className="border border-border">{externalTeam.length}</Badge>
                 </div>
-                <Dialog open={isAddMemberDialogOpen} onOpenChange={(open) => {
-                    setIsAddMemberDialogOpen(open);
-                    if (!open) {
-                      setExternalMemberMode("select");
-                      setSelectedContactId("");
-                      setSelectedContactRole("");
-                      setNewExternalMember({ name: "", email: "", role: "", company: "" });
-                    }
-                  }}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="border">
-                      <UserPlus className="h-4 w-4 mr-1" />
-                      Add
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="border sm:max-w-[450px]">
-                    <DialogHeader className="border-b border-border pb-4">
-                      <DialogTitle>Add External Team Member</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      {/* Mode toggle */}
-                      <div className="flex gap-2">
-                        <Button
-                          variant={externalMemberMode === "select" ? "default" : "outline"}
-                          size="sm"
-                          className="flex-1 border"
-                          onClick={() => setExternalMemberMode("select")}
-                        >
-                          Select from Contacts
-                        </Button>
-                        <Button
-                          variant={externalMemberMode === "create" ? "default" : "outline"}
-                          size="sm"
-                          className="flex-1 border"
-                          onClick={() => setExternalMemberMode("create")}
-                        >
-                          Create New Contact
-                        </Button>
-                      </div>
-
-                      {externalMemberMode === "select" ? (
-                        <>
-                          <div className="grid gap-2">
-                            <Label>Select Contact *</Label>
-                            <Select value={selectedContactId} onValueChange={setSelectedContactId}>
-                              <SelectTrigger className="border">
-                                <SelectValue placeholder="Choose a contact..." />
-                              </SelectTrigger>
-                              <SelectContent className="border">
-                                {availableContacts.length === 0 ? (
-                                  <div className="p-2 text-sm text-muted-foreground text-center">
-                                    No contacts available
-                                  </div>
-                                ) : (
-                                  availableContacts.map((contact) => (
-                                    <SelectItem key={contact.id} value={contact.id}>
-                                      <span className="font-medium">{contact.name}</span>
-                                      {contact.company?.name && (
-                                        <span className="text-muted-foreground ml-2">({contact.company.name})</span>
-                                      )}
-                                    </SelectItem>
-                                  ))
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="ext-select-role">Role on Project</Label>
-                            <Input
-                              id="ext-select-role"
-                              placeholder="e.g., Product Owner, Technical Lead"
-                              value={selectedContactRole}
-                              onChange={(e) => setSelectedContactRole(e.target.value)}
-                              className="border"
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="grid gap-2">
-                            <Label htmlFor="ext-name">Name *</Label>
-                            <Input
-                              id="ext-name"
-                              placeholder="Full name"
-                              value={newExternalMember.name}
-                              onChange={(e) => setNewExternalMember({ ...newExternalMember, name: e.target.value })}
-                              className="border"
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="ext-email">Email</Label>
-                            <Input
-                              id="ext-email"
-                              type="email"
-                              placeholder="email@company.com"
-                              value={newExternalMember.email}
-                              onChange={(e) => setNewExternalMember({ ...newExternalMember, email: e.target.value })}
-                              className="border"
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="ext-role">Role / Job Title</Label>
-                            <Input
-                              id="ext-role"
-                              placeholder="e.g., Product Owner, Technical Lead"
-                              value={newExternalMember.role}
-                              onChange={(e) => setNewExternalMember({ ...newExternalMember, role: e.target.value })}
-                              className="border"
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            This will create a new contact in your CRM and add them to this project.
-                          </p>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex justify-end gap-3 border-t border-border pt-4">
-                      <Button variant="outline" onClick={() => setIsAddMemberDialogOpen(false)} className="border">
-                        Cancel
-                      </Button>
-                      {externalMemberMode === "select" ? (
-                        <Button
-                          onClick={handleAddExternalFromContact}
-                          className="border"
-                          disabled={!selectedContactId || addExternalMemberMutation.isPending}
-                        >
-                          {addExternalMemberMutation.isPending ? "Adding..." : "Add Member"}
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={handleAddExternalNewContact}
-                          className="border"
-                          disabled={!newExternalMember.name || createContactAndAdd.isPending}
-                        >
-                          {createContactAndAdd.isPending ? "Creating..." : "Create & Add"}
-                        </Button>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button size="sm" variant="outline" className="border" onClick={() => setIsAddMemberDialogOpen(true)}>
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
               </div>
               <div className="space-y-2">
                 {externalTeam.length === 0 ? (
@@ -1510,6 +1375,142 @@ export default function ProjectDetail() {
                 )}
               </div>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add External Team Member Dialog (opened from the Team tab or the Team Members dialog) */}
+      <Dialog open={isAddMemberDialogOpen} onOpenChange={(open) => {
+          setIsAddMemberDialogOpen(open);
+          if (!open) {
+            setExternalMemberMode("select");
+            setSelectedContactId("");
+            setSelectedContactRole("");
+            setNewExternalMember({ name: "", email: "", role: "", company: "" });
+          }
+        }}>
+        <DialogContent className="border sm:max-w-[450px]">
+          <DialogHeader className="border-b border-border pb-4">
+            <DialogTitle>Add External Team Member</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {/* Mode toggle */}
+            <div className="flex gap-2">
+              <Button
+                variant={externalMemberMode === "select" ? "default" : "outline"}
+                size="sm"
+                className="flex-1 border"
+                onClick={() => setExternalMemberMode("select")}
+              >
+                Select from Contacts
+              </Button>
+              <Button
+                variant={externalMemberMode === "create" ? "default" : "outline"}
+                size="sm"
+                className="flex-1 border"
+                onClick={() => setExternalMemberMode("create")}
+              >
+                Create New Contact
+              </Button>
+            </div>
+
+            {externalMemberMode === "select" ? (
+              <>
+                <div className="grid gap-2">
+                  <Label>Select Contact *</Label>
+                  <Select value={selectedContactId} onValueChange={setSelectedContactId}>
+                    <SelectTrigger className="border">
+                      <SelectValue placeholder="Choose a contact..." />
+                    </SelectTrigger>
+                    <SelectContent className="border">
+                      {availableContacts.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          No contacts available
+                        </div>
+                      ) : (
+                        availableContacts.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            <span className="font-medium">{contact.name}</span>
+                            {contact.company?.name && (
+                              <span className="text-muted-foreground ml-2">({contact.company.name})</span>
+                            )}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="ext-select-role">Role on Project</Label>
+                  <Input
+                    id="ext-select-role"
+                    placeholder="e.g., Product Owner, Technical Lead"
+                    value={selectedContactRole}
+                    onChange={(e) => setSelectedContactRole(e.target.value)}
+                    className="border"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="ext-name">Name *</Label>
+                  <Input
+                    id="ext-name"
+                    placeholder="Full name"
+                    value={newExternalMember.name}
+                    onChange={(e) => setNewExternalMember({ ...newExternalMember, name: e.target.value })}
+                    className="border"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="ext-email">Email</Label>
+                  <Input
+                    id="ext-email"
+                    type="email"
+                    placeholder="email@company.com"
+                    value={newExternalMember.email}
+                    onChange={(e) => setNewExternalMember({ ...newExternalMember, email: e.target.value })}
+                    className="border"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="ext-role">Role / Job Title</Label>
+                  <Input
+                    id="ext-role"
+                    placeholder="e.g., Product Owner, Technical Lead"
+                    value={newExternalMember.role}
+                    onChange={(e) => setNewExternalMember({ ...newExternalMember, role: e.target.value })}
+                    className="border"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This will create a new contact in your CRM and add them to this project.
+                </p>
+              </>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setIsAddMemberDialogOpen(false)} className="border">
+              Cancel
+            </Button>
+            {externalMemberMode === "select" ? (
+              <Button
+                onClick={handleAddExternalFromContact}
+                className="border"
+                disabled={!selectedContactId || addExternalMemberMutation.isPending}
+              >
+                {addExternalMemberMutation.isPending ? "Adding..." : "Add Member"}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleAddExternalNewContact}
+                className="border"
+                disabled={!newExternalMember.name || createContactAndAdd.isPending}
+              >
+                {createContactAndAdd.isPending ? "Creating..." : "Create & Add"}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -3003,265 +3004,29 @@ export default function ProjectDetail() {
 
         {/* Team Tab */}
         <TabsContent value="team" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border border-border shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
-                    <Timer className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold font-mono">{totalHours}</div>
-                    <div className="text-sm text-muted-foreground">Total Hours</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border border-border shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-chart-2">
-                    <Clock className="h-5 w-5 text-background" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold font-mono">{billableHours}</div>
-                    <div className="text-sm text-muted-foreground">Billable Hours</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border border-border shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-chart-1">
-                    <Users className="h-5 w-5 text-background" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold">{internalTeam.length}</div>
-                    <div className="text-sm text-muted-foreground">Team Members</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border border-border shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-primary">
-                    <DollarSign className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold font-mono">
-                      ${hoursByMember.reduce((sum, m) => sum + m.totalPaid, 0).toLocaleString()}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Total Paid</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Team Members Breakdown */}
-          <Card className="border border-border shadow-sm">
-            <CardHeader className="border-b border-border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Team Members</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Hours worked, rates, and payment breakdown
-                  </p>
-                </div>
-                <Button size="sm" variant="outline" className="border" onClick={() => setIsTeamDialogOpen(true)}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Manage Team
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b hover:bg-transparent">
-                    <TableHead className="font-semibold uppercase text-xs">Member</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs">Role</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs">Contract</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs text-right">Hours</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs text-right">Rate/Hr</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs text-right">Salary</TableHead>
-                    <TableHead className="font-semibold uppercase text-xs text-right">Paid</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {hoursByMember.map((member) => (
-                    <TableRow key={member.id} className="border-b">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8 border border-border">
-                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">{member.avatar}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{member.name}</div>
-                            <div className="text-xs text-muted-foreground">{member.email}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{member.role}</TableCell>
-                      <TableCell>
-                        <Badge className={contractTypeStyles[member.contractType as keyof typeof contractTypeStyles] || "bg-slate-400 text-black"}>
-                          {member.contractType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">{member.hoursOnProject}h</TableCell>
-                      <TableCell className="text-right font-mono">${member.hourlyRate}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        {member.salary > 0 ? `$${member.salary.toLocaleString()}` : "-"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono font-semibold">${member.totalPaid.toLocaleString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Project Access Manager */}
-          {dbProject?.id && (
-            <ProjectAccessManager projectId={dbProject.id} projectName={dbProject.name} />
-          )}
-
-          {/* Time Entries */}
-          <Card className="border border-border shadow-sm">
-            <CardHeader className="border-b border-border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Time Entries</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Recent hours logged on this project
-                  </p>
-                </div>
-                <Dialog open={isTimeEntryDialogOpen} onOpenChange={setIsTimeEntryDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" className="border">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Log Time
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="border sm:max-w-[425px]">
-                    <DialogHeader className="border-b border-border pb-4">
-                      <DialogTitle>Log Time Entry</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="time-member">Team Member *</Label>
-                        <Select value={newTimeEntry.memberId} onValueChange={(value) => setNewTimeEntry({ ...newTimeEntry, memberId: value })}>
-                          <SelectTrigger className="border">
-                            <SelectValue placeholder="Select member" />
-                          </SelectTrigger>
-                          <SelectContent className="border">
-                            {internalTeam.map((member) => (
-                              <SelectItem key={member.id} value={member.id}>
-                                {member.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="time-hours">Hours *</Label>
-                        <Input
-                          id="time-hours"
-                          type="number"
-                          step="0.5"
-                          placeholder="8"
-                          value={newTimeEntry.hours}
-                          onChange={(e) => setNewTimeEntry({ ...newTimeEntry, hours: e.target.value })}
-                          className="border"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="time-desc">Description</Label>
-                        <Textarea
-                          id="time-desc"
-                          placeholder="What did you work on?"
-                          value={newTimeEntry.description}
-                          onChange={(e) => setNewTimeEntry({ ...newTimeEntry, description: e.target.value })}
-                          className="border"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="time-billable"
-                          checked={newTimeEntry.billable}
-                          onCheckedChange={(checked) => setNewTimeEntry({ ...newTimeEntry, billable: checked as boolean })}
-                          className="border"
-                        />
-                        <Label htmlFor="time-billable" className="text-sm cursor-pointer">
-                          Billable hours
-                        </Label>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-3 border-t border-border pt-4">
-                      <Button variant="outline" onClick={() => setIsTimeEntryDialogOpen(false)} className="border">
-                        Cancel
-                      </Button>
-                      <Button onClick={addTimeEntry} className="border">
-                        Log Time
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {timeEntriesLoading ? (
-                <div className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-                </div>
-              ) : !dbTimeEntries || dbTimeEntries.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No time entries yet
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-b hover:bg-transparent">
-                      <TableHead className="font-semibold uppercase text-xs">Date</TableHead>
-                      <TableHead className="font-semibold uppercase text-xs">Member</TableHead>
-                      <TableHead className="font-semibold uppercase text-xs">Description</TableHead>
-                      <TableHead className="font-semibold uppercase text-xs text-right">Hours</TableHead>
-                      <TableHead className="font-semibold uppercase text-xs">Type</TableHead>
-                      <TableHead className="font-semibold uppercase text-xs">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dbTimeEntries?.map((entry) => (
-                      <TableRow key={entry.id} className="border-b">
-                        <TableCell className="text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy")}</TableCell>
-                        <TableCell className="font-medium">{entry.team_member?.name || "Unknown"}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{entry.description || "-"}</TableCell>
-                        <TableCell className="text-right font-mono font-semibold">{entry.hours}h</TableCell>
-                        <TableCell>
-                          {entry.billable ? (
-                            <Badge className="bg-emerald-600 text-white">Billable</Badge>
-                          ) : (
-                            <Badge variant="secondary" className="border border-border">Non-billable</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
-                            onClick={() => handleDeleteTimeEntry(entry.id, entry.team_member_id, entry.hours)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <ProjectTeamTab
+            projectId={dbProject.id}
+            projectName={dbProject.name}
+            totalHours={totalHours}
+            billableHours={billableHours}
+            teamMembers={hoursByMember}
+            externalMembers={externalTeam}
+            availableTeamMembers={availableTeamMembers}
+            isAddingMember={addProjectTeamMember.isPending}
+            onManageTeam={() => setIsTeamDialogOpen(true)}
+            onAddExternalMember={() => setIsAddMemberDialogOpen(true)}
+            onAddTeamMember={addInternalMember}
+            onRemoveTeamMember={removeInternalMember}
+            onRemoveExternalMember={handleRemoveExternalMember}
+            timeEntries={dbTimeEntries}
+            timeEntriesLoading={timeEntriesLoading}
+            isTimeEntryDialogOpen={isTimeEntryDialogOpen}
+            onTimeEntryDialogOpenChange={setIsTimeEntryDialogOpen}
+            newTimeEntry={newTimeEntry}
+            onNewTimeEntryChange={setNewTimeEntry}
+            onAddTimeEntry={addTimeEntry}
+            onDeleteTimeEntry={handleDeleteTimeEntry}
+          />
         </TabsContent>
       </Tabs>
 
