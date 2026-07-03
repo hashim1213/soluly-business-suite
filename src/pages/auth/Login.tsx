@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { validateEmail } from "@/lib/validation";
-import { orgPath } from "@/lib/tenant";
+import { orgPath, getTenantSlug } from "@/lib/tenant";
 
 export default function Login() {
   useDocumentTitle("Login");
@@ -20,16 +20,12 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (isAuthenticated && organization?.slug) {
-        navigate(orgPath(organization.slug), { replace: true });
-      } else if (user && !organization) {
-        navigate("/", { replace: true });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, organization?.slug, user, authLoading]);
+  if (!authLoading && isAuthenticated && organization?.slug) {
+    return <Navigate to={orgPath(organization.slug)} replace />;
+  }
+  if (!authLoading && user && !organization && !getTenantSlug()) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
