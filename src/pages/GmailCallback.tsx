@@ -73,7 +73,8 @@ export default function GmailCallback() {
     };
 
     handleCallback();
-  }, [searchParams, navigate, organization]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

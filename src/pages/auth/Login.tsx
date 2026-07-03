@@ -20,19 +20,16 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // If already authenticated with org, redirect to workspace
-  // If logged in but no org, redirect to root (OrgRedirect will handle org creation)
   useEffect(() => {
     if (!authLoading) {
       if (isAuthenticated && organization?.slug) {
         navigate(orgPath(organization.slug), { replace: true });
       } else if (user && !organization) {
-        // User is logged in but has no organization - redirect to root
-        // OrgRedirect will show the org creation form
         navigate("/", { replace: true });
       }
     }
-  }, [isAuthenticated, organization, user, authLoading, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, organization?.slug, user, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
