@@ -43,7 +43,21 @@ export default function AcceptInvite() {
         return;
       }
 
-      let { data, error } = await supabase
+      // Sign out first to avoid stale JWT issues on cross-subdomain navigation,
+      // then check if we actually have a valid session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      let hasSession = !!currentSession;
+
+      // If there's a session but it might be stale/invalid, validate it
+      if (hasSession) {
+        const { error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          await supabase.auth.signOut();
+          hasSession = false;
+        }
+      }
+
+      const { data, error } = await supabase
         .from("invitations")
         .select(`
           id,
@@ -56,40 +70,31 @@ export default function AcceptInvite() {
         .is("accepted_at", null)
         .single();
 
-      // If we get a 401, there might be a stale session - try signing out and retrying
-      if (error?.message?.includes("JWT") || error?.code === "PGRST301" || (error as any)?.status === 401) {
-        console.log("Stale session detected, signing out and retrying...");
-        await supabase.auth.signOut();
-
-        // Retry the query
-        const retry = await supabase
-          .from("invitations")
-          .select(`
-            id,
-            email,
-            expires_at,
-            organization:organizations(name, slug),
-            role:roles(name)
-          `)
-          .eq("token", token)
-          .is("accepted_at", null)
-          .single();
-
-        data = retry.data;
-        error = retry.error;
-      }
-
       if (error || !data) {
-        console.error("Invitation fetch error:", error);
-        console.error("Token used:", token);
-        setError("This invitation is invalid or has already been used");
-        setIsLoading(false);
-        return;
-      }
+        // If we got an auth error and had a session, sign out and retry as anon
+        if (error && hasSession) {
+          await supabase.auth.signOut();
+          const retry = await supabase
+            .from("invitations")
+            .select(`
+              id,
+              email,
+              expires_at,
+              organization:organizations(name, slug),
+              role:roles(name)
+            `)
+            .eq("token", token)
+            .is("accepted_at", null)
+            .single();
 
-      // Check if expired
-      if (new Date(data.expires_at) < new Date()) {
-        setError("This invitation has expired");
+          if (!retry.error && retry.data) {
+            setInvitation(retry.data as Invitation);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        setError("This invitation is invalid or has already been used");
         setIsLoading(false);
         return;
       }

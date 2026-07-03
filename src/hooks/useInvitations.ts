@@ -4,6 +4,7 @@ import { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { getCsrfToken, CSRF_HEADER } from "@/lib/csrf";
+import { getBaseDomain } from "@/lib/tenant";
 
 export type Invitation = Tables<"invitations">;
 export type InvitationInsert = TablesInsert<"invitations">;
@@ -106,9 +107,9 @@ export function useCreateInvitation() {
         throw new Error("An invitation has already been sent to this email");
       }
 
-      // Create invitation (expires in 7 days)
+      // Create invitation (valid for 1 year — effectively no expiry until accepted)
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
       const { data, error } = await supabase
         .from("invitations")
@@ -146,8 +147,10 @@ export function useCreateInvitation() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
-      // Generate the invite link
-      const baseUrl = import.meta.env.PROD ? "https://app.soluly.com" : window.location.origin;
+      const baseDomain = getBaseDomain();
+      const baseUrl = baseDomain
+        ? `${window.location.protocol}//${organization?.slug}.${baseDomain}`
+        : window.location.origin;
       const inviteLink = `${baseUrl}/invite/${data.token}`;
       toast.success(
         `Invitation sent to ${data.email}. Link: ${inviteLink}`,
@@ -172,7 +175,7 @@ export function useResendInvitation() {
       }
 
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
       const { data, error } = await supabase
         .from("invitations")
@@ -203,7 +206,10 @@ export function useResendInvitation() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
-      const baseUrl = import.meta.env.PROD ? "https://app.soluly.com" : window.location.origin;
+      const baseDomain = getBaseDomain();
+      const baseUrl = baseDomain
+        ? `${window.location.protocol}//${organization?.slug}.${baseDomain}`
+        : window.location.origin;
       const inviteLink = `${baseUrl}/invite/${data.token}`;
       toast.success(`Invitation resent. New link: ${inviteLink}`, { duration: 10000 });
     },
