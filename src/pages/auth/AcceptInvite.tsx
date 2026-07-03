@@ -43,67 +43,43 @@ export default function AcceptInvite() {
         return;
       }
 
-      // Sign out first to avoid stale JWT issues on cross-subdomain navigation,
-      // then check if we actually have a valid session
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      let hasSession = !!currentSession;
+      // Fetch invitation directly via REST API to avoid any Supabase client
+      // session/auth issues on cross-subdomain navigation. The RLS policy
+      // allows anon SELECT on unaccepted invitations.
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      // If there's a session but it might be stale/invalid, validate it
-      if (hasSession) {
-        const { error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          await supabase.auth.signOut();
-          hasSession = false;
-        }
-      }
-
-      const { data, error } = await supabase
-        .from("invitations")
-        .select(`
-          id,
-          email,
-          expires_at,
-          organization:organizations(name, slug),
-          role:roles(name)
-        `)
-        .eq("token", token)
-        .is("accepted_at", null)
-        .single();
-
-      if (error || !data) {
-        // If we got an auth error and had a session, sign out and retry as anon
-        if (error && hasSession) {
-          await supabase.auth.signOut();
-          const retry = await supabase
-            .from("invitations")
-            .select(`
-              id,
-              email,
-              expires_at,
-              organization:organizations(name, slug),
-              role:roles(name)
-            `)
-            .eq("token", token)
-            .is("accepted_at", null)
-            .single();
-
-          if (!retry.error && retry.data) {
-            setInvitation(retry.data as Invitation);
-            setIsLoading(false);
-            return;
+      try {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/invitations?select=id,email,expires_at,organization:organizations(name,slug),role:roles(name)&token=eq.${token}&accepted_at=is.null`,
+          {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+            },
           }
+        );
+
+        if (!res.ok) {
+          setError("This invitation is invalid or has already been used");
+          setIsLoading(false);
+          return;
         }
 
-        setError("This invitation is invalid or has already been used");
-        setIsLoading(false);
-        return;
-      }
+        const rows = await res.json();
+        if (!rows || rows.length === 0) {
+          setError("This invitation is invalid or has already been used");
+          setIsLoading(false);
+          return;
+        }
 
-      setInvitation(data as Invitation);
+        setInvitation(rows[0] as Invitation);
 
-      // Check if user is already logged in
-      if (user) {
-        setIsExistingUser(true);
+        if (user) {
+          setIsExistingUser(true);
+        }
+      } catch {
+        setError("Failed to load invitation. Please try again.");
       }
 
       setIsLoading(false);
