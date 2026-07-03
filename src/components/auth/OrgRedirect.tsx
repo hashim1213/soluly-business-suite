@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ export function OrgRedirect() {
   const queryClient = useQueryClient();
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
+  const redirectingRef = useRef(false);
 
   // Form state for creating org
   const [orgName, setOrgName] = useState("");
@@ -221,8 +222,10 @@ export function OrgRedirect() {
   // Have user and org - redirect to workspace
   if (organization?.slug) {
     if (isSubdomainCapable()) {
-      // Workspaces live on their own subdomain (acme.soluly.com)
-      window.location.replace(orgHref(organization.slug, "/"));
+      if (!redirectingRef.current) {
+        redirectingRef.current = true;
+        window.location.replace(orgHref(organization.slug, "/"));
+      }
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
