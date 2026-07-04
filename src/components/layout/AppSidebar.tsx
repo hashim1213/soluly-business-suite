@@ -107,12 +107,12 @@ export function AppSidebar() {
       <NavLink
         to={getFullUrl(item.path)}
         end={item.path === ""}
-        className={`relative flex items-center rounded-sm text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-sidebar-primary before:opacity-0 before:transition-opacity ${
-          collapsed ? "justify-center p-2" : "gap-3 px-3 py-2"
+        className={`relative flex items-center rounded-[3px] text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+          collapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-1.5"
         }`}
-        activeClassName="bg-sidebar-accent/60 font-semibold text-sidebar-primary before:opacity-100"
+        activeClassName="bg-sidebar-accent font-medium text-sidebar-primary"
       >
-        <item.icon className="h-5 w-5 shrink-0" />
+        <item.icon className="h-4 w-4 shrink-0" />
         {!collapsed && <span>{item.title}</span>}
       </NavLink>
     );
@@ -135,14 +135,14 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="h-14 border-b border-sidebar-border px-2 flex items-center">
+      <SidebarHeader className="h-12 border-b border-sidebar-border px-2 flex items-center">
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-1.5">
         {visibleMainItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/70 px-3 mb-1">
+            <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 px-2.5 mb-0.5">
               {!collapsed && "Main"}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -158,8 +158,8 @@ export function AppSidebar() {
         )}
 
         {visibleSystemItems.length > 0 && (
-          <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/70 px-3 mb-1">
+          <SidebarGroup className="mt-3">
+            <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 px-2.5 mb-0.5">
               {!collapsed && "System"}
             </SidebarGroupLabel>
             <SidebarGroupContent>

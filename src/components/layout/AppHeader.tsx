@@ -180,7 +180,7 @@ export function AppHeader() {
     .slice(0, 2) || "??";
 
   return (
-    <header className="h-12 border-b border-border bg-card flex items-center justify-between px-2 sm:px-4 shrink-0">
+    <header className="h-11 border-b border-border bg-card flex items-center justify-between px-3 sm:px-4 shrink-0">
       {/* Breadcrumb trail (Fluent command bar) */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 min-w-0 text-sm">
         {crumbs.map((crumb, i) => {
