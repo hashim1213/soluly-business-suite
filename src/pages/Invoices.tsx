@@ -111,6 +111,7 @@ interface InvoiceFormData {
   invoice_number: string;
   notes: string;
   tax_rate: string;
+  tax_amount_override: string;
 }
 
 const emptyForm: InvoiceFormData = {
@@ -121,6 +122,7 @@ const emptyForm: InvoiceFormData = {
   invoice_number: "",
   notes: "",
   tax_rate: "0",
+  tax_amount_override: "",
 };
 
 const emptyLineItem = (): InvoiceLineItemInput => ({
@@ -178,7 +180,8 @@ export default function Invoices() {
     [lineItems]
   );
   const taxRate = parseFloat(form.tax_rate) || 0;
-  const taxAmount = subtotal * (taxRate / 100);
+  const taxAmountOverride = parseFloat(form.tax_amount_override);
+  const taxAmount = !isNaN(taxAmountOverride) && form.tax_amount_override !== "" ? taxAmountOverride : subtotal * (taxRate / 100);
   const grandTotal = subtotal + taxAmount;
 
   const openCreate = () => {
@@ -198,6 +201,7 @@ export default function Invoices() {
       invoice_number: invoice.invoice_number ?? "",
       notes: invoice.notes ?? "",
       tax_rate: (invoice.tax_rate ?? 0).toString(),
+      tax_amount_override: invoice.tax_amount && invoice.tax_amount > 0 ? invoice.tax_amount.toString() : "",
     });
     if (editLineItems && editLineItems.length > 0) {
       setLineItems(
@@ -245,7 +249,8 @@ export default function Invoices() {
     }
 
     const invoiceSubtotal = validItems.reduce((sum, li) => sum + li.quantity * li.unit_price, 0);
-    const invoiceTaxAmount = invoiceSubtotal * (taxRate / 100);
+    const overrideAmt = parseFloat(form.tax_amount_override);
+    const invoiceTaxAmount = !isNaN(overrideAmt) && form.tax_amount_override !== "" ? overrideAmt : invoiceSubtotal * (taxRate / 100);
     const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
 
     try {
@@ -828,7 +833,7 @@ export default function Invoices() {
 
             {/* Totals */}
             <div className="flex justify-end">
-              <div className="w-72 space-y-2 border rounded-md p-4 bg-muted/30">
+              <div className="w-80 space-y-2 border rounded-md p-4 bg-muted/30">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-mono">{formatCurrency(subtotal)}</span>
@@ -841,8 +846,21 @@ export default function Invoices() {
                     min="0"
                     max="100"
                     value={form.tax_rate}
-                    onChange={(e) => setForm((f) => ({ ...f, tax_rate: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, tax_rate: e.target.value, tax_amount_override: "" }))}
                     className="border h-8 w-20 text-right"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span className="text-muted-foreground">Tax Amount ($)</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.tax_amount_override}
+                    onChange={(e) => setForm((f) => ({ ...f, tax_amount_override: e.target.value, tax_rate: "0" }))}
+                    className="border h-8 w-24 text-right"
+                    placeholder="Auto"
                   />
                 </div>
                 {taxAmount > 0 && (
