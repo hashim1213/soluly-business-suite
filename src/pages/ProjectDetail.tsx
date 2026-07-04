@@ -580,8 +580,8 @@ export default function ProjectDetail() {
     tickets: projectTickets?.length || 0,
     client: dbProject.client_name,
     clientEmail: dbProject.client_email || "",
-    startDate: dbProject.start_date ? format(new Date(dbProject.start_date), "MMM d, yyyy") : "Not set",
-    endDate: dbProject.end_date ? format(new Date(dbProject.end_date), "MMM d, yyyy") : "Not set",
+    startDate: dbProject.start_date ? format(new Date(dbProject.start_date + "T00:00:00"), "MMM d, yyyy") : "Not set",
+    endDate: dbProject.end_date ? format(new Date(dbProject.end_date + "T00:00:00"), "MMM d, yyyy") : "Not set",
     internalTeam,
     externalTeam,
   };
@@ -1725,7 +1725,7 @@ export default function ProjectDetail() {
                         </div>
                         {dbProject.maintenance_start_date && (
                           <div className="text-xs text-muted-foreground">
-                            Started: {format(new Date(dbProject.maintenance_start_date), "MMM d, yyyy")}
+                            Started: {format(new Date(dbProject.maintenance_start_date + "T00:00:00"), "MMM d, yyyy")}
                           </div>
                         )}
                       </div>
@@ -1784,56 +1784,6 @@ export default function ProjectDetail() {
             </Card>
           </div>
 
-          {/* Maintenance Card */}
-          {dbProject?.has_maintenance && (
-            <Card className="border border-chart-2/50 bg-chart-2/5 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 border border-chart-2 flex items-center justify-center bg-chart-2/20 rounded-lg">
-                      <RefreshCw className="h-6 w-6 text-chart-2" />
-                    </div>
-                    <div>
-                      <div className="font-semibold flex items-center gap-2">
-                        Recurring Maintenance
-                        <Badge variant="secondary" className="border border-chart-2 text-chart-2">
-                          {dbProject.maintenance_frequency?.charAt(0).toUpperCase() + dbProject.maintenance_frequency?.slice(1) || "Monthly"}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <span className="font-mono font-semibold text-foreground">
-                          ${Number(dbProject.maintenance_amount || 0).toLocaleString()}
-                        </span>
-                        {" "}per {dbProject.maintenance_frequency === "yearly" ? "year" : dbProject.maintenance_frequency === "quarterly" ? "quarter" : "month"}
-                        {dbProject.maintenance_notes && (
-                          <span className="ml-2">• {dbProject.maintenance_notes}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border border-chart-2 text-chart-2 hover:bg-chart-2 hover:text-background"
-                      onClick={handleCreateMaintenanceInvoice}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Invoice
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="border border-transparent hover:border-border"
-                      onClick={openMaintenanceDialog}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           <Card className="border border-border shadow-sm">
             <CardHeader className="border-b border-border">
@@ -1964,7 +1914,7 @@ export default function ProjectDetail() {
                       </TableCell>
                       <TableCell className="text-right font-mono font-semibold">${invoice.amount.toLocaleString()}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {invoice.due_date ? format(new Date(invoice.due_date), "MMM d, yyyy") : "-"}
+                        {invoice.due_date ? format(new Date(invoice.due_date + "T00:00:00"), "MMM d, yyyy") : "-"}
                       </TableCell>
                       <TableCell>
                         <Badge className={invoiceStatusStyles[invoice.status as keyof typeof invoiceStatusStyles] || "bg-slate-400 text-black"}>
@@ -2280,7 +2230,7 @@ export default function ProjectDetail() {
                                 {task.assignee?.profiles?.full_name && <span>•</span>}
                                 <span className="flex items-center gap-1">
                                   <CalendarIcon className="h-3 w-3" />
-                                  Due: {new Date(task.due_date).toLocaleDateString()}
+                                  Due: {new Date(task.due_date + "T00:00:00").toLocaleDateString()}
                                 </span>
                               </>
                             )}
@@ -2537,7 +2487,7 @@ export default function ProjectDetail() {
                       }}
                       className="border"
                     />
-                    <p className="text-xs text-muted-foreground">Current: {new Date(editingMilestone.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                    <p className="text-xs text-muted-foreground">Current: {new Date(editingMilestone.due_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                   </div>
                 </div>
               )}

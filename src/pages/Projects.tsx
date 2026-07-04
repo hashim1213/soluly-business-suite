@@ -102,8 +102,8 @@ const generateProjectPDF = async (project: Project, tickets: any[]) => {
     ["Progress:", `${project.progress}%`],
     ["Value:", `$${project.value.toLocaleString()}`],
     ["Budget:", `$${project.budget.toLocaleString()}`],
-    ["Start Date:", project.start_date ? new Date(project.start_date).toLocaleDateString() : "N/A"],
-    ["End Date:", project.end_date ? new Date(project.end_date).toLocaleDateString() : "N/A"],
+    ["Start Date:", project.start_date ? new Date(project.start_date + "T00:00:00").toLocaleDateString() : "N/A"],
+    ["End Date:", project.end_date ? new Date(project.end_date + "T00:00:00").toLocaleDateString() : "N/A"],
   ];
 
   details.forEach(([label, value]) => {
@@ -492,7 +492,8 @@ export default function Projects() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const d = dateString.includes("T") ? new Date(dateString) : new Date(dateString + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",

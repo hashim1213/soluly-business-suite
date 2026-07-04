@@ -12,6 +12,7 @@ export type RecurringChargeCategory =
   | "subscription"
   | "domain"
   | "license"
+  | "maintenance"
   | "other";
 export type RecurringChargeFrequency = "monthly" | "quarterly" | "yearly";
 
@@ -30,9 +31,9 @@ export function isChargeDueInMonth(charge: RecurringCharge, month: Date): boolea
   if (!charge.active) return false;
   const cycleMonths = FREQUENCY_MONTHS[charge.frequency] ?? 1;
   const monthStart = startOfMonth(month);
-  const chargeStart = startOfMonth(parseISO(charge.start_date));
+  const chargeStart = startOfMonth(parseISO(charge.start_date + "T00:00:00"));
   if (monthStart < chargeStart) return false;
-  if (charge.end_date && parseISO(charge.end_date) < monthStart) return false;
+  if (charge.end_date && parseISO(charge.end_date + "T00:00:00") < monthStart) return false;
   const monthsSinceStart = differenceInCalendarMonths(monthStart, chargeStart);
   return monthsSinceStart % cycleMonths === 0;
 }

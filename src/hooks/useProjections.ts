@@ -492,8 +492,8 @@ export function useServicesKPIs(periodMonths: number = 12) {
       const periodProjects = projects.filter(p => new Date(p.created_at) >= periodStart);
       const periodQuotes = quotes.filter(q => new Date(q.created_at) >= periodStart);
       const periodClients = clients.filter(c => new Date(c.created_at) >= periodStart);
-      const periodTimeEntries = timeEntries.filter(t => new Date(t.date) >= periodStart);
-      const periodCosts = businessCosts.filter(c => new Date(c.date) >= periodStart);
+      const periodTimeEntries = timeEntries.filter(t => new Date(t.date + "T00:00:00") >= periodStart);
+      const periodCosts = businessCosts.filter(c => new Date(c.date + "T00:00:00") >= periodStart);
       const periodInvoices = invoices.filter(i => new Date(i.created_at) >= periodStart);
 
       // Revenue & Profitability - Use INVOICED amounts (sent, paid, overdue - not drafts)
@@ -597,8 +597,8 @@ export function useServicesKPIs(periodMonths: number = 12) {
       const projectsWithDates = completedProjects.filter(p => p.start_date && p.end_date);
       const avgProjectDuration = projectsWithDates.length > 0
         ? projectsWithDates.reduce((sum, p) => {
-            const start = new Date(p.start_date);
-            const end = new Date(p.end_date || p.updated_at);
+            const start = new Date(p.start_date + "T00:00:00");
+            const end = p.end_date ? new Date(p.end_date + "T00:00:00") : new Date(p.updated_at);
             return sum + Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
           }, 0) / projectsWithDates.length
         : 60; // default 60 days
@@ -606,7 +606,7 @@ export function useServicesKPIs(periodMonths: number = 12) {
       // On-time delivery (simplified - projects with progress 100% before end_date)
       const projectsWithEndDate = completedProjects.filter(p => p.end_date);
       const onTimeProjects = projectsWithEndDate.filter(p => {
-        const endDate = new Date(p.end_date);
+        const endDate = new Date(p.end_date + "T00:00:00");
         const completedDate = new Date(p.updated_at);
         return completedDate <= endDate;
       });

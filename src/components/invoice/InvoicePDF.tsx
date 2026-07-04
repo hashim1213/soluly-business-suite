@@ -305,9 +305,10 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// Format date
+// Format date — date-only strings (YYYY-MM-DD) must be parsed as local time
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-US", {
+  const d = dateString.includes("T") ? new Date(dateString) : new Date(dateString + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",

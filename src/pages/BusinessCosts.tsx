@@ -943,7 +943,7 @@ export default function BusinessCosts() {
                       {cost.vendor || "-"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {format(new Date(cost.date), "MMM d, yyyy")}
+                      {format(new Date(cost.date + "T00:00:00"), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="text-right font-mono font-medium">
                       <div>

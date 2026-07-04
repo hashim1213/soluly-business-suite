@@ -1,5 +1,19 @@
-import { useState } from "react";
-import { useAllProjectInvoices, useCreateProjectInvoice, useUpdateProjectInvoice, useDeleteProjectInvoice, ProjectInvoice, INVOICE_STATUSES } from "@/hooks/useProjectInvoices";
+import { useState, useMemo } from "react";
+import { pdf } from "@react-pdf/renderer";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { InvoicePDF, InvoiceData } from "@/components/invoice/InvoicePDF";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentOrganization } from "@/hooks/useOrganization";
+import {
+  useAllProjectInvoices,
+  useCreateProjectInvoice,
+  useUpdateProjectInvoice,
+  useDeleteProjectInvoice,
+  ProjectInvoice,
+  INVOICE_STATUSES,
+} from "@/hooks/useProjectInvoices";
+import { useInvoiceLineItems, useSaveInvoiceLineItems, InvoiceLineItemInput } from "@/hooks/useInvoiceLineItems";
 import { useProjects } from "@/hooks/useProjects";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import {
@@ -15,6 +29,8 @@ import {
   Trash2,
   Pencil,
   FolderKanban,
+  Download,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,7 +88,8 @@ const formatCurrency = (value: number) =>
 
 const formatDate = (date: string | null) => {
   if (!date) return "—";
-  return new Date(date).toLocaleDateString("en-US", {
+  const d = date.includes("T") ? new Date(date) : new Date(date + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -89,37 +106,50 @@ const statusConfig = {
 interface InvoiceFormData {
   project_id: string;
   description: string;
-  amount: string;
   status: "draft" | "sent" | "paid" | "overdue";
   due_date: string;
   invoice_number: string;
   notes: string;
+  tax_rate: string;
 }
 
 const emptyForm: InvoiceFormData = {
   project_id: "",
   description: "",
-  amount: "",
   status: "draft",
   due_date: "",
   invoice_number: "",
   notes: "",
+  tax_rate: "0",
 };
+
+const emptyLineItem = (): InvoiceLineItemInput => ({
+  description: "",
+  quantity: 1,
+  unit_price: 0,
+});
 
 export default function Invoices() {
   const { navigateOrg } = useOrgNavigation();
+  const { organization } = useAuth();
+  const { data: orgDetails } = useCurrentOrganization();
   const { data: invoices, isLoading: invoicesLoading } = useAllProjectInvoices();
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const createInvoice = useCreateProjectInvoice();
   const updateInvoice = useUpdateProjectInvoice();
   const deleteInvoice = useDeleteProjectInvoice();
+  const saveLineItems = useSaveInvoiceLineItems();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<ProjectInvoice | null>(null);
   const [form, setForm] = useState<InvoiceFormData>(emptyForm);
+  const [lineItems, setLineItems] = useState<InvoiceLineItemInput[]>([emptyLineItem()]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("all");
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const { data: editLineItems } = useInvoiceLineItems(editingInvoice?.id);
 
   const isLoading = invoicesLoading || projectsLoading;
 
@@ -131,7 +161,6 @@ export default function Invoices() {
     return true;
   });
 
-  // Group invoices by project
   const invoicesByProject = new Map<string, ProjectInvoice[]>();
   for (const inv of filteredInvoices) {
     const list = invoicesByProject.get(inv.project_id) || [];
@@ -139,15 +168,23 @@ export default function Invoices() {
     invoicesByProject.set(inv.project_id, list);
   }
 
-  // Summary stats
   const totalInvoiced = filteredInvoices.reduce((sum, inv) => sum + inv.amount, 0);
   const totalPaid = filteredInvoices.filter((inv) => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0);
   const totalOutstanding = filteredInvoices.filter((inv) => inv.status === "sent" || inv.status === "overdue").reduce((sum, inv) => sum + inv.amount, 0);
   const totalDraft = filteredInvoices.filter((inv) => inv.status === "draft").reduce((sum, inv) => sum + inv.amount, 0);
 
+  const subtotal = useMemo(
+    () => lineItems.reduce((sum, item) => sum + item.quantity * item.unit_price, 0),
+    [lineItems]
+  );
+  const taxRate = parseFloat(form.tax_rate) || 0;
+  const taxAmount = subtotal * (taxRate / 100);
+  const grandTotal = subtotal + taxAmount;
+
   const openCreate = () => {
     setForm(emptyForm);
     setEditingInvoice(null);
+    setLineItems([emptyLineItem()]);
     setIsCreateOpen(true);
   };
 
@@ -156,46 +193,181 @@ export default function Invoices() {
     setForm({
       project_id: invoice.project_id,
       description: invoice.description,
-      amount: invoice.amount.toString(),
       status: invoice.status,
       due_date: invoice.due_date?.split("T")[0] ?? "",
       invoice_number: invoice.invoice_number ?? "",
       notes: invoice.notes ?? "",
+      tax_rate: (invoice.tax_rate ?? 0).toString(),
     });
+    if (editLineItems && editLineItems.length > 0) {
+      setLineItems(
+        editLineItems.map((li) => ({
+          description: li.description,
+          quantity: li.quantity,
+          unit_price: li.unit_price,
+        }))
+      );
+    } else if (invoice.amount > 0) {
+      setLineItems([
+        { description: invoice.description, quantity: 1, unit_price: invoice.amount },
+      ]);
+    } else {
+      setLineItems([emptyLineItem()]);
+    }
     setIsCreateOpen(true);
+  };
+
+  const addLineItem = () => {
+    setLineItems([...lineItems, emptyLineItem()]);
+  };
+
+  const removeLineItem = (index: number) => {
+    if (lineItems.length <= 1) return;
+    setLineItems(lineItems.filter((_, i) => i !== index));
+  };
+
+  const updateLineItem = (index: number, field: keyof InvoiceLineItemInput, value: string | number) => {
+    setLineItems(
+      lineItems.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      )
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const amount = parseFloat(form.amount);
-    if (!form.project_id || !form.description || isNaN(amount) || amount <= 0) return;
+    if (!form.project_id || !form.description) return;
 
-    if (editingInvoice) {
-      await updateInvoice.mutateAsync({
-        id: editingInvoice.id,
-        description: form.description,
-        amount,
-        status: form.status,
-        due_date: form.due_date || undefined,
-        invoice_number: form.invoice_number || undefined,
-        notes: form.notes || undefined,
-        paid_date: form.status === "paid" && !editingInvoice.paid_date ? new Date().toISOString() : undefined,
-      });
-    } else {
-      await createInvoice.mutateAsync({
-        project_id: form.project_id,
-        description: form.description,
-        amount,
-        status: form.status,
-        due_date: form.due_date || undefined,
-        invoice_number: form.invoice_number || undefined,
-        notes: form.notes || undefined,
-      });
+    const validItems = lineItems.filter((li) => li.description.trim() && li.unit_price > 0);
+    if (validItems.length === 0) {
+      toast.error("Please add at least one line item with a description and price");
+      return;
     }
 
-    setIsCreateOpen(false);
-    setEditingInvoice(null);
-    setForm(emptyForm);
+    const invoiceSubtotal = validItems.reduce((sum, li) => sum + li.quantity * li.unit_price, 0);
+    const invoiceTaxAmount = invoiceSubtotal * (taxRate / 100);
+    const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
+
+    try {
+      if (editingInvoice) {
+        await updateInvoice.mutateAsync({
+          id: editingInvoice.id,
+          description: form.description,
+          amount: invoiceTotal,
+          status: form.status,
+          due_date: form.due_date || undefined,
+          invoice_number: form.invoice_number || undefined,
+          notes: form.notes || undefined,
+          tax_rate: taxRate,
+          tax_amount: invoiceTaxAmount,
+          subtotal: invoiceSubtotal,
+          paid_date: form.status === "paid" && !editingInvoice.paid_date ? new Date().toISOString() : undefined,
+        });
+        await saveLineItems.mutateAsync({ invoiceId: editingInvoice.id, lineItems: validItems });
+      } else {
+        const invoice = await createInvoice.mutateAsync({
+          project_id: form.project_id,
+          description: form.description,
+          amount: invoiceTotal,
+          status: form.status,
+          due_date: form.due_date || undefined,
+          invoice_number: form.invoice_number || undefined,
+          notes: form.notes || undefined,
+          tax_rate: taxRate,
+          tax_amount: invoiceTaxAmount,
+          subtotal: invoiceSubtotal,
+        });
+        if (invoice?.id) {
+          await saveLineItems.mutateAsync({ invoiceId: invoice.id, lineItems: validItems });
+        }
+      }
+
+      setIsCreateOpen(false);
+      setEditingInvoice(null);
+      setForm(emptyForm);
+      setLineItems([emptyLineItem()]);
+    } catch {
+      // Errors handled by hooks
+    }
+  };
+
+  const handleDownloadPdf = async (invoice: ProjectInvoice) => {
+    setDownloadingId(invoice.id);
+    try {
+      const { data: items } = await supabase
+        .from("invoice_line_items")
+        .select("*")
+        .eq("invoice_id", invoice.id)
+        .order("sort_order", { ascending: true });
+
+      const project = projectMap.get(invoice.project_id);
+      const org = orgDetails as any;
+
+      const pdfLineItems =
+        items && items.length > 0
+          ? items.map((li: any) => ({
+              description: li.description,
+              quantity: li.quantity,
+              unit_price: li.unit_price,
+            }))
+          : [{ description: invoice.description, quantity: 1, unit_price: invoice.amount }];
+
+      const pdfSubtotal = pdfLineItems.reduce(
+        (sum: number, li: any) => sum + li.quantity * li.unit_price,
+        0
+      );
+      const pdfTaxRate = invoice.tax_rate ?? 0;
+      const pdfTaxAmount = invoice.tax_amount ?? pdfSubtotal * (pdfTaxRate / 100);
+      const pdfTotal = pdfSubtotal + pdfTaxAmount;
+
+      const invoiceData: InvoiceData = {
+        invoiceNumber: invoice.invoice_number || invoice.display_id,
+        invoiceDate: invoice.created_at,
+        dueDate: invoice.due_date || undefined,
+
+        companyName: org?.billing_name || organization?.name || "Your Company",
+        companyAddress: org?.billing_address || undefined,
+        companyCity: org?.billing_city || undefined,
+        companyState: org?.billing_state || undefined,
+        companyPostalCode: org?.billing_postal_code || undefined,
+        companyCountry: org?.billing_country || undefined,
+        companyPhone: org?.billing_phone || undefined,
+        companyEmail: org?.billing_email || undefined,
+        companyLogo: organization?.logo_url || undefined,
+        taxNumber: org?.tax_number || undefined,
+
+        clientName: project?.client_name || "Client",
+        contactEmail: project?.client_email || undefined,
+
+        lineItems: pdfLineItems,
+
+        subtotal: pdfSubtotal,
+        taxRate: pdfTaxRate > 0 ? pdfTaxRate : undefined,
+        taxAmount: pdfTaxAmount > 0 ? pdfTaxAmount : undefined,
+        total: pdfTotal,
+        balanceDue: invoice.status === "paid" ? 0 : pdfTotal,
+
+        notes: invoice.notes || org?.default_invoice_notes || undefined,
+        terms: org?.default_invoice_terms || undefined,
+      };
+
+      const blob = await pdf(<InvoicePDF data={invoiceData} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${invoiceData.invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Invoice PDF downloaded");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const renderStatusBadge = (status: ProjectInvoice["status"]) => {
@@ -209,31 +381,46 @@ export default function Invoices() {
     );
   };
 
-  const renderInvoiceRow = (invoice: ProjectInvoice) => {
+  const renderInvoiceRow = (invoice: ProjectInvoice, showProject = true) => {
     const project = projectMap.get(invoice.project_id);
     return (
       <TableRow key={invoice.id}>
         <TableCell className="font-medium">{invoice.display_id}</TableCell>
         <TableCell>{invoice.invoice_number || "—"}</TableCell>
         <TableCell className="max-w-[200px] truncate">{invoice.description}</TableCell>
-        <TableCell>
-          {project ? (
-            <button
-              onClick={() => navigateOrg(`/projects/${project.id}`)}
-              className="text-sm text-primary hover:underline"
-            >
-              {project.name}
-            </button>
-          ) : (
-            "—"
-          )}
-        </TableCell>
+        {showProject && (
+          <TableCell>
+            {project ? (
+              <button
+                onClick={() => navigateOrg(`/projects/${project.id}`)}
+                className="text-sm text-primary hover:underline"
+              >
+                {project.name}
+              </button>
+            ) : (
+              "—"
+            )}
+          </TableCell>
+        )}
         <TableCell className="font-medium">{formatCurrency(invoice.amount)}</TableCell>
         <TableCell>{renderStatusBadge(invoice.status)}</TableCell>
         <TableCell>{formatDate(invoice.due_date)}</TableCell>
         <TableCell>{formatDate(invoice.paid_date)}</TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => handleDownloadPdf(invoice)}
+              disabled={downloadingId === invoice.id}
+            >
+              {downloadingId === invoice.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(invoice)}>
               <Pencil className="h-4 w-4" />
             </Button>
@@ -404,7 +591,7 @@ export default function Invoices() {
                   <TableHead>Status</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Paid Date</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
+                  <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -416,7 +603,7 @@ export default function Invoices() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredInvoices.map(renderInvoiceRow)
+                  filteredInvoices.map((inv) => renderInvoiceRow(inv, true))
                 )}
               </TableBody>
             </Table>
@@ -468,52 +655,11 @@ export default function Invoices() {
                         <TableHead>Status</TableHead>
                         <TableHead>Due Date</TableHead>
                         <TableHead>Paid Date</TableHead>
-                        <TableHead className="w-[80px]">Actions</TableHead>
+                        <TableHead className="w-[120px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {projectInvoices.map((invoice) => (
-                        <TableRow key={invoice.id}>
-                          <TableCell className="font-medium">{invoice.display_id}</TableCell>
-                          <TableCell>{invoice.invoice_number || "—"}</TableCell>
-                          <TableCell className="max-w-[250px] truncate">{invoice.description}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(invoice.amount)}</TableCell>
-                          <TableCell>{renderStatusBadge(invoice.status)}</TableCell>
-                          <TableCell>{formatDate(invoice.due_date)}</TableCell>
-                          <TableCell>{formatDate(invoice.paid_date)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(invoice)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="border">
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete {invoice.display_id}?
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteInvoice.mutate(invoice.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {projectInvoices.map((inv) => renderInvoiceRow(inv, false))}
                     </TableBody>
                   </Table>
                 </Card>
@@ -525,48 +671,34 @@ export default function Invoices() {
 
       {/* Create/Edit Invoice Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="border sm:max-w-lg">
+        <DialogContent className="border sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingInvoice ? "Edit Invoice" : "Create Invoice"}</DialogTitle>
             <DialogDescription>
               {editingInvoice
-                ? "Update invoice details below."
-                : "Create a new invoice for a project. Fill in the details below."}
+                ? "Update invoice details and line items below."
+                : "Create a new invoice with line items. Fill in the details below."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="project">Project *</Label>
-              <Select
-                value={form.project_id}
-                onValueChange={(v) => setForm((f) => ({ ...f, project_id: v }))}
-                disabled={!!editingInvoice}
-              >
-                <SelectTrigger className="border">
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent className="border">
-                  {projects?.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Invoice Details */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount *</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={form.amount}
-                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                  className="border"
-                  required
-                />
+                <Label htmlFor="project">Project *</Label>
+                <Select
+                  value={form.project_id}
+                  onValueChange={(v) => setForm((f) => ({ ...f, project_id: v }))}
+                  disabled={!!editingInvoice}
+                >
+                  <SelectTrigger className="border">
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                  <SelectContent className="border">
+                    {projects?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
@@ -621,15 +753,121 @@ export default function Invoices() {
               </div>
             </div>
 
+            {/* Line Items */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Line Items</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addLineItem} className="border">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Item
+                </Button>
+              </div>
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[45%]">Description</TableHead>
+                      <TableHead className="w-[12%]">Qty</TableHead>
+                      <TableHead className="w-[18%]">Unit Price</TableHead>
+                      <TableHead className="w-[18%] text-right">Amount</TableHead>
+                      <TableHead className="w-[7%]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lineItems.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="p-1.5">
+                          <Input
+                            placeholder="Item description"
+                            value={item.description}
+                            onChange={(e) => updateLineItem(index, "description", e.target.value)}
+                            className="border h-9"
+                          />
+                        </TableCell>
+                        <TableCell className="p-1.5">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateLineItem(index, "quantity", parseInt(e.target.value) || 1)}
+                            className="border h-9"
+                          />
+                        </TableCell>
+                        <TableCell className="p-1.5">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.unit_price || ""}
+                            onChange={(e) => updateLineItem(index, "unit_price", parseFloat(e.target.value) || 0)}
+                            className="border h-9"
+                            placeholder="0.00"
+                          />
+                        </TableCell>
+                        <TableCell className="p-1.5 text-right font-mono text-sm">
+                          {formatCurrency(item.quantity * item.unit_price)}
+                        </TableCell>
+                        <TableCell className="p-1.5">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => removeLineItem(index)}
+                            disabled={lineItems.length <= 1}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Totals */}
+            <div className="flex justify-end">
+              <div className="w-72 space-y-2 border rounded-md p-4 bg-muted/30">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-mono">{formatCurrency(subtotal)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span className="text-muted-foreground">Tax Rate (%)</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={form.tax_rate}
+                    onChange={(e) => setForm((f) => ({ ...f, tax_rate: e.target.value }))}
+                    className="border h-8 w-20 text-right"
+                  />
+                </div>
+                {taxAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tax</span>
+                    <span className="font-mono">{formatCurrency(taxAmount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-semibold border-t pt-2">
+                  <span>Total</span>
+                  <span className="font-mono">{formatCurrency(grandTotal)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"
-                placeholder="Additional notes or details..."
+                placeholder="Additional notes or payment terms..."
                 value={form.notes}
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                 className="border"
-                rows={3}
+                rows={2}
               />
             </div>
 
@@ -639,10 +877,10 @@ export default function Invoices() {
               </Button>
               <Button
                 type="submit"
-                disabled={createInvoice.isPending || updateInvoice.isPending}
+                disabled={createInvoice.isPending || updateInvoice.isPending || saveLineItems.isPending}
                 className="border"
               >
-                {(createInvoice.isPending || updateInvoice.isPending) && (
+                {(createInvoice.isPending || updateInvoice.isPending || saveLineItems.isPending) && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
                 {editingInvoice ? "Save Changes" : "Create Invoice"}

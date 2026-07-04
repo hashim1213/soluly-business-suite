@@ -394,7 +394,8 @@ function formatCellValue(value: any, column: string): string {
   if (value === null || value === undefined) return "-";
   if (column.includes("date") || column === "created_at" || column === "updated_at" || column === "start_date" || column === "end_date") {
     try {
-      return format(new Date(value), "MMM d, yyyy");
+      const d = typeof value === "string" && !value.includes("T") ? new Date(value + "T00:00:00") : new Date(value);
+      return format(d, "MMM d, yyyy");
     } catch {
       return value;
     }
@@ -1233,11 +1234,11 @@ export default function Reports() {
                 <div className="flex justify-between text-sm">
                   <div>
                     <span className="text-muted-foreground">Start: </span>
-                    {project.start_date ? format(new Date(project.start_date), "MMM d, yyyy") : "Not set"}
+                    {project.start_date ? format(new Date(project.start_date + "T00:00:00"), "MMM d, yyyy") : "Not set"}
                   </div>
                   <div>
                     <span className="text-muted-foreground">End: </span>
-                    {project.end_date ? format(new Date(project.end_date), "MMM d, yyyy") : "Not set"}
+                    {project.end_date ? format(new Date(project.end_date + "T00:00:00"), "MMM d, yyyy") : "Not set"}
                   </div>
                 </div>
               </CardContent>

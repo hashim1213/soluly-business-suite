@@ -57,6 +57,7 @@ const CATEGORIES: { value: RecurringChargeCategory; label: string }[] = [
   { value: "subscription", label: "Subscription" },
   { value: "domain", label: "Domain" },
   { value: "license", label: "License" },
+  { value: "maintenance", label: "Maintenance" },
   { value: "other", label: "Other" },
 ];
 
@@ -78,6 +79,7 @@ const CATEGORY_STYLES: Record<string, string> = {
   subscription: "bg-chart-4 text-foreground",
   domain: "bg-chart-3 text-background",
   license: "bg-chart-5 text-background",
+  maintenance: "bg-chart-2 text-background",
   other: "bg-muted text-muted-foreground",
 };
 
@@ -129,13 +131,16 @@ export function RecurringChargesCard({ project }: { project: Project }) {
     return isNaN(d.getTime()) ? null : d;
   }, [billingMonth]);
 
+  const hasMaintenanceCharge = (charges || []).some((c) => c.category === "maintenance");
+
   // Line items due in the selected month: the project's maintenance fee (if it
-  // lands on a billing-cycle month) plus every recurring charge due that month.
+  // lands on a billing-cycle month and no dedicated maintenance charge exists)
+  // plus every recurring charge due that month.
   const lineItems = useMemo<LineItem[]>(() => {
     if (!monthDate) return [];
     const items: LineItem[] = [];
 
-    if (project.has_maintenance && (project.maintenance_amount || 0) > 0) {
+    if (!hasMaintenanceCharge && project.has_maintenance && (project.maintenance_amount || 0) > 0) {
       const maintenanceAsCharge = {
         active: true,
         frequency: project.maintenance_frequency || "monthly",
@@ -160,7 +165,7 @@ export function RecurringChargesCard({ project }: { project: Project }) {
     }
 
     return items;
-  }, [monthDate, project, charges]);
+  }, [monthDate, project, charges, hasMaintenanceCharge]);
 
   const checkedItems = lineItems.filter((item) => !uncheckedIds.has(item.id));
   const total = checkedItems.reduce((sum, item) => sum + item.amount, 0);
@@ -540,7 +545,7 @@ export function RecurringChargesCard({ project }: { project: Project }) {
             </TableHeader>
             <TableBody>
               {charges.map((charge) => (
-                <TableRow key={charge.id} className={charge.active ? "" : "opacity-60"}>
+                <TableRow key={charge.id} className={`${charge.active ? "" : "opacity-60"} ${charge.category === "maintenance" ? "bg-chart-2/5" : ""}`}>
                   <TableCell>
                     <div className="font-medium">{charge.name}</div>
                     {charge.description && (
@@ -555,9 +560,9 @@ export function RecurringChargesCard({ project }: { project: Project }) {
                   <TableCell className="text-right font-mono">{money(charge.amount)}</TableCell>
                   <TableCell className="capitalize">{charge.frequency}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {format(parseISO(charge.start_date), "MMM d, yyyy")}
+                    {format(parseISO(charge.start_date + "T00:00:00"), "MMM d, yyyy")}
                     {" – "}
-                    {charge.end_date ? format(parseISO(charge.end_date), "MMM d, yyyy") : "Ongoing"}
+                    {charge.end_date ? format(parseISO(charge.end_date + "T00:00:00"), "MMM d, yyyy") : "Ongoing"}
                   </TableCell>
                   <TableCell>
                     <Switch

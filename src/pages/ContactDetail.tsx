@@ -849,7 +849,7 @@ export default function ContactDetail() {
                           )}
                           {activity.activity_type === "task" && activity.task_due_date && (
                             <p className="text-sm text-muted-foreground mt-1">
-                              Due: {format(new Date(activity.task_due_date), "MMM d, yyyy")}
+                              Due: {format(new Date(activity.task_due_date + "T00:00:00"), "MMM d, yyyy")}
                             </p>
                           )}
                           <p className="text-xs text-muted-foreground mt-2">
@@ -951,7 +951,7 @@ export default function ContactDetail() {
                           <p className="font-medium">{task.title || task.description || "Untitled task"}</p>
                           {task.task_due_date && (
                             <p className="text-sm text-muted-foreground">
-                              Due: {format(new Date(task.task_due_date), "MMM d, yyyy")}
+                              Due: {format(new Date(task.task_due_date + "T00:00:00"), "MMM d, yyyy")}
                             </p>
                           )}
                         </div>

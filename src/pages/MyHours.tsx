@@ -89,7 +89,7 @@ export default function MyHours() {
   const weekEntries = useMemo(() => {
     if (!timeEntries) return [];
     return timeEntries.filter((entry) => {
-      const entryDate = parseISO(entry.date);
+      const entryDate = parseISO(entry.date + "T00:00:00");
       return isWithinInterval(entryDate, { start: currentWeekStart, end: weekEnd });
     });
   }, [timeEntries, currentWeekStart, weekEnd]);
@@ -491,7 +491,7 @@ export default function MyHours() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{format(parseISO(entry.date), "EEE, MMM d")}</span>
+                            <span className="font-medium">{format(parseISO(entry.date + "T00:00:00"), "EEE, MMM d")}</span>
                             <Badge variant={entry.billable ? "default" : "secondary"} className="text-xs">
                               {entry.hours}h
                             </Badge>
@@ -580,7 +580,7 @@ export default function MyHours() {
                       return (
                         <TableRow key={entry.id} className="border-b border-border hover:bg-muted/30">
                           <TableCell>
-                            <span className="font-medium">{format(parseISO(entry.date), "EEE, MMM d")}</span>
+                            <span className="font-medium">{format(parseISO(entry.date + "T00:00:00"), "EEE, MMM d")}</span>
                           </TableCell>
                           <TableCell>
                             {entry.project ? (

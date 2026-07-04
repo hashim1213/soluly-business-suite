@@ -712,7 +712,7 @@ export default function TeamMemberDetail() {
                             <div>
                               <div className="font-mono font-semibold text-lg">{entry.hours}h</div>
                               <div className="text-xs text-muted-foreground">
-                                {format(new Date(entry.date), "MMM d, yyyy")}
+                                {format(new Date(entry.date + "T00:00:00"), "MMM d, yyyy")}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -783,7 +783,7 @@ export default function TeamMemberDetail() {
                           return (
                             <TableRow key={entry.id} className="border-b">
                               <TableCell className="text-muted-foreground">
-                                {format(new Date(entry.date), "MMM d, yyyy")}
+                                {format(new Date(entry.date + "T00:00:00"), "MMM d, yyyy")}
                               </TableCell>
                               <TableCell>
                                 {entry.project ? (
@@ -906,7 +906,7 @@ export default function TeamMemberDetail() {
                           <div>
                             <div className="font-mono font-semibold text-lg">{canViewAmounts ? `$${payment.amount.toLocaleString()}` : "••••••"}</div>
                             <div className="text-xs text-muted-foreground">
-                              {format(new Date(payment.payment_date), "MMM d, yyyy")}
+                              {format(new Date(payment.payment_date + "T00:00:00"), "MMM d, yyyy")}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -965,7 +965,7 @@ export default function TeamMemberDetail() {
                         {payments.map((payment) => (
                           <TableRow key={payment.id} className="border-b">
                             <TableCell className="font-medium">
-                              {format(new Date(payment.payment_date), "MMM d, yyyy")}
+                              {format(new Date(payment.payment_date + "T00:00:00"), "MMM d, yyyy")}
                             </TableCell>
                             <TableCell className="text-muted-foreground">
                               {payment.period_start && payment.period_end

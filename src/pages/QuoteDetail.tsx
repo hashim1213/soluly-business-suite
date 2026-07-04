@@ -134,7 +134,8 @@ export default function QuoteDetail() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "TBD";
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const d = dateString.includes("T") ? new Date(dateString) : new Date(dateString + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",

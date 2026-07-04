@@ -17,6 +17,9 @@ export interface ProjectInvoice {
   file_name: string | null;
   invoice_number: string | null;
   notes: string | null;
+  tax_rate: number | null;
+  tax_amount: number | null;
+  subtotal: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +34,9 @@ export interface CreateProjectInvoiceInput {
   file_name?: string;
   invoice_number?: string;
   notes?: string;
+  tax_rate?: number;
+  tax_amount?: number;
+  subtotal?: number;
 }
 
 export interface UpdateProjectInvoiceInput {
@@ -44,6 +50,9 @@ export interface UpdateProjectInvoiceInput {
   file_name?: string;
   invoice_number?: string;
   notes?: string;
+  tax_rate?: number;
+  tax_amount?: number;
+  subtotal?: number;
 }
 
 export const INVOICE_STATUSES = [
@@ -158,6 +167,9 @@ export function useCreateProjectInvoice() {
           file_name: input.file_name || null,
           invoice_number: input.invoice_number || null,
           notes: input.notes || null,
+          tax_rate: input.tax_rate ?? 0,
+          tax_amount: input.tax_amount ?? 0,
+          subtotal: input.subtotal ?? null,
         })
         .select()
         .single();

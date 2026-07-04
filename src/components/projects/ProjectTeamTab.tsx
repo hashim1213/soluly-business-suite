@@ -501,7 +501,7 @@ export function ProjectTeamTab({
               <TableBody>
                 {timeEntries.map((entry) => (
                   <TableRow key={entry.id} className="border-b">
-                    <TableCell className="text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy")}</TableCell>
+                    <TableCell className="text-muted-foreground">{format(new Date(entry.date + "T00:00:00"), "MMM d, yyyy")}</TableCell>
                     <TableCell className="font-medium">{entry.team_member?.name || "Unknown"}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{entry.description || "-"}</TableCell>
                     <TableCell className="text-right font-mono font-semibold">{entry.hours}h</TableCell>

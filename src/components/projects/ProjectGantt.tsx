@@ -47,7 +47,8 @@ const DAY = "yyyy-MM-dd";
 
 function safeParse(value: string | null | undefined): Date | null {
   if (!value) return null;
-  const d = parseISO(value);
+  const normalized = value.includes("T") ? value : value + "T00:00:00";
+  const d = parseISO(normalized);
   return isNaN(d.getTime()) ? null : startOfDay(d);
 }
 

@@ -77,7 +77,7 @@ export function TasksList() {
                       </Badge>
                       {task.due_date && (
                         <span className="text-xs text-muted-foreground">
-                          Due {formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}
+                          Due {formatDistanceToNow(new Date(task.due_date + "T00:00:00"), { addSuffix: true })}
                         </span>
                       )}
                     </div>

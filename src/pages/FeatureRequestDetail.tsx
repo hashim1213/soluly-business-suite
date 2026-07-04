@@ -88,7 +88,8 @@ export default function FeatureRequestDetail() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const d = dateString.includes("T") ? new Date(dateString) : new Date(dateString + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",

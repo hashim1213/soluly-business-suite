@@ -54,7 +54,7 @@ export function SprintOverview() {
   const donePoints = doneTickets.reduce((sum, t) => sum + (t.story_points || 0), 0);
 
   const daysRemaining = sprint.end_date
-    ? differenceInCalendarDays(parseISO(sprint.end_date), new Date())
+    ? differenceInCalendarDays(parseISO(sprint.end_date + "T00:00:00"), new Date())
     : null;
 
   const daysLabel =
