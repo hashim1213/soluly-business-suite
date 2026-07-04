@@ -112,6 +112,12 @@ interface InvoiceFormData {
   notes: string;
   tax_rate: string;
   tax_amount_override: string;
+  client_name: string;
+  client_address: string;
+  client_city: string;
+  client_state: string;
+  client_postal_code: string;
+  client_email: string;
 }
 
 const emptyForm: InvoiceFormData = {
@@ -123,6 +129,12 @@ const emptyForm: InvoiceFormData = {
   notes: "",
   tax_rate: "0",
   tax_amount_override: "",
+  client_name: "",
+  client_address: "",
+  client_city: "",
+  client_state: "",
+  client_postal_code: "",
+  client_email: "",
 };
 
 const emptyLineItem = (): InvoiceLineItemInput => ({
@@ -191,8 +203,22 @@ export default function Invoices() {
     setIsCreateOpen(true);
   };
 
+  const fillClientFromProject = (projectId: string): Partial<InvoiceFormData> => {
+    const project = projectMap.get(projectId);
+    if (!project) return {};
+    return {
+      client_name: project.client_name || "",
+      client_email: project.client_email || "",
+      client_address: "",
+      client_city: "",
+      client_state: "",
+      client_postal_code: "",
+    };
+  };
+
   const openEdit = (invoice: ProjectInvoice) => {
     setEditingInvoice(invoice);
+    const project = projectMap.get(invoice.project_id);
     setForm({
       project_id: invoice.project_id,
       description: invoice.description,
@@ -202,6 +228,12 @@ export default function Invoices() {
       notes: invoice.notes ?? "",
       tax_rate: (invoice.tax_rate ?? 0).toString(),
       tax_amount_override: invoice.tax_amount && invoice.tax_amount > 0 ? invoice.tax_amount.toString() : "",
+      client_name: invoice.client_name || project?.client_name || "",
+      client_email: invoice.client_email || project?.client_email || "",
+      client_address: invoice.client_address || "",
+      client_city: invoice.client_city || "",
+      client_state: invoice.client_state || "",
+      client_postal_code: invoice.client_postal_code || "",
     });
     if (editLineItems && editLineItems.length > 0) {
       setLineItems(
@@ -253,6 +285,15 @@ export default function Invoices() {
     const invoiceTaxAmount = !isNaN(overrideAmt) && form.tax_amount_override !== "" ? overrideAmt : invoiceSubtotal * (taxRate / 100);
     const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
 
+    const billingFields = {
+      client_name: form.client_name || undefined,
+      client_email: form.client_email || undefined,
+      client_address: form.client_address || undefined,
+      client_city: form.client_city || undefined,
+      client_state: form.client_state || undefined,
+      client_postal_code: form.client_postal_code || undefined,
+    };
+
     try {
       if (editingInvoice) {
         await updateInvoice.mutateAsync({
@@ -267,6 +308,7 @@ export default function Invoices() {
           tax_amount: invoiceTaxAmount,
           subtotal: invoiceSubtotal,
           paid_date: form.status === "paid" && !editingInvoice.paid_date ? new Date().toISOString() : undefined,
+          ...billingFields,
         });
         await saveLineItems.mutateAsync({ invoiceId: editingInvoice.id, lineItems: validItems });
       } else {
@@ -281,6 +323,7 @@ export default function Invoices() {
           tax_rate: taxRate,
           tax_amount: invoiceTaxAmount,
           subtotal: invoiceSubtotal,
+          ...billingFields,
         });
         if (invoice?.id) {
           await saveLineItems.mutateAsync({ invoiceId: invoice.id, lineItems: validItems });
@@ -341,8 +384,12 @@ export default function Invoices() {
         companyLogo: organization?.logo_url || undefined,
         taxNumber: org?.tax_number || undefined,
 
-        clientName: project?.client_name || "Client",
-        contactEmail: project?.client_email || undefined,
+        clientName: invoice.client_name || project?.client_name || "Client",
+        clientAddress: invoice.client_address || undefined,
+        clientCity: invoice.client_city || undefined,
+        clientState: invoice.client_state || undefined,
+        clientPostalCode: invoice.client_postal_code || undefined,
+        contactEmail: invoice.client_email || project?.client_email || undefined,
 
         lineItems: pdfLineItems,
 
@@ -692,7 +739,7 @@ export default function Invoices() {
                 <Label htmlFor="project">Project *</Label>
                 <Select
                   value={form.project_id}
-                  onValueChange={(v) => setForm((f) => ({ ...f, project_id: v }))}
+                  onValueChange={(v) => setForm((f) => ({ ...f, project_id: v, ...fillClientFromProject(v) }))}
                   disabled={!!editingInvoice}
                 >
                   <SelectTrigger className="border">
@@ -755,6 +802,76 @@ export default function Invoices() {
                   onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
                   className="border"
                 />
+              </div>
+            </div>
+
+            {/* Bill To */}
+            <div className="space-y-3 border rounded-md p-4 bg-muted/20">
+              <Label className="text-base font-semibold">Bill To</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="client_name" className="text-xs text-muted-foreground">Client Name</Label>
+                  <Input
+                    id="client_name"
+                    placeholder="Client or company name"
+                    value={form.client_name}
+                    onChange={(e) => setForm((f) => ({ ...f, client_name: e.target.value }))}
+                    className="border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client_email" className="text-xs text-muted-foreground">Email</Label>
+                  <Input
+                    id="client_email"
+                    type="email"
+                    placeholder="client@example.com"
+                    value={form.client_email}
+                    onChange={(e) => setForm((f) => ({ ...f, client_email: e.target.value }))}
+                    className="border"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="client_address" className="text-xs text-muted-foreground">Street Address</Label>
+                <Input
+                  id="client_address"
+                  placeholder="123 Main Street"
+                  value={form.client_address}
+                  onChange={(e) => setForm((f) => ({ ...f, client_address: e.target.value }))}
+                  className="border"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="client_city" className="text-xs text-muted-foreground">City</Label>
+                  <Input
+                    id="client_city"
+                    placeholder="City"
+                    value={form.client_city}
+                    onChange={(e) => setForm((f) => ({ ...f, client_city: e.target.value }))}
+                    className="border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client_state" className="text-xs text-muted-foreground">State / Province</Label>
+                  <Input
+                    id="client_state"
+                    placeholder="State"
+                    value={form.client_state}
+                    onChange={(e) => setForm((f) => ({ ...f, client_state: e.target.value }))}
+                    className="border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client_postal_code" className="text-xs text-muted-foreground">Postal Code</Label>
+                  <Input
+                    id="client_postal_code"
+                    placeholder="A1A 1A1"
+                    value={form.client_postal_code}
+                    onChange={(e) => setForm((f) => ({ ...f, client_postal_code: e.target.value }))}
+                    className="border"
+                  />
+                </div>
               </div>
             </div>
 

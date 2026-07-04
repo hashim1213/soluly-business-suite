@@ -20,6 +20,12 @@ export interface ProjectInvoice {
   tax_rate: number | null;
   tax_amount: number | null;
   subtotal: number | null;
+  client_name: string | null;
+  client_email: string | null;
+  client_address: string | null;
+  client_city: string | null;
+  client_state: string | null;
+  client_postal_code: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +43,12 @@ export interface CreateProjectInvoiceInput {
   tax_rate?: number;
   tax_amount?: number;
   subtotal?: number;
+  client_name?: string;
+  client_email?: string;
+  client_address?: string;
+  client_city?: string;
+  client_state?: string;
+  client_postal_code?: string;
 }
 
 export interface UpdateProjectInvoiceInput {
@@ -53,6 +65,12 @@ export interface UpdateProjectInvoiceInput {
   tax_rate?: number;
   tax_amount?: number;
   subtotal?: number;
+  client_name?: string;
+  client_email?: string;
+  client_address?: string;
+  client_city?: string;
+  client_state?: string;
+  client_postal_code?: string;
 }
 
 export const INVOICE_STATUSES = [
@@ -170,6 +188,12 @@ export function useCreateProjectInvoice() {
           tax_rate: input.tax_rate ?? 0,
           tax_amount: input.tax_amount ?? 0,
           subtotal: input.subtotal ?? null,
+          client_name: input.client_name || null,
+          client_email: input.client_email || null,
+          client_address: input.client_address || null,
+          client_city: input.client_city || null,
+          client_state: input.client_state || null,
+          client_postal_code: input.client_postal_code || null,
         })
         .select()
         .single();

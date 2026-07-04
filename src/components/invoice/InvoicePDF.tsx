@@ -7,8 +7,6 @@ import {
   Image,
 } from "@react-pdf/renderer";
 
-// Create styles - using Helvetica (built-in PDF font)
-// Helvetica-Bold is used for bold text
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
@@ -18,237 +16,211 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#1a1a1a",
   },
+  // Header: logo left, INVOICE right
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 30,
+    marginBottom: 8,
   },
   logo: {
-    width: 120,
-    maxHeight: 60,
+    width: 140,
+    maxHeight: 50,
     objectFit: "contain",
   },
   companyName: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: "Helvetica-Bold",
-    marginBottom: 4,
   },
   invoiceTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: "Helvetica-Bold",
     textAlign: "right",
     color: "#1a1a1a",
   },
   invoiceNumber: {
-    fontSize: 12,
+    fontSize: 11,
     textAlign: "right",
-    color: "#666666",
-    marginTop: 4,
+    color: "#555555",
+    marginTop: 2,
   },
-  companyInfo: {
-    marginBottom: 30,
-  },
+  // Company address (below header, left side)
   companyAddress: {
     fontSize: 10,
-    color: "#666666",
-    lineHeight: 1.6,
+    color: "#444444",
+    lineHeight: 1.5,
+    marginBottom: 20,
   },
-  billToSection: {
+  // Middle section: Bill To (left) + Date/Due/Balance (right)
+  middleSection: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 30,
+    marginBottom: 24,
   },
-  billToColumn: {
-    width: "48%",
+  billToBlock: {
+    width: "55%",
   },
-  sectionLabel: {
+  billToLabel: {
     fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    color: "#888888",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+    color: "#666666",
+    marginBottom: 4,
   },
   clientName: {
     fontSize: 12,
     fontFamily: "Helvetica-Bold",
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  clientAddress: {
+  clientDetail: {
     fontSize: 10,
-    color: "#444444",
-    lineHeight: 1.6,
+    color: "#333333",
+    lineHeight: 1.5,
   },
-  invoiceDetails: {
+  // Right details column
+  detailsBlock: {
+    width: "40%",
     alignItems: "flex-end",
   },
-  invoiceDetailRow: {
+  detailRow: {
     flexDirection: "row",
-    justifyContent: "flex-end",
     marginBottom: 4,
   },
-  invoiceDetailLabel: {
+  detailLabel: {
     fontSize: 10,
     color: "#666666",
-    width: 80,
+    width: 70,
     textAlign: "right",
-    marginRight: 10,
   },
-  invoiceDetailValue: {
+  detailValue: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
     width: 100,
     textAlign: "right",
   },
-  balanceDue: {
-    marginTop: 8,
-    paddingTop: 8,
+  balanceDueRow: {
+    flexDirection: "row",
+    marginTop: 6,
+    paddingTop: 6,
     borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
+    borderTopColor: "#cccccc",
   },
   balanceDueLabel: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
+    width: 90,
+    textAlign: "right",
     color: "#1a1a1a",
   },
   balanceDueValue: {
     fontSize: 14,
     fontFamily: "Helvetica-Bold",
+    width: 100,
+    textAlign: "right",
     color: "#1a1a1a",
   },
+  // Table
   table: {
-    marginTop: 20,
     marginBottom: 20,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f5f5f5",
-    borderBottomWidth: 2,
-    borderBottomColor: "#1a1a1a",
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-  },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-  },
-  tableColDescription: {
-    width: "50%",
-  },
-  tableColQty: {
-    width: "15%",
-    textAlign: "center",
-  },
-  tableColRate: {
-    width: "17.5%",
-    textAlign: "right",
-  },
-  tableColAmount: {
-    width: "17.5%",
-    textAlign: "right",
+    backgroundColor: "#4a7c59",
+    paddingVertical: 8,
+    paddingHorizontal: 10,
   },
   tableHeaderText: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    color: "#444444",
+    color: "#ffffff",
   },
-  tableCellText: {
+  tableRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eeeeee",
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+  },
+  colItem: {
+    width: "50%",
+  },
+  colQty: {
+    width: "15%",
+    textAlign: "center",
+  },
+  colRate: {
+    width: "17.5%",
+    textAlign: "right",
+  },
+  colAmount: {
+    width: "17.5%",
+    textAlign: "right",
+  },
+  cellText: {
     fontSize: 10,
     color: "#1a1a1a",
   },
-  tableCellDescription: {
-    fontSize: 10,
-    color: "#1a1a1a",
-  },
+  // Totals
   totalsSection: {
     marginTop: 20,
     marginLeft: "auto",
-    width: 250,
+    width: 220,
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    paddingVertical: 5,
   },
   totalLabel: {
     fontSize: 10,
     color: "#666666",
+    textAlign: "right",
   },
   totalValue: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
+    textAlign: "right",
   },
-  grandTotal: {
+  grandTotalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 10,
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: "#cccccc",
     marginTop: 4,
-    backgroundColor: "#1a1a1a",
-    paddingHorizontal: 10,
   },
   grandTotalLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: "#ffffff",
   },
   grandTotalValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Helvetica-Bold",
-    color: "#ffffff",
   },
+  // Footer
   footer: {
     marginTop: 40,
   },
-  notesSection: {
-    marginBottom: 20,
+  notesBlock: {
+    marginBottom: 16,
   },
-  notesLabel: {
+  footerLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: "#888888",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+    color: "#666666",
+    marginBottom: 4,
   },
-  notesText: {
+  footerText: {
     fontSize: 10,
-    color: "#444444",
+    color: "#333333",
     lineHeight: 1.6,
   },
-  termsSection: {
-    marginTop: 20,
-    paddingTop: 20,
+  termsBlock: {
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
   },
-  termsLabel: {
-    fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    color: "#888888",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  termsText: {
-    fontSize: 9,
-    color: "#666666",
-    lineHeight: 1.6,
-  },
-  // Additional styles for inline bold text
-  boldText: {
-    fontFamily: "Helvetica-Bold",
-  },
 });
 
-// Type definitions for the invoice data
 export interface InvoiceLineItem {
   description: string;
   quantity: number;
@@ -256,13 +228,11 @@ export interface InvoiceLineItem {
 }
 
 export interface InvoiceData {
-  // Invoice details
   invoiceNumber: string;
   invoiceDate: string;
   dueDate?: string;
   poNumber?: string;
 
-  // Company (seller) info
   companyName: string;
   companyAddress?: string;
   companyCity?: string;
@@ -274,16 +244,17 @@ export interface InvoiceData {
   companyLogo?: string;
   taxNumber?: string;
 
-  // Client (bill to) info
   clientName: string;
   clientAddress?: string;
+  clientCity?: string;
+  clientState?: string;
+  clientPostalCode?: string;
+  clientCountry?: string;
   contactName?: string;
   contactEmail?: string;
 
-  // Line items
   lineItems: InvoiceLineItem[];
 
-  // Totals
   subtotal: number;
   taxRate?: number;
   taxAmount?: number;
@@ -291,12 +262,10 @@ export interface InvoiceData {
   amountPaid?: number;
   balanceDue: number;
 
-  // Footer
   notes?: string;
   terms?: string;
 }
 
-// Format currency
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -305,32 +274,32 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// Format date — date-only strings (YYYY-MM-DD) must be parsed as local time
 const formatDate = (dateString: string): string => {
   const d = dateString.includes("T") ? new Date(dateString) : new Date(dateString + "T00:00:00");
   return d.toLocaleDateString("en-US", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 };
 
-// Invoice PDF Component
 export const InvoicePDF = ({ data }: { data: InvoiceData }) => {
-  const companyFullAddress = [
+  const companyAddressLines = [
     data.companyAddress,
-    data.companyCity && data.companyState
-      ? `${data.companyCity}, ${data.companyState} ${data.companyPostalCode || ""}`
-      : data.companyCity || data.companyState,
+    [data.companyCity, data.companyState, data.companyPostalCode].filter(Boolean).join(", "),
     data.companyCountry,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].filter(Boolean).join("\n");
+
+  const clientAddressLines = [
+    data.clientAddress,
+    [data.clientCity, data.clientState, data.clientPostalCode].filter(Boolean).join(", "),
+    data.clientCountry,
+  ].filter(Boolean).join("\n");
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
+        {/* Header: Logo/Name left, INVOICE right */}
         <View style={styles.header}>
           <View>
             {data.companyLogo ? (
@@ -341,72 +310,50 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => {
           </View>
           <View>
             <Text style={styles.invoiceTitle}>INVOICE</Text>
-            <Text style={styles.invoiceNumber}>#{data.invoiceNumber}</Text>
+            <Text style={styles.invoiceNumber}># {data.invoiceNumber}</Text>
           </View>
         </View>
 
-        {/* Company Info */}
-        <View style={styles.companyInfo}>
+        {/* Company address */}
+        <View style={{ marginBottom: 16 }}>
           {data.companyLogo && (
-            <Text style={[styles.companyName, { marginBottom: 8 }]}>
-              {data.companyName}
-            </Text>
+            <Text style={[styles.companyName, { fontSize: 11, marginBottom: 2 }]}>{data.companyName}</Text>
           )}
-          <Text style={styles.companyAddress}>{companyFullAddress}</Text>
-          {data.companyPhone && (
-            <Text style={styles.companyAddress}>{data.companyPhone}</Text>
-          )}
-          {data.companyEmail && (
-            <Text style={styles.companyAddress}>{data.companyEmail}</Text>
-          )}
-          {data.taxNumber && (
-            <Text style={styles.companyAddress}>Tax ID: {data.taxNumber}</Text>
-          )}
+          {companyAddressLines ? <Text style={styles.companyAddress}>{companyAddressLines}</Text> : null}
+          {data.companyPhone && <Text style={styles.companyAddress}>{data.companyPhone}</Text>}
+          {data.companyEmail && <Text style={styles.companyAddress}>{data.companyEmail}</Text>}
+          {data.taxNumber && <Text style={styles.companyAddress}>Tax ID: {data.taxNumber}</Text>}
         </View>
 
-        {/* Bill To Section */}
-        <View style={styles.billToSection}>
-          <View style={styles.billToColumn}>
-            <Text style={styles.sectionLabel}>Bill To</Text>
+        {/* Middle: Bill To (left) + Date/Due/Balance (right) */}
+        <View style={styles.middleSection}>
+          <View style={styles.billToBlock}>
+            <Text style={styles.billToLabel}>Bill To:</Text>
             <Text style={styles.clientName}>{data.clientName}</Text>
-            {data.contactName && (
-              <Text style={styles.clientAddress}>{data.contactName}</Text>
-            )}
-            {data.clientAddress && (
-              <Text style={styles.clientAddress}>{data.clientAddress}</Text>
-            )}
-            {data.contactEmail && (
-              <Text style={styles.clientAddress}>{data.contactEmail}</Text>
-            )}
+            {data.contactName && <Text style={styles.clientDetail}>{data.contactName}</Text>}
+            {clientAddressLines ? <Text style={styles.clientDetail}>{clientAddressLines}</Text> : null}
+            {data.contactEmail && <Text style={styles.clientDetail}>{data.contactEmail}</Text>}
           </View>
-          <View style={styles.invoiceDetails}>
-            <View style={styles.invoiceDetailRow}>
-              <Text style={styles.invoiceDetailLabel}>Date:</Text>
-              <Text style={styles.invoiceDetailValue}>
-                {formatDate(data.invoiceDate)}
-              </Text>
+          <View style={styles.detailsBlock}>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Date:</Text>
+              <Text style={styles.detailValue}>{formatDate(data.invoiceDate)}</Text>
             </View>
             {data.dueDate && (
-              <View style={styles.invoiceDetailRow}>
-                <Text style={styles.invoiceDetailLabel}>Due Date:</Text>
-                <Text style={styles.invoiceDetailValue}>
-                  {formatDate(data.dueDate)}
-                </Text>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Due Date:</Text>
+                <Text style={styles.detailValue}>{formatDate(data.dueDate)}</Text>
               </View>
             )}
             {data.poNumber && (
-              <View style={styles.invoiceDetailRow}>
-                <Text style={styles.invoiceDetailLabel}>PO Number:</Text>
-                <Text style={styles.invoiceDetailValue}>{data.poNumber}</Text>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>PO #:</Text>
+                <Text style={styles.detailValue}>{data.poNumber}</Text>
               </View>
             )}
-            <View style={styles.balanceDue}>
-              <View style={styles.invoiceDetailRow}>
-                <Text style={styles.balanceDueLabel}>Balance Due:</Text>
-                <Text style={styles.balanceDueValue}>
-                  {formatCurrency(data.balanceDue)}
-                </Text>
-              </View>
+            <View style={styles.balanceDueRow}>
+              <Text style={styles.balanceDueLabel}>Balance Due:</Text>
+              <Text style={styles.balanceDueValue}>{formatCurrency(data.balanceDue)}</Text>
             </View>
           </View>
         </View>
@@ -414,46 +361,32 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => {
         {/* Line Items Table */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <View style={styles.tableColDescription}>
+            <View style={styles.colItem}>
               <Text style={styles.tableHeaderText}>Item</Text>
             </View>
-            <View style={styles.tableColQty}>
-              <Text style={[styles.tableHeaderText, { textAlign: "center" }]}>
-                Qty
-              </Text>
+            <View style={styles.colQty}>
+              <Text style={[styles.tableHeaderText, { textAlign: "center" }]}>Quantity</Text>
             </View>
-            <View style={styles.tableColRate}>
-              <Text style={[styles.tableHeaderText, { textAlign: "right" }]}>
-                Rate
-              </Text>
+            <View style={styles.colRate}>
+              <Text style={[styles.tableHeaderText, { textAlign: "right" }]}>Rate</Text>
             </View>
-            <View style={styles.tableColAmount}>
-              <Text style={[styles.tableHeaderText, { textAlign: "right" }]}>
-                Amount
-              </Text>
+            <View style={styles.colAmount}>
+              <Text style={[styles.tableHeaderText, { textAlign: "right" }]}>Amount</Text>
             </View>
           </View>
           {data.lineItems.map((item, index) => (
             <View style={styles.tableRow} key={index}>
-              <View style={styles.tableColDescription}>
-                <Text style={styles.tableCellDescription}>
-                  {item.description || "Item"}
-                </Text>
+              <View style={styles.colItem}>
+                <Text style={styles.cellText}>{item.description || "Item"}</Text>
               </View>
-              <View style={styles.tableColQty}>
-                <Text style={[styles.tableCellText, { textAlign: "center" }]}>
-                  {item.quantity}
-                </Text>
+              <View style={styles.colQty}>
+                <Text style={[styles.cellText, { textAlign: "center" }]}>{item.quantity}</Text>
               </View>
-              <View style={styles.tableColRate}>
-                <Text style={[styles.tableCellText, { textAlign: "right" }]}>
-                  {formatCurrency(item.unit_price)}
-                </Text>
+              <View style={styles.colRate}>
+                <Text style={[styles.cellText, { textAlign: "right" }]}>{formatCurrency(item.unit_price)}</Text>
               </View>
-              <View style={styles.tableColAmount}>
-                <Text style={[styles.tableCellText, { textAlign: "right" }]}>
-                  {formatCurrency(item.quantity * item.unit_price)}
-                </Text>
+              <View style={styles.colAmount}>
+                <Text style={[styles.cellText, { textAlign: "right" }]}>{formatCurrency(item.quantity * item.unit_price)}</Text>
               </View>
             </View>
           ))}
@@ -462,59 +395,43 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => {
         {/* Totals */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal</Text>
-            <Text style={styles.totalValue}>
-              {formatCurrency(data.subtotal)}
-            </Text>
+            <Text style={styles.totalLabel}>Subtotal:</Text>
+            <Text style={styles.totalValue}>{formatCurrency(data.subtotal)}</Text>
           </View>
-          {(data.taxRate || data.taxAmount) && (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>
-                Tax {data.taxRate ? `(${data.taxRate}%)` : ""}
-              </Text>
-              <Text style={styles.totalValue}>
-                {formatCurrency(data.taxAmount || 0)}
-              </Text>
-            </View>
-          )}
-          <View style={styles.grandTotal}>
-            <Text style={styles.grandTotalLabel}>Total</Text>
-            <Text style={styles.grandTotalValue}>
-              {formatCurrency(data.total)}
-            </Text>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Tax ({data.taxRate ?? 0}%):</Text>
+            <Text style={styles.totalValue}>{formatCurrency(data.taxAmount ?? 0)}</Text>
           </View>
-          {data.amountPaid && data.amountPaid > 0 && (
+          <View style={styles.grandTotalRow}>
+            <Text style={styles.grandTotalLabel}>Total:</Text>
+            <Text style={styles.grandTotalValue}>{formatCurrency(data.total)}</Text>
+          </View>
+          {data.amountPaid && data.amountPaid > 0 ? (
             <>
-              <View style={[styles.totalRow, { marginTop: 8 }]}>
-                <Text style={styles.totalLabel}>Amount Paid</Text>
-                <Text style={styles.totalValue}>
-                  -{formatCurrency(data.amountPaid)}
-                </Text>
+              <View style={[styles.totalRow, { marginTop: 4 }]}>
+                <Text style={styles.totalLabel}>Amount Paid:</Text>
+                <Text style={styles.totalValue}>-{formatCurrency(data.amountPaid)}</Text>
               </View>
-              <View style={[styles.totalRow, { borderBottomWidth: 0 }]}>
-                <Text style={[styles.totalLabel, styles.boldText]}>
-                  Balance Due
-                </Text>
-                <Text style={[styles.totalValue, { fontSize: 12 }]}>
-                  {formatCurrency(data.balanceDue)}
-                </Text>
+              <View style={styles.totalRow}>
+                <Text style={[styles.totalLabel, { fontFamily: "Helvetica-Bold" }]}>Balance Due:</Text>
+                <Text style={[styles.totalValue, { fontSize: 12 }]}>{formatCurrency(data.balanceDue)}</Text>
               </View>
             </>
-          )}
+          ) : null}
         </View>
 
-        {/* Footer - Notes and Terms */}
+        {/* Footer: Notes & Terms */}
         <View style={styles.footer}>
           {data.notes && (
-            <View style={styles.notesSection}>
-              <Text style={styles.notesLabel}>Notes</Text>
-              <Text style={styles.notesText}>{data.notes}</Text>
+            <View style={styles.notesBlock}>
+              <Text style={styles.footerLabel}>Notes:</Text>
+              <Text style={styles.footerText}>{data.notes}</Text>
             </View>
           )}
           {data.terms && (
-            <View style={styles.termsSection}>
-              <Text style={styles.termsLabel}>Terms</Text>
-              <Text style={styles.termsText}>{data.terms}</Text>
+            <View style={styles.termsBlock}>
+              <Text style={styles.footerLabel}>Terms:</Text>
+              <Text style={styles.footerText}>{data.terms}</Text>
             </View>
           )}
         </View>
