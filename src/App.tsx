@@ -42,6 +42,7 @@ import Emails from "./pages/Emails";
 import Settings from "./pages/Settings";
 import GmailCallback from "./pages/GmailCallback";
 import Financials from "./pages/Financials";
+import Invoices from "./pages/Invoices";
 import BusinessCosts from "./pages/BusinessCosts";
 import Forms from "./pages/Forms";
 import FormBuilder from "./pages/FormBuilder";
@@ -307,6 +308,14 @@ const App = () => (
                   element={
                     <AppLayout>
                       <Financials />
+                    </AppLayout>
+                  }
+                />
+                <Route
+                  path="invoices"
+                  element={
+                    <AppLayout>
+                      <Invoices />
                     </AppLayout>
                   }
                 />

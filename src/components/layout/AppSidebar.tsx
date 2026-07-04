@@ -8,6 +8,7 @@ import {
   Contact,
   DollarSign,
   Receipt,
+  FileText,
   ClipboardList,
   BarChart3,
   TrendingUp,
@@ -52,6 +53,7 @@ const mainNavItems: NavItem[] = [
   { title: "Team Members", path: "team", icon: Users, permission: "team" },
   { title: "CRM", path: "crm", icon: Contact, permission: "crm" },
   { title: "Financials", path: "financials", icon: DollarSign, permission: "financials" },
+  { title: "Invoices", path: "invoices", icon: FileText, permission: "financials" },
   { title: "Expenses", path: "expenses", icon: Receipt, permission: "expenses" },
   { title: "Projections", path: "projections", icon: TrendingUp, permission: "financials" },
 ];
