@@ -216,6 +216,24 @@ export default function Invoices() {
     };
   };
 
+  const fillClientAsync = async (projectId: string) => {
+    const project = projectMap.get(projectId) as any;
+    if (!project?.client_id) return;
+    const { data: client } = await supabase
+      .from("crm_clients")
+      .select("name, address, contact_name, contact_email, contact_phone")
+      .eq("id", project.client_id)
+      .single();
+    if (client) {
+      setForm((f) => ({
+        ...f,
+        client_name: client.name || f.client_name,
+        client_email: client.contact_email || f.client_email,
+        client_address: client.address || f.client_address,
+      }));
+    }
+  };
+
   const openEdit = (invoice: ProjectInvoice) => {
     setEditingInvoice(invoice);
     const project = projectMap.get(invoice.project_id);
@@ -739,7 +757,10 @@ export default function Invoices() {
                 <Label htmlFor="project">Project *</Label>
                 <Select
                   value={form.project_id}
-                  onValueChange={(v) => setForm((f) => ({ ...f, project_id: v, ...fillClientFromProject(v) }))}
+                  onValueChange={(v) => {
+                    setForm((f) => ({ ...f, project_id: v, ...fillClientFromProject(v) }));
+                    fillClientAsync(v);
+                  }}
                   disabled={!!editingInvoice}
                 >
                   <SelectTrigger className="border">
@@ -787,7 +808,7 @@ export default function Invoices() {
                 <Label htmlFor="invoice_number">Invoice Number</Label>
                 <Input
                   id="invoice_number"
-                  placeholder="e.g., INV-2026-001"
+                  placeholder="Auto-generated (INV-001)"
                   value={form.invoice_number}
                   onChange={(e) => setForm((f) => ({ ...f, invoice_number: e.target.value }))}
                   className="border"
