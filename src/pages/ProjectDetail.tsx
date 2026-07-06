@@ -21,6 +21,7 @@ import { useProjectExternalMembers, useAddProjectExternalMember, useRemoveProjec
 import { useContacts } from "@/hooks/useContacts";
 import { ProjectAccessManager } from "@/components/projects/ProjectAccessManager";
 import { ProjectTeamTab } from "@/components/projects/ProjectTeamTab";
+import { ProjectBoard } from "@/components/projects/ProjectBoard";
 import { formatDistanceToNow, format } from "date-fns";
 import { Loader2, Save } from "lucide-react";
 import {
@@ -57,6 +58,7 @@ import {
   ExternalLink,
   Wrench,
   RefreshCw,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1098,16 +1100,12 @@ export default function ProjectDetail() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center gap-2 sm:gap-4">
-        <Button variant="ghost" onClick={() => navigateOrg("/projects")} className="border border-transparent hover:border-border">
-          <ArrowLeft className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">Back</span>
-        </Button>
-      </div>
-
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
+            <Button variant="ghost" size="icon" onClick={() => navigateOrg("/projects")} className="h-6 w-6 -ml-1">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <span className="font-mono text-sm text-muted-foreground">{project.id}</span>
             <Badge className={projectStatusStyles[project.status as keyof typeof projectStatusStyles] || "bg-slate-400 text-black"}>
               {project.status}
@@ -1520,6 +1518,10 @@ export default function ProjectDetail() {
           <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Overview
           </TabsTrigger>
+          <TabsTrigger value="board" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <LayoutGrid className="h-4 w-4 mr-1" />
+            Board
+          </TabsTrigger>
           <TabsTrigger value="invoices" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <FileText className="h-4 w-4 mr-1" />
             Invoices
@@ -1737,6 +1739,11 @@ export default function ProjectDetail() {
               </Card>
             </div>
           </div>
+        </TabsContent>
+
+        {/* Board Tab */}
+        <TabsContent value="board" className="space-y-4">
+          {dbProject && <ProjectBoard projectId={dbProject.id} />}
         </TabsContent>
 
         {/* Invoices Tab */}

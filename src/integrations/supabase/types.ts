@@ -1382,6 +1382,14 @@ export type Database = {
           story_points: number | null
           title: string
           updated_at: string
+          ticket_type: Database["public"]["Enums"]["ticket_type"]
+          parent_ticket_id: string | null
+          labels: string[]
+          due_date: string | null
+          estimated_hours: number | null
+          actual_hours: number | null
+          resolution: string | null
+          workflow_status_id: string | null
         }
         Insert: {
           assignee_id?: string | null
@@ -1399,6 +1407,14 @@ export type Database = {
           story_points?: number | null
           title: string
           updated_at?: string
+          ticket_type?: Database["public"]["Enums"]["ticket_type"]
+          parent_ticket_id?: string | null
+          labels?: string[]
+          due_date?: string | null
+          estimated_hours?: number | null
+          actual_hours?: number | null
+          resolution?: string | null
+          workflow_status_id?: string | null
         }
         Update: {
           assignee_id?: string | null
@@ -1416,6 +1432,14 @@ export type Database = {
           story_points?: number | null
           title?: string
           updated_at?: string
+          ticket_type?: Database["public"]["Enums"]["ticket_type"]
+          parent_ticket_id?: string | null
+          labels?: string[]
+          due_date?: string | null
+          estimated_hours?: number | null
+          actual_hours?: number | null
+          resolution?: string | null
+          workflow_status_id?: string | null
         }
         Relationships: [
           {
@@ -1440,6 +1464,150 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
+      }
+      ticket_dependencies: {
+        Row: {
+          id: string
+          blocking_ticket_id: string
+          blocked_ticket_id: string
+          dependency_type: Database["public"]["Enums"]["dependency_type"]
+          organization_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          blocking_ticket_id: string
+          blocked_ticket_id: string
+          dependency_type?: Database["public"]["Enums"]["dependency_type"]
+          organization_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          blocking_ticket_id?: string
+          blocked_ticket_id?: string
+          dependency_type?: Database["public"]["Enums"]["dependency_type"]
+          organization_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      ticket_activity: {
+        Row: {
+          id: string
+          ticket_id: string
+          organization_id: string
+          actor_id: string | null
+          action: string
+          field_name: string | null
+          old_value: string | null
+          new_value: string | null
+          metadata: Record<string, unknown>
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ticket_id: string
+          organization_id: string
+          actor_id?: string | null
+          action: string
+          field_name?: string | null
+          old_value?: string | null
+          new_value?: string | null
+          metadata?: Record<string, unknown>
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ticket_id?: string
+          organization_id?: string
+          actor_id?: string | null
+          action?: string
+          field_name?: string | null
+          old_value?: string | null
+          new_value?: string | null
+          metadata?: Record<string, unknown>
+          created_at?: string
+        }
+        Relationships: []
+      }
+      workflow_statuses: {
+        Row: {
+          id: string
+          project_id: string
+          organization_id: string
+          name: string
+          category: Database["public"]["Enums"]["workflow_category"]
+          color: string
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          organization_id: string
+          name: string
+          category: Database["public"]["Enums"]["workflow_category"]
+          color?: string
+          position?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          organization_id?: string
+          name?: string
+          category?: Database["public"]["Enums"]["workflow_category"]
+          color?: string
+          position?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      project_templates: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          description: string | null
+          category: Database["public"]["Enums"]["template_category"]
+          default_statuses: unknown[]
+          default_milestones: unknown[]
+          default_tasks: unknown[]
+          settings: Record<string, unknown>
+          is_system: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          description?: string | null
+          category?: Database["public"]["Enums"]["template_category"]
+          default_statuses?: unknown[]
+          default_milestones?: unknown[]
+          default_tasks?: unknown[]
+          settings?: Record<string, unknown>
+          is_system?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          description?: string | null
+          category?: Database["public"]["Enums"]["template_category"]
+          default_statuses?: unknown[]
+          default_milestones?: unknown[]
+          default_tasks?: unknown[]
+          settings?: Record<string, unknown>
+          is_system?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       project_tasks: {
         Row: {
@@ -2270,6 +2438,10 @@ export type Database = {
       email_direction_type: "sent" | "received"
       activity_task_status: "pending" | "in_progress" | "completed" | "cancelled"
       activity_task_priority: "low" | "medium" | "high"
+      ticket_type: "epic" | "story" | "task" | "subtask" | "bug"
+      dependency_type: "blocks" | "relates_to" | "duplicates"
+      workflow_category: "todo" | "in_progress" | "done"
+      template_category: "consulting" | "supply_chain" | "maintenance" | "software" | "general"
     }
     CompositeTypes: {
       [_ in never]: never

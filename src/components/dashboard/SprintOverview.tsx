@@ -1,16 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Calendar, Zap, BookOpen, CircleDot, Bug, Layers } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { useActiveSprint } from "@/hooks/useSprints";
+import { useActiveSprint, useSprints } from "@/hooks/useSprints";
 import { useTickets } from "@/hooks/useTickets";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
+
+const typeIcons = {
+  epic: Zap,
+  story: BookOpen,
+  task: CircleDot,
+  subtask: Layers,
+  bug: Bug,
+} as const;
+
+const typeColors = {
+  epic: "text-violet-600",
+  story: "text-emerald-600",
+  task: "text-blue-600",
+  subtask: "text-sky-500",
+  bug: "text-red-500",
+} as const;
 
 export function SprintOverview() {
   const { navigateOrg } = useOrgNavigation();
   const { data: sprint, isLoading: sprintLoading } = useActiveSprint();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
+  const { data: allSprints } = useSprints();
 
   const isLoading = sprintLoading || ticketsLoading;
 
@@ -106,6 +124,53 @@ export function SprintOverview() {
             </span>
           </div>
         )}
+
+        {/* Breakdown by type */}
+        {sprintTickets.length > 0 && (
+          <div className="pt-2 border-t border-border space-y-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Breakdown</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {(["epic", "story", "task", "bug"] as const)
+                .map((type) => {
+                  const count = sprintTickets.filter(t => (t.ticket_type || "task") === type).length;
+                  if (count === 0) return null;
+                  const Icon = typeIcons[type];
+                  return (
+                    <div key={type} className="flex items-center gap-1.5 text-xs">
+                      <Icon className={`h-3.5 w-3.5 ${typeColors[type]}`} />
+                      <span className="capitalize">{type}</span>
+                      <Badge variant="secondary" className="ml-auto text-[10px] px-1 py-0 h-4">{count}</Badge>
+                    </div>
+                  );
+                })
+                .filter(Boolean)}
+            </div>
+          </div>
+        )}
+
+        {/* Velocity (from completed sprints) */}
+        {(() => {
+          const completedSprints = allSprints?.filter(s => s.status === "completed") || [];
+          if (completedSprints.length === 0) return null;
+          const recentVelocities = completedSprints.slice(0, 3).map(s => {
+            const sprintTix = tickets?.filter(t => t.sprint_id === s.id && t.status === "closed") || [];
+            return sprintTix.reduce((sum, t) => sum + (t.story_points || 0), 0);
+          });
+          const avgVelocity = recentVelocities.length > 0
+            ? Math.round(recentVelocities.reduce((a, b) => a + b, 0) / recentVelocities.length)
+            : 0;
+
+          if (avgVelocity === 0) return null;
+
+          return (
+            <div className="pt-2 border-t border-border">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Avg. Velocity</span>
+                <span className="font-mono font-medium">{avgVelocity} pts/sprint</span>
+              </div>
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );

@@ -27,6 +27,11 @@ import {
   List,
   LayoutGrid,
   Play,
+  Zap,
+  BookOpen,
+  CircleDot,
+  Bug,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -114,6 +119,22 @@ const categoryLabels: Record<TicketCategory, string> = {
   quote: "Customer Quote",
   feedback: "Feedback",
   issue: "Issue",
+};
+
+type TicketType = "epic" | "story" | "task" | "subtask" | "bug";
+const ticketTypeIcons: Record<TicketType, typeof Zap> = {
+  epic: Zap,
+  story: BookOpen,
+  task: CircleDot,
+  subtask: Layers,
+  bug: Bug,
+};
+const ticketTypeColors: Record<TicketType, string> = {
+  epic: "text-violet-600",
+  story: "text-emerald-600",
+  task: "text-blue-600",
+  subtask: "text-sky-500",
+  bug: "text-red-500",
 };
 
 import { ticketStatusStyles, ticketPriorityStyles } from "@/lib/styles";
@@ -212,11 +233,16 @@ export default function Tickets() {
     title: "",
     description: "",
     category: "feature" as TicketCategory,
+    ticket_type: "task" as "epic" | "story" | "task" | "subtask" | "bug",
     project_id: "",
     priority: "medium" as TicketPriority,
     assignee_id: "",
     story_points: "",
     sprint_id: "",
+    parent_ticket_id: "",
+    due_date: "",
+    estimated_hours: "",
+    labels: "" as string,
   });
 
   const [editForm, setEditForm] = useState({
@@ -476,22 +502,32 @@ export default function Tickets() {
         title: newTicket.title,
         description: newTicket.description || null,
         category: newTicket.category,
+        ticket_type: newTicket.ticket_type,
         project_id: newTicket.project_id || null,
         priority: newTicket.priority,
         assignee_id: newTicket.assignee_id || null,
         story_points: newTicket.story_points === "" ? null : parseFloat(newTicket.story_points),
         sprint_id: newTicket.sprint_id || null,
+        parent_ticket_id: newTicket.parent_ticket_id || null,
+        due_date: newTicket.due_date || null,
+        estimated_hours: newTicket.estimated_hours === "" ? null : parseFloat(newTicket.estimated_hours),
+        labels: newTicket.labels ? newTicket.labels.split(",").map((l) => l.trim()).filter(Boolean) : [],
       });
 
       setNewTicket({
         title: "",
         description: "",
         category: "feature",
+        ticket_type: "task",
         project_id: "",
         priority: "medium",
         assignee_id: "",
         story_points: "",
         sprint_id: "",
+        parent_ticket_id: "",
+        due_date: "",
+        estimated_hours: "",
+        labels: "",
       });
       setIsDialogOpen(false);
     } catch (error) {
@@ -763,6 +799,24 @@ export default function Tickets() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
+                  <Label htmlFor="ticket-type">Type</Label>
+                  <Select
+                    value={newTicket.ticket_type}
+                    onValueChange={(value: "epic" | "story" | "task" | "subtask" | "bug") => setNewTicket({ ...newTicket, ticket_type: value })}
+                  >
+                    <SelectTrigger className="border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border">
+                      <SelectItem value="epic">Epic</SelectItem>
+                      <SelectItem value="story">Story</SelectItem>
+                      <SelectItem value="task">Task</SelectItem>
+                      <SelectItem value="subtask">Subtask</SelectItem>
+                      <SelectItem value="bug">Bug</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
                   <Label htmlFor="category">Category</Label>
                   <Select
                     value={newTicket.category}
@@ -779,8 +833,10 @@ export default function Tickets() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="project">Project (optional)</Label>
+                  <Label htmlFor="project">Project</Label>
                   <Select
                     value={newTicket.project_id}
                     onValueChange={(value) => setNewTicket({ ...newTicket, project_id: value })}
@@ -797,6 +853,26 @@ export default function Tickets() {
                     </SelectContent>
                   </Select>
                 </div>
+                {newTicket.ticket_type === "subtask" && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="parent-ticket">Parent Ticket</Label>
+                    <Select
+                      value={newTicket.parent_ticket_id}
+                      onValueChange={(value) => setNewTicket({ ...newTicket, parent_ticket_id: value })}
+                    >
+                      <SelectTrigger className="border">
+                        <SelectValue placeholder="Select parent" />
+                      </SelectTrigger>
+                      <SelectContent className="border">
+                        {tickets?.filter(t => t.ticket_type !== "subtask" && t.status !== "closed").map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.display_id} — {t.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -834,7 +910,7 @@ export default function Tickets() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="story-points">Points</Label>
                   <Input
@@ -848,6 +924,31 @@ export default function Tickets() {
                     className="border"
                   />
                 </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="estimated-hours">Est. Hours</Label>
+                  <Input
+                    id="estimated-hours"
+                    type="number"
+                    step={0.5}
+                    min={0}
+                    placeholder="e.g. 8"
+                    value={newTicket.estimated_hours}
+                    onChange={(e) => setNewTicket({ ...newTicket, estimated_hours: e.target.value })}
+                    className="border"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="due-date">Due Date</Label>
+                  <Input
+                    id="due-date"
+                    type="date"
+                    value={newTicket.due_date}
+                    onChange={(e) => setNewTicket({ ...newTicket, due_date: e.target.value })}
+                    className="border"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="new-sprint">Sprint</Label>
                   <Select
@@ -867,6 +968,16 @@ export default function Tickets() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="labels">Labels</Label>
+                  <Input
+                    id="labels"
+                    placeholder="e.g. frontend, urgent, phase-2"
+                    value={newTicket.labels}
+                    onChange={(e) => setNewTicket({ ...newTicket, labels: e.target.value })}
+                    className="border"
+                  />
                 </div>
               </div>
             </div>
@@ -1344,19 +1455,26 @@ export default function Tickets() {
                         </TableCell>
                         <TableCell className="font-mono text-xs sm:text-sm">{ticket.display_id}</TableCell>
                         <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm line-clamp-1">{ticket.title}</span>
-                            <div className="flex flex-wrap items-center gap-1 mt-1 md:hidden">
-                              <Badge className={`${ticketPriorityStyles[ticket.priority]} text-xs`}>
-                                {ticket.priority}
-                              </Badge>
-                              {ticket.project?.name && (
-                                <span className="text-xs text-muted-foreground">{ticket.project.name}</span>
+                          <div className="flex items-start gap-2">
+                            {(() => {
+                              const TypeIcon = ticketTypeIcons[(ticket.ticket_type as TicketType) || "task"];
+                              const typeColor = ticketTypeColors[(ticket.ticket_type as TicketType) || "task"];
+                              return <TypeIcon className={`h-4 w-4 mt-0.5 shrink-0 ${typeColor}`} />;
+                            })()}
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-medium text-sm line-clamp-1">{ticket.title}</span>
+                              <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                                {ticket.labels && ticket.labels.length > 0 && ticket.labels.map((label: string) => (
+                                  <span key={label} className="text-[10px] px-1.5 py-0 rounded-[2px] bg-muted text-muted-foreground">{label}</span>
+                                ))}
+                                <span className="text-xs text-muted-foreground md:hidden">
+                                  {ticket.project?.name}
+                                </span>
+                              </div>
+                              {ticket.assignee?.name && (
+                                <span className="text-xs text-muted-foreground">{ticket.assignee.name}</span>
                               )}
                             </div>
-                            {ticket.assignee?.name && (
-                              <span className="text-xs text-muted-foreground">Assigned to: {ticket.assignee.name}</span>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">

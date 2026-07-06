@@ -1,7 +1,7 @@
 import { Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useTickets } from "@/hooks/useTickets";
 
@@ -11,40 +11,38 @@ export function TeamWorkload() {
 
   const isLoading = membersLoading || ticketsLoading;
 
-  // Calculate workload for each team member
   const workload = teamMembers
     ?.filter((m) => m.status === "active")
     .map((member) => {
-      const assignedTickets = tickets?.filter(
+      const openTickets = tickets?.filter(
         (t) => t.assignee_id === member.id && t.status !== "closed"
-      ).length || 0;
+      ) || [];
 
-      // Assume 10 tickets is "full" workload for visualization
-      const percentage = Math.min((assignedTickets / 10) * 100, 100);
+      const totalPoints = openTickets.reduce((sum, t) => sum + (t.story_points || 0), 0);
+      const totalEstHours = openTickets.reduce((sum, t) => sum + (t.estimated_hours || 0), 0);
+      const inProgress = openTickets.filter(t => t.status === "in-progress").length;
+      const percentage = Math.min((openTickets.length / 8) * 100, 100);
 
       return {
         ...member,
-        assignedTickets,
+        openCount: openTickets.length,
+        inProgress,
+        totalPoints,
+        totalEstHours,
         percentage,
       };
     })
-    .sort((a, b) => b.assignedTickets - a.assignedTickets)
-    .slice(0, 5) || [];
+    .sort((a, b) => b.percentage - a.percentage)
+    .slice(0, 8) || [];
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  };
+  const getInitials = (name: string) =>
+    name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 80) return "bg-red-500";
-    if (percentage >= 60) return "bg-orange-500";
-    if (percentage >= 40) return "bg-yellow-500";
-    return "bg-green-500";
+  const getCapacityLabel = (pct: number) => {
+    if (pct >= 90) return { text: "Over", color: "bg-red-500/10 text-red-600" };
+    if (pct >= 70) return { text: "High", color: "bg-amber-500/10 text-amber-600" };
+    if (pct >= 40) return { text: "Normal", color: "bg-emerald-500/10 text-emerald-600" };
+    return { text: "Low", color: "bg-slate-500/10 text-slate-600" };
   };
 
   return (
@@ -57,36 +55,50 @@ export function TeamWorkload() {
       </CardHeader>
       <CardContent className="p-0">
         {isLoading ? (
-          <div className="p-4 text-center text-muted-foreground">Loading...</div>
+          <div className="p-4 text-center text-muted-foreground text-sm">Loading...</div>
         ) : workload.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">No team members</div>
+          <div className="p-4 text-center text-muted-foreground text-sm">No active team members</div>
         ) : (
           <div className="divide-y">
-            {workload.map((member) => (
-              <div key={member.id} className="p-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8 border">
-                    <AvatarFallback className="bg-secondary text-xs">
-                      {getInitials(member.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm truncate">{member.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {member.assignedTickets} tickets
-                      </span>
+            {workload.map((member) => {
+              const cap = getCapacityLabel(member.percentage);
+              return (
+                <div key={member.id} className="px-3 py-2.5 hover:bg-accent/30 transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">
+                        {getInitials(member.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm truncate">{member.name}</span>
+                        <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 h-4 ${cap.color}`}>
+                          {cap.text}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
+                        <span>{member.openCount} open</span>
+                        <span>{member.inProgress} active</span>
+                        {member.totalPoints > 0 && <span>{member.totalPoints} pts</span>}
+                        {member.totalEstHours > 0 && <span>{member.totalEstHours}h est</span>}
+                      </div>
                     </div>
-                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                    {/* Capacity bar */}
+                    <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden shrink-0">
                       <div
-                        className={`h-full transition-all ${getProgressColor(member.percentage)}`}
+                        className={`h-full rounded-full transition-all ${
+                          member.percentage >= 90 ? "bg-red-500" :
+                          member.percentage >= 70 ? "bg-amber-500" :
+                          member.percentage >= 40 ? "bg-emerald-500" : "bg-slate-400"
+                        }`}
                         style={{ width: `${member.percentage}%` }}
                       />
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>

@@ -49,7 +49,9 @@
       "Bash(gh auth:*)",
       "Bash(xattr:*)",
       "Bash(security find-identity:*)",
-      "Bash(tr:*)"
+      "Bash(tr:*)",
+      "Bash(curl -s \"https://registry.npmjs.org/@ui5/webcomponents-icons\")",
+      "Bash(curl -s \"https://registry.npmjs.org/@sap-theming/theming-base-content\")"
     ]
   }
 }

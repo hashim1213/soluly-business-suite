@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench, Archive, Search, LayoutGrid, List, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
@@ -56,6 +56,8 @@ import { toast } from "sonner";
 import { useProjects, useCreateProject, useDeleteProject, useUpdateProject, Project } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
 import { useContacts, useCreateContact, Contact } from "@/hooks/useContacts";
+import { useProjectTemplates, useSeedSystemTemplates } from "@/hooks/useProjectTemplates";
+import { useInitializeWorkflow } from "@/hooks/useWorkflowStatuses";
 import { Database } from "@/integrations/supabase/types";
 import { projectStatusStyles } from "@/lib/styles";
 import { cn } from "@/lib/utils";
@@ -189,6 +191,18 @@ export default function Projects() {
   const deleteProject = useDeleteProject();
   const updateProject = useUpdateProject();
   const createContact = useCreateContact();
+  const { data: templates } = useProjectTemplates();
+  const seedTemplates = useSeedSystemTemplates();
+  const initializeWorkflow = useInitializeWorkflow();
+
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("blank");
+
+  // Seed system templates on first load if none exist
+  useEffect(() => {
+    if (templates && templates.length === 0) {
+      seedTemplates.mutate();
+    }
+  }, [templates]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
@@ -451,7 +465,7 @@ export default function Projects() {
     }
 
     try {
-      await createProject.mutateAsync({
+      const project = await createProject.mutateAsync({
         name: newProject.name,
         description: newProject.description || null,
         client_name: newProject.client,
@@ -462,6 +476,26 @@ export default function Projects() {
         start_date: newProject.startDate || undefined,
         end_date: newProject.endDate || null,
       });
+
+      // Apply template workflow statuses if selected
+      if (selectedTemplate && selectedTemplate !== "blank" && project) {
+        const template = templates?.find(t => t.id === selectedTemplate);
+        if (template?.default_statuses?.length) {
+          try {
+            await initializeWorkflow.mutateAsync({
+              projectId: project.id,
+              statuses: template.default_statuses.map((s, i) => ({
+                name: s.name,
+                category: s.category,
+                color: s.color,
+                position: i,
+              })),
+            });
+          } catch {
+            // Non-critical — project still created
+          }
+        }
+      }
 
       setNewProject({
         name: "",
@@ -474,6 +508,7 @@ export default function Projects() {
         startDate: "",
         endDate: "",
       });
+      setSelectedTemplate("blank");
       setSelectedContactId(null);
       setIsDialogOpen(false);
     } catch (error) {
@@ -646,6 +681,38 @@ export default function Projects() {
               <SheetTitle>Create New Project</SheetTitle>
             </SheetHeader>
             <div className="grid gap-4 py-4">
+              {/* Template selector */}
+              <div className="grid gap-2">
+                <Label>Project Template</Label>
+                <Select
+                  value={selectedTemplate}
+                  onValueChange={(value) => {
+                    setSelectedTemplate(value);
+                    if (value && value !== "blank") {
+                      const template = templates?.find(t => t.id === value);
+                      if (template) {
+                        setNewProject(prev => ({
+                          ...prev,
+                          description: template.description || prev.description,
+                        }));
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="border">
+                    <SelectValue placeholder="Start from a template (optional)" />
+                  </SelectTrigger>
+                  <SelectContent className="border">
+                    <SelectItem value="blank">Blank Project</SelectItem>
+                    {templates?.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                        <span className="text-muted-foreground ml-2 text-xs">({template.category})</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="name">Project Name *</Label>
                 <Input

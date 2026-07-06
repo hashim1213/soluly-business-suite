@@ -185,16 +185,12 @@ export default function TicketDetail() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center gap-2 sm:gap-4">
-        <Button variant="ghost" onClick={() => navigateOrg("/tickets")} className="border border-transparent hover:border-border">
-          <ArrowLeft className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">Back</span>
-        </Button>
-      </div>
-
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
+            <Button variant="ghost" size="icon" onClick={() => navigateOrg("/tickets")} className="h-6 w-6 -ml-1">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <span className="font-mono text-sm text-muted-foreground">{ticket.display_id}</span>
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <CategoryIcon className="h-4 w-4" />
@@ -298,12 +294,50 @@ export default function TicketDetail() {
               </div>
 
               <div className="border-t border-border pt-4">
+                <div className="text-sm text-muted-foreground mb-1">Type</div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="capitalize">{ticket.ticket_type || "task"}</Badge>
+                </div>
+              </div>
+
+              <div className="border-t border-border pt-4">
                 <div className="text-sm text-muted-foreground mb-1">Category</div>
                 <div className="flex items-center gap-2">
                   <CategoryIcon className="h-4 w-4" />
                   <span className="font-medium">{categoryLabels[ticket.category] || ticket.category}</span>
                 </div>
               </div>
+
+              {ticket.due_date && (
+                <div className="border-t border-border pt-4">
+                  <div className="text-sm text-muted-foreground mb-1">Due Date</div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{ticket.due_date}</span>
+                  </div>
+                </div>
+              )}
+
+              {(ticket.estimated_hours || ticket.actual_hours) && (
+                <div className="border-t border-border pt-4">
+                  <div className="text-sm text-muted-foreground mb-1">Hours</div>
+                  <div className="flex items-center gap-3 text-sm">
+                    {ticket.estimated_hours && <span>Est: <strong>{ticket.estimated_hours}h</strong></span>}
+                    {ticket.actual_hours ? <span>Actual: <strong>{ticket.actual_hours}h</strong></span> : null}
+                  </div>
+                </div>
+              )}
+
+              {ticket.labels && ticket.labels.length > 0 && (
+                <div className="border-t border-border pt-4">
+                  <div className="text-sm text-muted-foreground mb-1">Labels</div>
+                  <div className="flex flex-wrap gap-1">
+                    {ticket.labels.map((label: string) => (
+                      <Badge key={label} variant="secondary" className="text-xs">{label}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {ticket.project && (
                 <div className="border-t border-border pt-4">
