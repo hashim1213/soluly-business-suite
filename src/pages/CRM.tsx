@@ -57,6 +57,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useQuotes, useCreateQuote, useUpdateQuote, useDeleteQuote, useCreateActivity, useTasks, useCreateTask, useUpdateTask, Quote } from "@/hooks/useQuotes";
+import { usePipelineStages, isWonStatus, isOpenStatus, stageTextColor, PipelineStage } from "@/hooks/usePipelineStages";
+import { useDealGroups, useCreateDealGroup } from "@/hooks/useDealGroups";
+import { useDropdownOptions, optionLabel, optionColor } from "@/hooks/useDropdownOptions";
 import { useCrmClients, useCrmLeads, useCreateCrmClient, useCreateCrmLead, useDeleteCrmClient, useDeleteCrmLead, useConvertLeadToClient, useUpdateCrmLead, useUpdateCrmClient, CrmClient } from "@/hooks/useCRM";
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, Contact } from "@/hooks/useContacts";
 import { useBulkAddClientContacts } from "@/hooks/useClientContacts";
@@ -77,31 +80,6 @@ import { cn } from "@/lib/utils";
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 type ActivityType = Database["public"]["Enums"]["activity_type"];
 type LeadStatus = Database["public"]["Enums"]["lead_status"];
-
-// Pipeline stages - maps to quote statuses
-const pipelineStages = [
-  { id: "draft", name: "Lead", color: "bg-slate-200", textDark: false },
-  { id: "sent", name: "Proposal", color: "bg-blue-500", textDark: true },
-  { id: "negotiating", name: "Negotiation", color: "bg-purple-500", textDark: true },
-  { id: "accepted", name: "Won", color: "bg-green-500", textDark: true },
-  { id: "rejected", name: "Lost", color: "bg-red-500", textDark: true },
-];
-
-const leadStatusStyles: Record<LeadStatus, string> = {
-  new: "bg-blue-600 text-white",
-  contacted: "bg-amber-500 text-black",
-  qualified: "bg-purple-600 text-white",
-  converted: "bg-emerald-600 text-white",
-  lost: "bg-red-600 text-white",
-};
-
-const leadStatusOptions: { value: LeadStatus; label: string }[] = [
-  { value: "new", label: "New" },
-  { value: "contacted", label: "Contacted" },
-  { value: "qualified", label: "Qualified" },
-  { value: "converted", label: "Converted" },
-  { value: "lost", label: "Lost" },
-];
 
 // Generic client-side column sorting shared by the CRM tables
 type SortState = { key: string; dir: "asc" | "desc" };
@@ -225,9 +203,15 @@ export default function CRM() {
   const { data: tags } = useTags();
   const exportContacts = useExportContacts();
   const importContacts = useImportContacts();
+  const { data: pipelineStages = [] } = usePipelineStages();
+  const { data: dealGroups } = useDealGroups();
+  const createDealGroup = useCreateDealGroup();
+  const { data: leadStatusOptions } = useDropdownOptions("lead_status");
+  const { data: activityTypeOptions } = useDropdownOptions("crm_activity_type");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [tagFilter, setTagFilter] = useState<string>("all");
+  const [dealGroupFilter, setDealGroupFilter] = useState<string>("all");
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<any[]>([]);
@@ -272,7 +256,10 @@ export default function CRM() {
     valid_until: "",
     notes: "",
     contact_id: "",
+    deal_group_id: "",
   });
+  const [newDealGroupName, setNewDealGroupName] = useState("");
+  const [isCreatingDealGroupInline, setIsCreatingDealGroupInline] = useState(false);
   const [newActivity, setNewActivity] = useState({
     type: "call" as ActivityType,
     description: "",
@@ -317,35 +304,43 @@ export default function CRM() {
 
   const isLoading = quotesLoading || clientsLoading || leadsLoading || tasksLoading || contactsLoading;
 
-  // Filter quotes by search
+  // Filter quotes by search and deal group
   const filteredQuotes = quotes?.filter((quote) => {
+    if (dealGroupFilter !== "all") {
+      if (dealGroupFilter === "none") {
+        if (quote.deal_group_id) return false;
+      } else if (quote.deal_group_id !== dealGroupFilter) {
+        return false;
+      }
+    }
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
       quote.title.toLowerCase().includes(query) ||
       quote.company_name.toLowerCase().includes(query) ||
-      quote.contact_name?.toLowerCase().includes(query)
+      quote.contact_name?.toLowerCase().includes(query) ||
+      quote.deal_group?.name?.toLowerCase().includes(query)
     );
   }) || [];
 
   // Group deals by stage
   const dealsByStage = pipelineStages.map((stage) => ({
     ...stage,
-    deals: filteredQuotes.filter((q) => q.status === stage.id),
+    deals: filteredQuotes.filter((q) => q.status === stage.key),
     totalValue: filteredQuotes
-      .filter((q) => q.status === stage.id)
+      .filter((q) => q.status === stage.key)
       .reduce((sum, q) => sum + q.value, 0),
   }));
 
   // Calculate pipeline stats
   const totalPipelineValue = filteredQuotes
-    .filter((q) => q.status !== "rejected" && q.status !== "accepted")
+    .filter((q) => isOpenStatus(pipelineStages, q.status))
     .reduce((sum, q) => sum + q.value, 0);
   const wonValue = filteredQuotes
-    .filter((q) => q.status === "accepted")
+    .filter((q) => isWonStatus(pipelineStages, q.status))
     .reduce((sum, q) => sum + q.value, 0);
   const activeDeals = filteredQuotes.filter(
-    (q) => q.status !== "rejected" && q.status !== "accepted"
+    (q) => isOpenStatus(pipelineStages, q.status)
   ).length;
 
   // Filter leads
@@ -405,7 +400,8 @@ export default function CRM() {
   const sortedDeals = sortRows(filteredQuotes, dealSort, {
     title: (q) => q.title,
     company_name: (q) => q.company_name,
-    status: (q) => pipelineStages.findIndex((s) => s.id === q.status),
+    deal_group: (q) => q.deal_group?.name,
+    status: (q) => pipelineStages.findIndex((s) => s.key === q.status),
     value: (q) => q.value,
     valid_until: (q) => q.valid_until,
     last_activity: (q) => q.last_activity,
@@ -443,6 +439,35 @@ export default function CRM() {
     }
 
     try {
+      let dealGroupId = newDeal.deal_group_id || null;
+      if (isCreatingDealGroupInline && newDealGroupName.trim()) {
+        const group = await createDealGroup.mutateAsync({ name: newDealGroupName.trim() });
+        dealGroupId = group.id;
+      }
+
+      // Manually entered contacts are saved to Contacts, unless one with
+      // the same email (or name, when no email is given) already exists
+      const contactName = newDeal.contact_name.trim();
+      const contactEmail = newDeal.contact_email.trim();
+      if (!newDeal.contact_id && contactName) {
+        const existing = contacts?.find((c) =>
+          contactEmail
+            ? c.email?.toLowerCase() === contactEmail.toLowerCase()
+            : c.name.toLowerCase() === contactName.toLowerCase()
+        );
+        if (!existing) {
+          const matchedCompany = clients?.find(
+            (c) => c.name.toLowerCase() === newDeal.company_name.trim().toLowerCase()
+          );
+          await createContact.mutateAsync({
+            name: contactName,
+            email: contactEmail || undefined,
+            company_id: matchedCompany?.id,
+          });
+        }
+      }
+
+      const firstStage = pipelineStages[0];
       await createQuote.mutateAsync({
         title: newDeal.title,
         description: newDeal.description || null,
@@ -452,8 +477,9 @@ export default function CRM() {
         value: parseFloat(newDeal.value) || 0,
         valid_until: newDeal.valid_until || null,
         notes: newDeal.notes || null,
-        status: "draft",
-        stage: 10,
+        deal_group_id: dealGroupId,
+        status: firstStage?.key || "draft",
+        stage: firstStage?.winProgress ?? 10,
       });
 
       setNewDeal({
@@ -466,7 +492,10 @@ export default function CRM() {
         valid_until: "",
         notes: "",
         contact_id: "",
+        deal_group_id: "",
       });
+      setNewDealGroupName("");
+      setIsCreatingDealGroupInline(false);
       setIsNewDealOpen(false);
     } catch (error) {
       // Error handled by hook
@@ -725,17 +754,11 @@ export default function CRM() {
   };
 
   const handleMoveStage = (quoteId: string, newStatus: QuoteStatus) => {
-    const stageProgress: Record<QuoteStatus, number> = {
-      draft: 10,
-      sent: 50,
-      negotiating: 75,
-      accepted: 100,
-      rejected: 0,
-    };
+    const stage = pipelineStages.find((s) => s.key === newStatus);
     updateQuote.mutate({
       id: quoteId,
       status: newStatus,
-      stage: stageProgress[newStatus],
+      stage: stage?.winProgress ?? 10,
     });
   };
 
@@ -905,7 +928,21 @@ export default function CRM() {
 
         {/* Pipeline Tab */}
         <TabsContent value="pipeline" className="space-y-4">
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 flex-wrap">
+            <Select value={dealGroupFilter} onValueChange={setDealGroupFilter}>
+              <SelectTrigger className="border h-9 w-[180px]">
+                <SelectValue placeholder="All deal groups" />
+              </SelectTrigger>
+              <SelectContent className="border">
+                <SelectItem value="all">All deal groups</SelectItem>
+                <SelectItem value="none">Ungrouped</SelectItem>
+                {dealGroups?.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <ViewToggle
               value={dealsView}
               onChange={setDealsView}
@@ -934,6 +971,62 @@ export default function CRM() {
                       onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })}
                       className="border"
                     />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Deal Group</Label>
+                    {isCreatingDealGroupInline ? (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="e.g., First Farms"
+                          value={newDealGroupName}
+                          onChange={(e) => setNewDealGroupName(e.target.value)}
+                          className="border"
+                          autoFocus
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setIsCreatingDealGroupInline(false);
+                            setNewDealGroupName("");
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Select
+                        value={newDeal.deal_group_id || "none"}
+                        onValueChange={(v) => {
+                          if (v === "new") {
+                            setIsCreatingDealGroupInline(true);
+                            setNewDeal({ ...newDeal, deal_group_id: "" });
+                          } else {
+                            setNewDeal({ ...newDeal, deal_group_id: v === "none" ? "" : v });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="border">
+                          <SelectValue placeholder="No deal group" />
+                        </SelectTrigger>
+                        <SelectContent className="border">
+                          <SelectItem value="none">No deal group</SelectItem>
+                          {dealGroups?.map((group) => (
+                            <SelectItem key={group.id} value={group.id}>
+                              {group.name}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="new">
+                            <div className="flex items-center gap-2">
+                              <PlusCircle className="h-4 w-4" /> New deal group…
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Group multiple customers under one deal, e.g. "First Farms" or "University".
+                    </p>
                   </div>
                   <div className="grid gap-2">
                     <Label>Description</Label>
@@ -1063,28 +1156,34 @@ export default function CRM() {
 
           {/* Pipeline View */}
           {dealsView === "board" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className={cn(
+            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
+            pipelineStages.length <= 4 ? "xl:grid-cols-4" : "xl:grid-cols-5"
+          )}>
             {dealsByStage.map((stage) => (
-              <Card key={stage.id} className="border border-border shadow-sm">
-                <CardHeader className={`py-3 px-4 ${stage.color} ${stage.textDark ? "text-white" : ""}`}>
+              <Card key={stage.key} className="border border-border shadow-sm">
+                <CardHeader
+                  className="py-3 px-4"
+                  style={{ backgroundColor: stage.color, color: stageTextColor(stage.color) }}
+                >
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-semibold">{stage.name}</CardTitle>
                     <Badge variant="secondary" className="bg-white/20 text-current border-0">
                       {stage.deals.length}
                     </Badge>
                   </div>
-                  <div className={`text-xs ${stage.textDark ? "text-white/80" : "text-muted-foreground"}`}>
+                  <div className="text-xs opacity-80">
                     {formatValue(stage.totalValue)}
                   </div>
                 </CardHeader>
                 <CardContent
                   className={cn(
                     "p-2 space-y-2 min-h-[200px] transition-colors",
-                    hoveredStage === stage.id && "ring-2 ring-primary/40 bg-accent/50"
+                    hoveredStage === stage.key && "ring-2 ring-primary/40 bg-accent/50"
                   )}
                   onDragOver={(e) => {
                     e.preventDefault();
-                    setHoveredStage(stage.id);
+                    setHoveredStage(stage.key);
                   }}
                   onDragLeave={() => setHoveredStage(null)}
                   onDrop={(e) => {
@@ -1092,7 +1191,7 @@ export default function CRM() {
                     setHoveredStage(null);
                     const draggedId = e.dataTransfer.getData("text/plain");
                     if (!draggedId) return;
-                    handleMoveStage(draggedId, stage.id as QuoteStatus);
+                    handleMoveStage(draggedId, stage.key as QuoteStatus);
                     toast.success(`Deal moved to ${stage.name}`);
                   }}
                 >
@@ -1112,6 +1211,15 @@ export default function CRM() {
                         <CardContent className="p-3">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
+                              {deal.deal_group && (
+                                <Badge
+                                  variant="outline"
+                                  className="mb-1 text-[10px] px-1.5 py-0 font-medium border"
+                                  style={{ borderColor: deal.deal_group.color, color: deal.deal_group.color }}
+                                >
+                                  {deal.deal_group.name}
+                                </Badge>
+                              )}
                               <p className="font-medium text-sm truncate">{deal.title}</p>
                               <p className="text-xs text-muted-foreground truncate">
                                 {deal.company_name}
@@ -1141,42 +1249,28 @@ export default function CRM() {
                                   <Phone className="h-4 w-4 mr-2" />
                                   Log Activity
                                 </DropdownMenuItem>
-                                {stage.id !== "sent" && stage.id !== "negotiating" && stage.id !== "accepted" && stage.id !== "rejected" && (
-                                  <DropdownMenuItem onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMoveStage(deal.id, "sent");
-                                  }}>
-                                    <ArrowRight className="h-4 w-4 mr-2" />
-                                    Move to Proposal
-                                  </DropdownMenuItem>
-                                )}
-                                {stage.id !== "negotiating" && stage.id !== "accepted" && stage.id !== "rejected" && (
-                                  <DropdownMenuItem onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMoveStage(deal.id, "negotiating");
-                                  }}>
-                                    <ArrowRight className="h-4 w-4 mr-2" />
-                                    Move to Negotiation
-                                  </DropdownMenuItem>
-                                )}
-                                {stage.id !== "accepted" && stage.id !== "rejected" && (
-                                  <>
-                                    <DropdownMenuItem onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleMoveStage(deal.id, "accepted");
-                                    }} className="text-green-600">
-                                      <ChevronRight className="h-4 w-4 mr-2" />
-                                      Mark as Won
+                                {pipelineStages
+                                  .filter((s) => s.key !== stage.key)
+                                  .map((target) => (
+                                    <DropdownMenuItem
+                                      key={target.key}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMoveStage(deal.id, target.key as QuoteStatus);
+                                      }}
+                                      className={cn(
+                                        target.stageCategory === "won" && "text-green-600",
+                                        target.stageCategory === "lost" && "text-destructive"
+                                      )}
+                                    >
+                                      {target.stageCategory === "won" ? (
+                                        <ChevronRight className="h-4 w-4 mr-2" />
+                                      ) : (
+                                        <ArrowRight className="h-4 w-4 mr-2" />
+                                      )}
+                                      Move to {target.name}
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleMoveStage(deal.id, "rejected");
-                                    }} className="text-destructive">
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Mark as Lost
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
+                                  ))}
                                 <DropdownMenuItem
                                   className="text-destructive"
                                   onClick={(e) => {
@@ -1205,6 +1299,7 @@ export default function CRM() {
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <SortableTh sort={dealSort} onSort={toggleDealSort} id="title" label="Deal" />
+                    <SortableTh sort={dealSort} onSort={toggleDealSort} id="deal_group" label="Group" className="hidden sm:table-cell" />
                     <SortableTh sort={dealSort} onSort={toggleDealSort} id="company_name" label="Company" className="hidden md:table-cell" />
                     <SortableTh sort={dealSort} onSort={toggleDealSort} id="status" label="Stage" />
                     <SortableTh sort={dealSort} onSort={toggleDealSort} id="value" label="Value" className="text-right" />
@@ -1216,7 +1311,7 @@ export default function CRM() {
                 <TableBody>
                   {sortedDeals.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         No deals yet
                       </TableCell>
                     </TableRow>
@@ -1231,6 +1326,19 @@ export default function CRM() {
                           <div className="font-medium leading-tight">{deal.title}</div>
                           <div className="font-mono text-xs text-muted-foreground">{deal.display_id}</div>
                         </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {deal.deal_group ? (
+                            <Badge
+                              variant="outline"
+                              className="text-xs font-medium border"
+                              style={{ borderColor: deal.deal_group.color, color: deal.deal_group.color }}
+                            >
+                              {deal.deal_group.name}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="hidden md:table-cell">{deal.company_name}</TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Select
@@ -1242,7 +1350,7 @@ export default function CRM() {
                             </SelectTrigger>
                             <SelectContent>
                               {pipelineStages.map((s) => (
-                                <SelectItem key={s.id} value={s.id}>
+                                <SelectItem key={s.key} value={s.key}>
                                   {s.name}
                                 </SelectItem>
                               ))}
@@ -1412,8 +1520,13 @@ export default function CRM() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge className={leadStatusStyles[lead.status]}>
-                            {lead.status}
+                          <Badge
+                            style={{
+                              backgroundColor: optionColor(leadStatusOptions, lead.status) || "#6B7280",
+                              color: stageTextColor(optionColor(leadStatusOptions, lead.status) || "#6B7280"),
+                            }}
+                          >
+                            {optionLabel(leadStatusOptions, lead.status)}
                           </Badge>
                           <span className="font-mono text-xs text-muted-foreground">{lead.display_id}</span>
                         </div>
@@ -1437,12 +1550,16 @@ export default function CRM() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="border">
-                          <DropdownMenuItem onClick={() => updateLead.mutate({ id: lead.id, status: "contacted" })}>
-                            Mark as Contacted
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateLead.mutate({ id: lead.id, status: "qualified" })}>
-                            Mark as Qualified
-                          </DropdownMenuItem>
+                          {leadStatusOptions
+                            ?.filter((opt) => opt.value !== lead.status)
+                            .map((opt) => (
+                              <DropdownMenuItem
+                                key={opt.value}
+                                onClick={() => updateLead.mutate({ id: lead.id, status: opt.value as LeadStatus })}
+                              >
+                                Mark as {opt.label}
+                              </DropdownMenuItem>
+                            ))}
                           <DropdownMenuItem onClick={() => convertLead.mutate(lead.id)} className="text-chart-2">
                             <UserPlus className="h-4 w-4 mr-2" />
                             Convert to Client
@@ -1485,15 +1602,16 @@ export default function CRM() {
                           onValueChange={(v) => updateLead.mutate({ id: lead.id, status: v as LeadStatus })}
                         >
                           <SelectTrigger
-                            className={cn(
-                              "h-7 w-[120px] border-transparent px-2 text-xs font-semibold shadow-none",
-                              leadStatusStyles[lead.status]
-                            )}
+                            className="h-7 w-[120px] border-transparent px-2 text-xs font-semibold shadow-none"
+                            style={{
+                              backgroundColor: optionColor(leadStatusOptions, lead.status) || "#6B7280",
+                              color: stageTextColor(optionColor(leadStatusOptions, lead.status) || "#6B7280"),
+                            }}
                           >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {leadStatusOptions.map((opt) => (
+                            {leadStatusOptions?.map((opt) => (
                               <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
                               </SelectItem>
@@ -2602,26 +2720,11 @@ export default function CRM() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="border">
-                  <SelectItem value="call">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" /> Call
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="email">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" /> Email
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="meeting">
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4" /> Meeting
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="note">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" /> Note
-                    </div>
-                  </SelectItem>
+                  {activityTypeOptions?.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

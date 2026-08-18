@@ -75,6 +75,7 @@ import { useTags } from "@/hooks/useTags";
 import { useAllActivities } from "@/hooks/useContactActivities";
 import { useCrmClients, useCrmLeads } from "@/hooks/useCRM";
 import { useQuotes } from "@/hooks/useQuotes";
+import { usePipelineStages, isWonStatus, isLostStatus } from "@/hooks/usePipelineStages";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useProjects } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
@@ -429,6 +430,7 @@ export default function Reports() {
   const { data: clients, isLoading: clientsLoading } = useCrmClients();
   const { data: leads, isLoading: leadsLoading } = useCrmLeads();
   const { data: quotes, isLoading: quotesLoading } = useQuotes();
+  const { data: pipelineStages } = usePipelineStages();
   const { data: teamMembers, isLoading: teamLoading } = useTeamMembers();
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
@@ -846,15 +848,13 @@ export default function Reports() {
 
       // ============ SALES REPORTS ============
       case "sales-pipeline":
-        const pipelineByStage: Record<string, number> = {
-          draft: 0,
-          sent: 0,
-          negotiating: 0,
-          accepted: 0,
-          rejected: 0,
-        };
+        const pipelineByStage: Record<string, number> = {};
+        (pipelineStages || []).forEach((s) => {
+          pipelineByStage[s.name] = 0;
+        });
         quotes?.forEach((quote) => {
-          pipelineByStage[quote.status] = (pipelineByStage[quote.status] || 0) + (quote.value || 0);
+          const stageName = pipelineStages?.find((s) => s.key === quote.status)?.name || quote.status;
+          pipelineByStage[stageName] = (pipelineByStage[stageName] || 0) + (quote.value || 0);
         });
         const totalPipeline = quotes?.reduce((sum, q) => sum + (q.value || 0), 0) || 0;
         return {
@@ -874,8 +874,8 @@ export default function Reports() {
         };
 
       case "sales-won-lost":
-        const wonQuotes = quotes?.filter((q) => q.status === "accepted") || [];
-        const lostQuotes = quotes?.filter((q) => q.status === "rejected") || [];
+        const wonQuotes = quotes?.filter((q) => isWonStatus(pipelineStages, q.status)) || [];
+        const lostQuotes = quotes?.filter((q) => isLostStatus(pipelineStages, q.status)) || [];
         const wonValue = wonQuotes.reduce((sum, q) => sum + (q.value || 0), 0);
         const lostValue = lostQuotes.reduce((sum, q) => sum + (q.value || 0), 0);
         return {

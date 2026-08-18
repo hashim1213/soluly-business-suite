@@ -22,6 +22,7 @@ import { useTimeEntriesByMember } from "@/hooks/useTimeEntries";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
 import { useDashboardPreferences, StatCardType, WidgetType } from "@/hooks/useDashboardPreferences";
+import { usePipelineStages, isOpenStatus } from "@/hooks/usePipelineStages";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfWeek, endOfWeek, startOfMonth, addDays, isWithinInterval, parseISO } from "date-fns";
@@ -39,6 +40,7 @@ export default function Dashboard() {
   const { data: teamMembers, isLoading: teamLoading } = useTeamMembers();
   const { data: contacts, isLoading: contactsLoading } = useContacts();
   const { data: crmClients } = useCrmClients();
+  const { data: pipelineStages } = usePipelineStages();
   const { data: emailStats } = useEmailStats();
   const { data: myTimeEntries } = useTimeEntriesByMember(member?.id);
 
@@ -103,7 +105,7 @@ export default function Dashboard() {
   const inProgressFeatures = features?.filter(f => f.status === "in-progress").length || 0;
 
   const pipelineValue = quotes
-    ?.filter(q => q.status !== "rejected" && q.status !== "accepted")
+    ?.filter(q => isOpenStatus(pipelineStages, q.status))
     .reduce((sum, q) => sum + (q.value || 0), 0) || 0;
 
   const activeTeamMembers = teamMembers?.filter(m => m.status === "active").length || 0;
@@ -125,7 +127,7 @@ export default function Dashboard() {
     return isWithinInterval(updatedDate, { start: weekStart, end: weekEnd });
   }).length || 0;
 
-  const activeQuotes = quotes?.filter(q => q.status !== "rejected" && q.status !== "accepted").length || 0;
+  const activeQuotes = quotes?.filter(q => isOpenStatus(pipelineStages, q.status)).length || 0;
   const totalClients = crmClients?.length || 0;
 
   // Current member's hours logged this week (Mon-Sun, same week logic as MyHours)

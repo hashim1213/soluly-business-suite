@@ -52,6 +52,11 @@ export type QuoteWithProject = Quote & {
     display_id: string;
     client_name: string;
   } | null;
+  deal_group?: {
+    id: string;
+    name: string;
+    color: string;
+  } | null;
 };
 
 // Fetch all quotes for the current organization
@@ -67,7 +72,8 @@ export function useQuotes() {
         .from("quotes")
         .select(`
           *,
-          project:projects!project_id(id, name, display_id, client_name)
+          project:projects!project_id(id, name, display_id, client_name),
+          deal_group:deal_groups!deal_group_id(id, name, color)
         `)
         .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });

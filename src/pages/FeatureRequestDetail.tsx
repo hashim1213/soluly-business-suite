@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useFeatureRequestByDisplayId, useUpdateFeatureRequest, useDeleteFeatureRequest } from "@/hooks/useFeatureRequests";
+import { useDropdownOptions } from "@/hooks/useDropdownOptions";
 import { CommentsSection } from "@/components/comments/CommentsSection";
 import { Database } from "@/integrations/supabase/types";
 import { ticketPriorityStyles, featureStatusStyles } from "@/lib/styles";
@@ -54,6 +55,8 @@ export default function FeatureRequestDetail() {
   const { data: feature, isLoading, error } = useFeatureRequestByDisplayId(featureId);
   const updateFeature = useUpdateFeatureRequest();
   const deleteFeature = useDeleteFeatureRequest();
+  const { data: featureStatusOptions } = useDropdownOptions("feature_status");
+  const { data: featurePriorityOptions } = useDropdownOptions("feature_priority");
 
   const handleStatusChange = (newStatus: FeatureStatus) => {
     if (feature) {
@@ -257,11 +260,9 @@ export default function FeatureRequestDetail() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border">
-                    <SelectItem value="backlog">Backlog</SelectItem>
-                    <SelectItem value="in-review">In Review</SelectItem>
-                    <SelectItem value="planned">Planned</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    {featureStatusOptions?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -275,9 +276,9 @@ export default function FeatureRequestDetail() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border">
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                    {featurePriorityOptions?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

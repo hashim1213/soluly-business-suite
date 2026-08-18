@@ -472,6 +472,19 @@ export function useServicesKPIs(periodMonths: number = 12) {
         supabase.from("project_invoices").select("id, amount, status, created_at, project_id"),
       ]);
 
+      // Custom pipeline stages classify quote outcomes; fall back to the
+      // built-in accepted/rejected keys when the org hasn't customized.
+      const { data: stageRows } = await supabase
+        .from("crm_pipeline_stages")
+        .select("key, stage_category")
+        .eq("organization_id", organization.id);
+      const wonKeys = stageRows?.length
+        ? stageRows.filter((s) => s.stage_category === "won").map((s) => s.key)
+        : ["accepted"];
+      const lostKeys = stageRows?.length
+        ? stageRows.filter((s) => s.stage_category === "lost").map((s) => s.key)
+        : ["rejected"];
+
       if (projectsResult.error) throw projectsResult.error;
       if (clientsResult.error) throw clientsResult.error;
       if (quotesResult.error) throw quotesResult.error;
@@ -567,8 +580,8 @@ export function useServicesKPIs(periodMonths: number = 12) {
       const ltvCacRatio = customerAcquisitionCost > 0 ? customerLifetimeValue / customerAcquisitionCost : 0;
 
       // Sales Metrics
-      const wonQuotes = periodQuotes.filter(q => q.status === "accepted");
-      const lostQuotes = periodQuotes.filter(q => q.status === "rejected");
+      const wonQuotes = periodQuotes.filter(q => wonKeys.includes(q.status));
+      const lostQuotes = periodQuotes.filter(q => lostKeys.includes(q.status));
       const decidedQuotes = wonQuotes.length + lostQuotes.length;
       const winRate = decidedQuotes > 0 ? (wonQuotes.length / decidedQuotes) * 100 : 0;
       const avgDealSize = wonQuotes.length > 0
@@ -581,7 +594,7 @@ export function useServicesKPIs(periodMonths: number = 12) {
         : 0;
 
       // Pipeline value (active quotes)
-      const activeQuotes = quotes.filter(q => !["accepted", "rejected"].includes(q.status));
+      const activeQuotes = quotes.filter(q => !wonKeys.includes(q.status) && !lostKeys.includes(q.status));
       const pipelineValue = activeQuotes.reduce((sum, q) => sum + (q.value || 0), 0);
 
       // Backlog (active projects not started yet - simplified as pending projects)

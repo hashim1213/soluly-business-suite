@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { useProjects, useCreateProject, useDeleteProject, useUpdateProject, Project } from "@/hooks/useProjects";
+import { useDropdownOptions } from "@/hooks/useDropdownOptions";
 import { useTickets } from "@/hooks/useTickets";
 import { useContacts, useCreateContact, Contact } from "@/hooks/useContacts";
 import { useProjectTemplates, useSeedSystemTemplates } from "@/hooks/useProjectTemplates";
@@ -194,6 +195,7 @@ export default function Projects() {
   const { data: templates } = useProjectTemplates();
   const seedTemplates = useSeedSystemTemplates();
   const initializeWorkflow = useInitializeWorkflow();
+  const { data: projectStatusOptions } = useDropdownOptions("project_status");
 
   const [selectedTemplate, setSelectedTemplate] = useState<string>("blank");
 
@@ -579,12 +581,9 @@ export default function Projects() {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="pending">Pending</SelectItem>
-        <SelectItem value="active">Active</SelectItem>
-        <SelectItem value="on_hold">On Hold</SelectItem>
-        <SelectItem value="maintenance">Maintenance</SelectItem>
-        <SelectItem value="completed">Completed</SelectItem>
-        <SelectItem value="cancelled">Cancelled</SelectItem>
+        {projectStatusOptions?.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
@@ -630,12 +629,9 @@ export default function Projects() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="on_hold">On Hold</SelectItem>
-              <SelectItem value="maintenance">Maintenance</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
+              {projectStatusOptions?.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <div className="flex items-center rounded-sm border border-input overflow-hidden shrink-0">
@@ -900,8 +896,9 @@ export default function Projects() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border">
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
+                    {projectStatusOptions?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1241,12 +1238,9 @@ export default function Projects() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="border">
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="on_hold">On Hold</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      {projectStatusOptions?.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

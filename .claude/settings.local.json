@@ -51,7 +51,8 @@
       "Bash(security find-identity:*)",
       "Bash(tr:*)",
       "Bash(curl -s \"https://registry.npmjs.org/@ui5/webcomponents-icons\")",
-      "Bash(curl -s \"https://registry.npmjs.org/@sap-theming/theming-base-content\")"
+      "Bash(curl -s \"https://registry.npmjs.org/@sap-theming/theming-base-content\")",
+      "Bash(git -C /Users/hashimfarooq/Desktop/Projects/soluly-business-suite status --short)"
     ]
   }
 }

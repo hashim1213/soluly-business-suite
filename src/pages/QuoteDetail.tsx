@@ -7,6 +7,7 @@ import { pdf } from "@react-pdf/renderer";
 import { InvoicePDF, InvoiceData } from "@/components/invoice/InvoicePDF";
 import { useCurrentOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePipelineStages, stageFor, stageTextColor } from "@/hooks/usePipelineStages";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,22 +70,6 @@ const statusStyles: Record<string, string> = {
   rejected: "bg-destructive text-destructive-foreground",
 };
 
-const stageLabels: Record<string, string> = {
-  draft: "Preparing",
-  sent: "Awaiting Response",
-  negotiating: "In Negotiation",
-  accepted: "Won",
-  rejected: "Lost",
-};
-
-const stageValues: Record<string, number> = {
-  draft: 10,
-  sent: 40,
-  negotiating: 70,
-  accepted: 100,
-  rejected: 0,
-};
-
 export default function QuoteDetail() {
   const { quoteId } = useParams();
   const { navigateOrg } = useOrgNavigation();
@@ -92,6 +77,7 @@ export default function QuoteDetail() {
   const { organization } = useAuth();
   const { data: orgDetails } = useCurrentOrganization();
   const { data: quote, isLoading, error } = useQuoteByDisplayId(quoteId);
+  const { data: pipelineStages } = usePipelineStages();
   const { data: dbLineItems, isLoading: lineItemsLoading } = useQuoteLineItems(quote?.id);
   const updateQuote = useUpdateQuote();
   const deleteQuote = useDeleteQuote();
@@ -153,13 +139,14 @@ export default function QuoteDetail() {
 
   const handleStatusChange = async (newStatus: string) => {
     if (!quote) return;
+    const stage = stageFor(pipelineStages, newStatus);
     try {
       await updateQuote.mutateAsync({
         id: quote.id,
-        status: newStatus as "draft" | "sent" | "negotiating" | "accepted" | "rejected",
-        stage: stageValues[newStatus] || 10,
+        status: newStatus,
+        stage: stage?.winProgress ?? 10,
       });
-      toast.success(`Quote status updated to ${stageLabels[newStatus]}`);
+      toast.success(`Quote status updated to ${stage?.name || newStatus}`);
     } catch (error) {
       // Error handled by hook
     }
@@ -445,8 +432,18 @@ export default function QuoteDetail() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <span className="font-mono text-sm text-muted-foreground">{quote.display_id}</span>
-            <Badge className={statusStyles[quote.status] || statusStyles.draft}>
-              {stageLabels[quote.status] || quote.status}
+            <Badge
+              className={statusStyles[quote.status]}
+              style={
+                statusStyles[quote.status]
+                  ? undefined
+                  : {
+                      backgroundColor: stageFor(pipelineStages, quote.status)?.color || "#6B7280",
+                      color: stageTextColor(stageFor(pipelineStages, quote.status)?.color || "#6B7280"),
+                    }
+              }
+            >
+              {stageFor(pipelineStages, quote.status)?.name || quote.status}
             </Badge>
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">{quote.title}</h1>
@@ -708,11 +705,11 @@ export default function QuoteDetail() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border">
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="sent">Sent</SelectItem>
-                    <SelectItem value="negotiating">Negotiating</SelectItem>
-                    <SelectItem value="accepted">Accepted</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
+                    {pipelineStages?.map((s) => (
+                      <SelectItem key={s.key} value={s.key}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

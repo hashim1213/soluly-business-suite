@@ -86,6 +86,7 @@ import {
 } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { useTickets, useCreateTicket, useUpdateTicket, useDeleteTicket, TicketWithProject } from "@/hooks/useTickets";
+import { useDropdownOptions } from "@/hooks/useDropdownOptions";
 import { useSprints, useCreateSprint, useUpdateSprint, useDeleteSprint, Sprint } from "@/hooks/useSprints";
 import { useProjects } from "@/hooks/useProjects";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -162,6 +163,10 @@ export default function Tickets() {
   const { data: projects } = useProjects();
   const { data: teamMembers } = useTeamMembers();
   const { data: sprints } = useSprints();
+  const { data: typeOptions } = useDropdownOptions("ticket_type");
+  const { data: categoryOptions } = useDropdownOptions("ticket_category");
+  const { data: priorityOptions } = useDropdownOptions("ticket_priority");
+  const { data: statusOptions } = useDropdownOptions("ticket_status");
 
   // Mutations
   const createTicket = useCreateTicket();
@@ -802,17 +807,15 @@ export default function Tickets() {
                   <Label htmlFor="ticket-type">Type</Label>
                   <Select
                     value={newTicket.ticket_type}
-                    onValueChange={(value: "epic" | "story" | "task" | "subtask" | "bug") => setNewTicket({ ...newTicket, ticket_type: value })}
+                    onValueChange={(value: string) => setNewTicket({ ...newTicket, ticket_type: value as TicketType })}
                   >
                     <SelectTrigger className="border">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="border">
-                      <SelectItem value="epic">Epic</SelectItem>
-                      <SelectItem value="story">Story</SelectItem>
-                      <SelectItem value="task">Task</SelectItem>
-                      <SelectItem value="subtask">Subtask</SelectItem>
-                      <SelectItem value="bug">Bug</SelectItem>
+                      {typeOptions?.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -826,10 +829,9 @@ export default function Tickets() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="border">
-                      <SelectItem value="feature">Feature Request</SelectItem>
-                      <SelectItem value="quote">Customer Quote</SelectItem>
-                      <SelectItem value="feedback">Feedback</SelectItem>
-                      <SelectItem value="issue">Issue</SelectItem>
+                      {categoryOptions?.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -885,9 +887,9 @@ export default function Tickets() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="border">
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
+                      {priorityOptions?.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1211,10 +1213,9 @@ export default function Tickets() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="open">Open</SelectItem>
-                            <SelectItem value="in-progress">In Progress</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="closed">Closed</SelectItem>
+                            {statusOptions?.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1227,9 +1228,9 @@ export default function Tickets() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Priorities</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="low">Low</SelectItem>
+                            {priorityOptions?.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1502,9 +1503,9 @@ export default function Tickets() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="border">
-                              <SelectItem value="high">High</SelectItem>
-                              <SelectItem value="medium">Medium</SelectItem>
-                              <SelectItem value="low">Low</SelectItem>
+                              {priorityOptions?.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -1517,10 +1518,9 @@ export default function Tickets() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="border">
-                              <SelectItem value="open">Open</SelectItem>
-                              <SelectItem value="in-progress">In Progress</SelectItem>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="closed">Closed</SelectItem>
+                              {statusOptions?.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -1648,10 +1648,9 @@ export default function Tickets() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border">
-                    <SelectItem value="feature">Feature Request</SelectItem>
-                    <SelectItem value="quote">Customer Quote</SelectItem>
-                    <SelectItem value="feedback">Feedback</SelectItem>
-                    <SelectItem value="issue">Issue</SelectItem>
+                    {categoryOptions?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1685,9 +1684,9 @@ export default function Tickets() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border">
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                    {priorityOptions?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1701,10 +1700,9 @@ export default function Tickets() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border">
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
+                    {statusOptions?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

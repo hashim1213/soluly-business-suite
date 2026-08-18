@@ -18,6 +18,7 @@ import {
   Monitor,
   Upload,
   FileText,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +61,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRoles } from "@/hooks/useRoles";
 import { RoleManagement } from "@/components/settings/RoleManagement";
 import { EmailAccountsSettings } from "@/components/settings/EmailAccountsSettings";
+import { PipelineStagesSettings } from "@/components/settings/PipelineStagesSettings";
+import { DealGroupsSettings } from "@/components/settings/DealGroupsSettings";
+import { DropdownOptionsSettings } from "@/components/settings/DropdownOptionsSettings";
 import { useInvitations, useCreateInvitation, useDeleteInvitation } from "@/hooks/useInvitations";
 import { useUpdateOrganization, useOrganizationStats, useCurrentOrganization } from "@/hooks/useOrganization";
 import { Textarea } from "@/components/ui/textarea";
@@ -310,6 +314,7 @@ export default function Settings() {
             <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
             <TabsTrigger value="appearance" className="text-xs sm:text-sm">Appearance</TabsTrigger>
             {canManageOrg && <TabsTrigger value="organization" className="text-xs sm:text-sm">Org</TabsTrigger>}
+            {canManageOrg && <TabsTrigger value="customization" className="text-xs sm:text-sm">Customization</TabsTrigger>}
             {canManageOrg && <TabsTrigger value="billing" className="text-xs sm:text-sm">Billing</TabsTrigger>}
             {canManageUsers && <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>}
             {canManageRoles && <TabsTrigger value="roles" className="text-xs sm:text-sm">Roles</TabsTrigger>}
@@ -810,6 +815,37 @@ export default function Settings() {
                     "Save Changes"
                   )}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Customization Tab */}
+        {canManageOrg && (
+          <TabsContent value="customization" className="space-y-6">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 border border-border flex items-center justify-center bg-secondary">
+                    <SlidersHorizontal className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle>Customization</CardTitle>
+                    <CardDescription>
+                      Tailor pipeline stages, deal groups, and dropdown options across the app to fit how your team works
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <PipelineStagesSettings />
+                  <DealGroupsSettings />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold uppercase text-muted-foreground mb-3">Dropdown Options</h3>
+                  <DropdownOptionsSettings />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

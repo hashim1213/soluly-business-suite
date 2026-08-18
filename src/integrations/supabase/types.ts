@@ -892,6 +892,7 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           created_at: string
+          deal_group_id: string | null
           description: string | null
           display_id: string
           id: string
@@ -910,6 +911,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           created_at?: string
+          deal_group_id?: string | null
           description?: string | null
           display_id: string
           id?: string
@@ -928,6 +930,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           created_at?: string
+          deal_group_id?: string | null
           description?: string | null
           display_id?: string
           id?: string
@@ -946,6 +949,136 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "crm_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_deal_group_id_fkey"
+            columns: ["deal_group_id"]
+            isOneToOne: false
+            referencedRelation: "deal_groups"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      deal_groups: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      crm_pipeline_stages: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          key: string
+          name: string
+          organization_id: string
+          position: number
+          stage_category: string
+          win_progress: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          key: string
+          name: string
+          organization_id: string
+          position?: number
+          stage_category?: string
+          win_progress?: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          key?: string
+          name?: string
+          organization_id?: string
+          position?: number
+          stage_category?: string
+          win_progress?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_pipeline_stages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      dropdown_options: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          label: string
+          option_type: string
+          organization_id: string
+          position: number
+          value: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          option_type: string
+          organization_id: string
+          position?: number
+          value: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          option_type?: string
+          organization_id?: string
+          position?: number
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropdown_options_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           }
         ]
@@ -2411,25 +2544,25 @@ export type Database = {
       }
     }
     Enums: {
-      activity_type: "call" | "email" | "meeting" | "note"
+      activity_type: string
       client_status: "active" | "inactive"
       contract_type: "Full-time" | "Part-time" | "Contractor"
       email_category: "ticket" | "feature_request" | "customer_quote" | "feedback" | "other"
       email_status: "pending" | "processed" | "failed"
-      feature_priority: "high" | "medium" | "low"
-      feature_status: "backlog" | "in-review" | "planned" | "in-progress" | "completed"
+      feature_priority: string
+      feature_status: string
       feedback_category: "performance" | "ui-ux" | "feature" | "mobile" | "bug" | "general"
       feedback_sentiment: "positive" | "neutral" | "negative"
       feedback_source: "email" | "call" | "support"
       feedback_status: "acknowledged" | "under-review" | "investigating" | "in-progress" | "resolved"
-      lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
+      lead_status: string
       member_status: "active" | "inactive"
-      project_status: "active" | "pending" | "completed" | "on_hold" | "cancelled" | "maintenance"
-      quote_status: "draft" | "sent" | "negotiating" | "accepted" | "rejected"
+      project_status: string
+      quote_status: string
       task_priority: "high" | "medium" | "low"
-      ticket_category: "feature" | "quote" | "feedback" | "issue"
-      ticket_priority: "high" | "medium" | "low"
-      ticket_status: "open" | "in-progress" | "pending" | "closed"
+      ticket_category: string
+      ticket_priority: string
+      ticket_status: string
       payment_status: "pending" | "paid" | "cancelled"
       payment_method: "direct_deposit" | "check" | "wire_transfer" | "e_transfer" | "cash" | "other"
       custom_field_type: "text" | "number" | "date" | "select" | "multiselect" | "boolean" | "url" | "email" | "phone"
@@ -2438,7 +2571,7 @@ export type Database = {
       email_direction_type: "sent" | "received"
       activity_task_status: "pending" | "in_progress" | "completed" | "cancelled"
       activity_task_priority: "low" | "medium" | "high"
-      ticket_type: "epic" | "story" | "task" | "subtask" | "bug"
+      ticket_type: string
       dependency_type: "blocks" | "relates_to" | "duplicates"
       workflow_category: "todo" | "in_progress" | "done"
       template_category: "consulting" | "supply_chain" | "maintenance" | "software" | "general"

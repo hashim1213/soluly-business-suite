@@ -62,6 +62,7 @@ import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useCrmClientByDisplayId, useUpdateCrmClient, useDeleteCrmClient } from "@/hooks/useCRM";
 import { useContactsByCompany } from "@/hooks/useContacts";
 import { useQuotes } from "@/hooks/useQuotes";
+import { usePipelineStages, isWonStatus, isOpenStatus, stageFor, stageTextColor } from "@/hooks/usePipelineStages";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -69,14 +70,6 @@ const clientStatusStyles: Record<string, string> = {
   active: "bg-emerald-600 text-white",
   inactive: "bg-gray-500 text-white",
   churned: "bg-red-600 text-white",
-};
-
-const quoteStatusStyles: Record<string, string> = {
-  draft: "bg-slate-500 text-white",
-  sent: "bg-blue-600 text-white",
-  negotiating: "bg-purple-600 text-white",
-  accepted: "bg-emerald-600 text-white",
-  rejected: "bg-red-600 text-white",
 };
 
 export default function ClientDetail() {
@@ -87,6 +80,7 @@ export default function ClientDetail() {
   const { data: client, isLoading: clientLoading } = useCrmClientByDisplayId(clientId);
   const { data: contacts, isLoading: contactsLoading } = useContactsByCompany(client?.id);
   const { data: allQuotes } = useQuotes();
+  const { data: pipelineStages } = usePipelineStages();
 
   // Get quotes for this client
   const clientQuotes = allQuotes?.filter((q) => q.client_id === client?.id) || [];
@@ -172,11 +166,11 @@ export default function ClientDetail() {
 
   // Calculate stats
   const totalRevenue = clientQuotes
-    .filter((q) => q.status === "accepted")
+    .filter((q) => isWonStatus(pipelineStages, q.status))
     .reduce((sum, q) => sum + (q.value || 0), 0);
 
   const pipelineValue = clientQuotes
-    .filter((q) => q.status !== "accepted" && q.status !== "rejected")
+    .filter((q) => isOpenStatus(pipelineStages, q.status))
     .reduce((sum, q) => sum + (q.value || 0), 0);
 
   if (clientLoading) {
@@ -622,8 +616,13 @@ export default function ClientDetail() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge className={quoteStatusStyles[quote.status]}>
-                            {quote.status}
+                          <Badge
+                            style={{
+                              backgroundColor: stageFor(pipelineStages, quote.status)?.color || "#6B7280",
+                              color: stageTextColor(stageFor(pipelineStages, quote.status)?.color || "#6B7280"),
+                            }}
+                          >
+                            {stageFor(pipelineStages, quote.status)?.name || quote.status}
                           </Badge>
                           <span className="font-mono text-xs text-muted-foreground">
                             {quote.display_id}
