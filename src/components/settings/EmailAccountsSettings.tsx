@@ -36,7 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Mail, Settings2, Trash2, CheckCircle, Loader2, RefreshCw, AlertCircle, Filter, Plus, X, ChevronDown } from "lucide-react";
+import { Mail, Settings2, Trash2, CheckCircle, Loader2, RefreshCw, AlertCircle, Filter, Plus, X, ChevronDown, Server } from "lucide-react";
 import {
   useEmailAccounts,
   useUpdateEmailAccount,
@@ -49,6 +49,8 @@ import {
   useSyncComposioAccount,
   useDisconnectComposioAccount,
 } from "@/hooks/useComposioEmail";
+import { useSyncImapAccount } from "@/hooks/useImapEmail";
+import { AddImapAccountDialog } from "./AddImapAccountDialog";
 import { format } from "date-fns";
 
 // Gmail logo SVG
@@ -70,22 +72,26 @@ export function EmailAccountsSettings() {
   const { data: providers } = useEmailProviders();
   const connectProvider = useConnectEmailProvider();
   const syncComposio = useSyncComposioAccount();
+  const syncImap = useSyncImapAccount();
   const disconnectComposio = useDisconnectComposioAccount();
 
   const [editingAccount, setEditingAccount] = useState<any | null>(null);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
   const [filterAccount, setFilterAccount] = useState<any | null>(null);
   const [newSender, setNewSender] = useState("");
+  const [isImapDialogOpen, setIsImapDialogOpen] = useState(false);
 
   const handleSync = async (account: any) => {
     if (account.oauth_provider === "composio") {
       syncComposio.mutate({ accountId: account.id });
+    } else if (account.oauth_provider === "imap") {
+      syncImap.mutate({ accountId: account.id });
     } else {
       syncGmail.mutate({ accountId: account.id });
     }
   };
 
-  const isSyncPending = syncGmail.isPending || syncComposio.isPending;
+  const isSyncPending = syncGmail.isPending || syncComposio.isPending || syncImap.isPending;
 
   const handleUpdateSettings = async () => {
     if (!editingAccount) return;
@@ -183,7 +189,7 @@ export function EmailAccountsSettings() {
         </Badge>
       );
     }
-    if (account.oauth_provider === "google" || account.oauth_provider === "composio") {
+    if (account.oauth_provider) {
       return (
         <Badge variant="default" className="bg-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
@@ -202,12 +208,13 @@ export function EmailAccountsSettings() {
     return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   }
 
-  const connectedAccounts = accounts?.filter((a: any) => a.oauth_provider === "google" || a.oauth_provider === "composio") || [];
+  const connectedAccounts = accounts?.filter((a: any) => !!a.oauth_provider) || [];
   const manualAccounts = accounts?.filter((a: any) => !a.oauth_provider) || [];
 
   const providerLabel = (account: any) => {
     if (account.oauth_provider === "google" || account.provider_slug === "gmail") return "Gmail";
     if (account.provider_slug === "outlook") return "Outlook";
+    if (account.oauth_provider === "imap") return "IMAP";
     return account.provider_slug || "Email";
   };
 
@@ -244,6 +251,10 @@ export function EmailAccountsSettings() {
                   <span className="ml-2">{provider.name}</span>
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuItem onClick={() => setIsImapDialogOpen(true)}>
+                <Server className="h-5 w-5" />
+                <span className="ml-2">Private Mail (IMAP)</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -358,6 +369,10 @@ export function EmailAccountsSettings() {
                 <Button variant="outline" onClick={() => connectProvider.mutate("outlook")} disabled={connectProvider.isPending}>
                   <Mail className="h-4 w-4" />
                   <span className="ml-2">Connect Outlook</span>
+                </Button>
+                <Button variant="outline" onClick={() => setIsImapDialogOpen(true)}>
+                  <Server className="h-4 w-4" />
+                  <span className="ml-2">Private Mail</span>
                 </Button>
               </div>
             </CardContent>
@@ -495,6 +510,9 @@ export function EmailAccountsSettings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add IMAP Account Dialog */}
+      <AddImapAccountDialog open={isImapDialogOpen} onOpenChange={setIsImapDialogOpen} />
 
       {/* Sender Filters Dialog */}
       <Dialog open={!!filterAccount} onOpenChange={(open) => !open && setFilterAccount(null)}>

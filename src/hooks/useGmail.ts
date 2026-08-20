@@ -110,11 +110,11 @@ export function useSyncAllGmailAccounts() {
       maxResults?: number;
       fromDate?: Date;
     } = {}) => {
-      // Get all connected accounts (Gmail OAuth and Composio-backed)
+      // Get all connected accounts (Gmail OAuth, Composio, and IMAP)
       // Generated types don't include oauth_provider yet, so bypass the typed builder
       const { data: accounts, error: accountsError } = await (supabase.from("email_accounts") as any)
         .select("id, oauth_provider")
-        .in("oauth_provider", ["google", "composio"])
+        .in("oauth_provider", ["google", "composio", "imap"])
         .eq("status", "active") as {
         data: { id: string; oauth_provider: string }[] | null;
         error: { message: string } | null;
@@ -134,18 +134,18 @@ export function useSyncAllGmailAccounts() {
 
       for (const account of accounts) {
         try {
-          const isComposio = account.oauth_provider === "composio";
-          const { data, error } = await supabase.functions.invoke(
-            isComposio ? "composio-email" : "gmail-sync",
-            {
-              body: {
-                ...(isComposio ? { action: "sync" } : {}),
-                accountId: account.id,
-                maxResults,
-                fromDate: fromDate?.toISOString(),
-              },
-            }
-          );
+          const fn =
+            account.oauth_provider === "composio" ? "composio-email"
+            : account.oauth_provider === "imap" ? "imap-email"
+            : "gmail-sync";
+          const { data, error } = await supabase.functions.invoke(fn, {
+            body: {
+              ...(fn === "gmail-sync" ? {} : { action: "sync" }),
+              accountId: account.id,
+              maxResults,
+              fromDate: fromDate?.toISOString(),
+            },
+          });
 
           if (error || !data?.success) {
             failed++;
