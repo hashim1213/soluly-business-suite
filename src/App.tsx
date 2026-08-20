@@ -41,6 +41,7 @@ import Issues from "./pages/Issues";
 import Emails from "./pages/Emails";
 import Settings from "./pages/Settings";
 import GmailCallback from "./pages/GmailCallback";
+import ComposioCallback from "./pages/ComposioCallback";
 import Financials from "./pages/Financials";
 import Invoices from "./pages/Invoices";
 import BusinessCosts from "./pages/BusinessCosts";
@@ -127,6 +128,7 @@ const App = () => (
 
             {/* OAuth callback routes */}
             <Route path="/auth/gmail/callback" element={<GmailCallback />} />
+            <Route path="/auth/composio/callback" element={<ComposioCallback />} />
 
             {/* Public form submission */}
             <Route path="/f/:token" element={<FormSubmit />} />

@@ -30,13 +30,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Settings2, Trash2, CheckCircle, Loader2, RefreshCw, AlertCircle, Filter, Plus, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Mail, Settings2, Trash2, CheckCircle, Loader2, RefreshCw, AlertCircle, Filter, Plus, X, ChevronDown } from "lucide-react";
 import {
   useEmailAccounts,
   useUpdateEmailAccount,
   useDeleteEmailAccount,
 } from "@/hooks/useEmailAccounts";
-import { useConnectGmail, useSyncGmailAccount } from "@/hooks/useGmail";
+import { useSyncGmailAccount } from "@/hooks/useGmail";
+import {
+  useEmailProviders,
+  useConnectEmailProvider,
+  useSyncComposioAccount,
+  useDisconnectComposioAccount,
+} from "@/hooks/useComposioEmail";
 import { format } from "date-fns";
 
 // Gmail logo SVG
@@ -54,21 +66,26 @@ export function EmailAccountsSettings() {
   const { data: accounts, isLoading } = useEmailAccounts();
   const updateAccount = useUpdateEmailAccount();
   const deleteAccount = useDeleteEmailAccount();
-  const connectGmail = useConnectGmail();
   const syncGmail = useSyncGmailAccount();
+  const { data: providers } = useEmailProviders();
+  const connectProvider = useConnectEmailProvider();
+  const syncComposio = useSyncComposioAccount();
+  const disconnectComposio = useDisconnectComposioAccount();
 
   const [editingAccount, setEditingAccount] = useState<any | null>(null);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
   const [filterAccount, setFilterAccount] = useState<any | null>(null);
   const [newSender, setNewSender] = useState("");
 
-  const handleConnectGmail = async () => {
-    connectGmail.mutate();
+  const handleSync = async (account: any) => {
+    if (account.oauth_provider === "composio") {
+      syncComposio.mutate({ accountId: account.id });
+    } else {
+      syncGmail.mutate({ accountId: account.id });
+    }
   };
 
-  const handleSync = async (accountId: string) => {
-    syncGmail.mutate({ accountId });
-  };
+  const isSyncPending = syncGmail.isPending || syncComposio.isPending;
 
   const handleUpdateSettings = async () => {
     if (!editingAccount) return;
@@ -83,7 +100,12 @@ export function EmailAccountsSettings() {
 
   const handleDelete = async () => {
     if (deleteAccountId) {
-      await deleteAccount.mutateAsync(deleteAccountId);
+      const account = accounts?.find((a) => a.id === deleteAccountId) as any;
+      if (account?.oauth_provider === "composio") {
+        await disconnectComposio.mutateAsync(deleteAccountId);
+      } else {
+        await deleteAccount.mutateAsync(deleteAccountId);
+      }
       setDeleteAccountId(null);
     }
   };
@@ -161,7 +183,7 @@ export function EmailAccountsSettings() {
         </Badge>
       );
     }
-    if (account.oauth_provider === "google") {
+    if (account.oauth_provider === "google" || account.oauth_provider === "composio") {
       return (
         <Badge variant="default" className="bg-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
@@ -180,43 +202,65 @@ export function EmailAccountsSettings() {
     return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   }
 
-  const gmailAccounts = accounts?.filter(a => a.oauth_provider === "google") || [];
-  const manualAccounts = accounts?.filter(a => !a.oauth_provider) || [];
+  const connectedAccounts = accounts?.filter((a: any) => a.oauth_provider === "google" || a.oauth_provider === "composio") || [];
+  const manualAccounts = accounts?.filter((a: any) => !a.oauth_provider) || [];
+
+  const providerLabel = (account: any) => {
+    if (account.oauth_provider === "google" || account.provider_slug === "gmail") return "Gmail";
+    if (account.provider_slug === "outlook") return "Outlook";
+    return account.provider_slug || "Email";
+  };
 
   return (
     <div className="space-y-6">
-      {/* Gmail Connection Section */}
+      {/* Connected Accounts Section */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold">Gmail Accounts</h3>
+            <h3 className="text-lg font-semibold">Email Accounts</h3>
             <p className="text-sm text-muted-foreground">
-              Connect Gmail accounts to automatically sync and categorize emails.
+              Connect email accounts to automatically sync and categorize emails.
             </p>
           </div>
-          <Button onClick={handleConnectGmail} disabled={connectGmail.isPending}>
-            {connectGmail.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <GmailLogo />
-            )}
-            <span className="ml-2">Connect Gmail</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button disabled={connectProvider.isPending}>
+                {connectProvider.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4 mr-2" />
+                )}
+                Connect Email
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {(providers || [{ slug: "gmail", name: "Gmail" }, { slug: "outlook", name: "Outlook" }]).map((provider) => (
+                <DropdownMenuItem
+                  key={provider.slug}
+                  onClick={() => connectProvider.mutate(provider.slug)}
+                >
+                  {provider.slug === "gmail" ? <GmailLogo /> : <Mail className="h-5 w-5" />}
+                  <span className="ml-2">{provider.name}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {gmailAccounts.length > 0 ? (
+        {connectedAccounts.length > 0 ? (
           <div className="grid gap-4">
-            {gmailAccounts.map((account) => (
+            {connectedAccounts.map((account: any) => (
               <Card key={account.id} className="border">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-red-50 flex items-center justify-center">
-                        <GmailLogo />
+                        {providerLabel(account) === "Gmail" ? <GmailLogo /> : <Mail className="h-5 w-5 text-primary" />}
                       </div>
                       <div>
                         <CardTitle className="text-base">{account.display_name}</CardTitle>
-                        <CardDescription>{account.email_address}</CardDescription>
+                        <CardDescription>{account.email_address} · {providerLabel(account)}</CardDescription>
                       </div>
                     </div>
                     {getStatusBadge(account)}
@@ -238,10 +282,10 @@ export function EmailAccountsSettings() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleSync(account.id)}
-                        disabled={syncGmail.isPending || account.status === "syncing"}
+                        onClick={() => handleSync(account)}
+                        disabled={isSyncPending || account.status === "syncing"}
                       >
-                        {syncGmail.isPending ? (
+                        {isSyncPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <RefreshCw className="h-4 w-4" />
@@ -296,20 +340,26 @@ export function EmailAccountsSettings() {
           <Card className="border border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-8">
               <div className="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center mb-4">
-                <GmailLogo />
+                <Mail className="h-6 w-6 text-primary" />
               </div>
-              <h4 className="font-medium mb-2">No Gmail accounts connected</h4>
+              <h4 className="font-medium mb-2">No email accounts connected</h4>
               <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
-                Connect your Gmail account to automatically sync emails and use AI to categorize them.
+                Connect a Gmail or Outlook account to automatically sync emails and use AI to categorize them.
               </p>
-              <Button onClick={handleConnectGmail} disabled={connectGmail.isPending}>
-                {connectGmail.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <GmailLogo />
-                )}
-                <span className="ml-2">Connect Gmail</span>
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => connectProvider.mutate("gmail")} disabled={connectProvider.isPending}>
+                  {connectProvider.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <GmailLogo />
+                  )}
+                  <span className="ml-2">Connect Gmail</span>
+                </Button>
+                <Button variant="outline" onClick={() => connectProvider.mutate("outlook")} disabled={connectProvider.isPending}>
+                  <Mail className="h-4 w-4" />
+                  <span className="ml-2">Connect Outlook</span>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
