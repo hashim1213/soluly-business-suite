@@ -88,3 +88,13 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+supabase.auth.onAuthStateChange((event) => {
+  if (event === "TOKEN_REFRESHED") return;
+  if (event === "SIGNED_OUT") {
+    const on = window.location.pathname;
+    if (on !== "/login" && on !== "/signup" && on !== "/auth/callback") {
+      window.location.replace("/login");
+    }
+  }
+});
