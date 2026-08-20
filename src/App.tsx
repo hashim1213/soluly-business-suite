@@ -73,13 +73,11 @@ function StripOrgPrefix() {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Smart retry with exponential backoff
       retry: (failureCount, error: any) => {
-        // Don't retry auth errors
         if (error?.status === 401 || error?.status === 403) return false;
-        // Don't retry client errors
         if (error?.status >= 400 && error?.status < 500) return false;
-        // Retry up to 3 times for server errors
+        const msg = error?.message?.toLowerCase() || "";
+        if (msg.includes("refresh token") || msg.includes("jwt") || msg.includes("not authenticated")) return false;
         return failureCount < 3;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),

@@ -101,7 +101,6 @@ function getFromDate(range: string): Date | undefined {
   }
 }
 
-// Inbox-style tabs mapped onto status/review filters
 type InboxTab = "all" | "review" | "pending" | "done";
 
 export default function Emails() {
@@ -160,69 +159,65 @@ export default function Emails() {
 
   if (!hasConnectedAccounts) {
     return (
-      <div className="space-y-6">
-        <Card className="border border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-              <Mail className="h-10 w-10 text-primary" />
-            </div>
-            <h1 className="text-3xl font-semibold mb-3">Email Inbox</h1>
-            <p className="text-muted-foreground mb-8 max-w-md text-base">
-              Connect Gmail, Outlook, or a private IMAP mailbox to automatically sync, categorize,
-              and manage incoming emails with AI-powered processing.
-            </p>
-            <Button size="lg" onClick={() => navigate(orgPath(organization?.slug, "/settings"))} className="border">
-              <Settings className="h-5 w-5 mr-2" />
-              Connect Email in Settings
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+        <div className="flex flex-col items-center text-center max-w-md">
+          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+            <Mail className="h-8 w-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-semibold mb-2">Email Inbox</h1>
+          <p className="text-muted-foreground mb-8">
+            Connect Gmail, Outlook, or a private IMAP mailbox to sync and categorize emails with AI.
+          </p>
+          <Button size="lg" onClick={() => navigate(orgPath(organization?.slug, "/settings"))}>
+            <Settings className="h-4 w-4 mr-2" />
+            Connect Email Account
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-3">
-      {/* Toolbar: search + filters + actions in one row */}
-      <div className="flex items-center gap-2">
-        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="h-[calc(100vh-4.5rem)] flex flex-col">
+      {/* Top bar */}
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b bg-background shrink-0">
+        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search emails..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-8 h-9 border"
+            className="pl-8 h-8 text-sm border-muted"
           />
           {appliedSearch && (
             <button
               type="button"
               onClick={clearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </form>
 
-        {/* Filters popover */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="border h-9">
-              <SlidersHorizontal className="h-4 w-4 mr-2" />
+            <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs">
+              <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" />
               Filters
               {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
+                <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px] min-w-4 justify-center">
                   {activeFilterCount}
                 </Badge>
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 border" align="start">
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Date range</Label>
+          <PopoverContent className="w-56" align="start">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Date range</Label>
                 <Select value={dateRange} onValueChange={setDateRange}>
-                  <SelectTrigger className="h-8 border">
+                  <SelectTrigger className="h-8 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,13 +229,13 @@ export default function Emails() {
               </div>
 
               {accounts && accounts.length > 1 && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Account</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Account</Label>
                   <Select
                     value={accountFilter || "all"}
                     onValueChange={(v) => setAccountFilter(v === "all" ? undefined : v)}
                   >
-                    <SelectTrigger className="h-8 border">
+                    <SelectTrigger className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -253,13 +248,13 @@ export default function Emails() {
                 </div>
               )}
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">Category</Label>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Category</Label>
                 <Select
                   value={categoryFilter || "all"}
                   onValueChange={(v) => setCategoryFilter(v === "all" ? undefined : (v as EmailCategory))}
                 >
-                  <SelectTrigger className="h-8 border">
+                  <SelectTrigger className="h-8 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -275,14 +270,13 @@ export default function Emails() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full h-8"
+                  className="w-full h-7 text-xs"
                   onClick={() => {
                     setDateRange("1year");
                     setAccountFilter(undefined);
                     setCategoryFilter(undefined);
                   }}
                 >
-                  <X className="h-3.5 w-3.5 mr-1.5" />
                   Reset filters
                 </Button>
               )}
@@ -290,42 +284,63 @@ export default function Emails() {
           </PopoverContent>
         </Popover>
 
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as InboxTab)} className="ml-2">
+          <TabsList className="h-8">
+            <TabsTrigger value="all" className="text-xs px-2.5 h-6">
+              All
+              {stats?.total ? <span className="ml-1 text-muted-foreground">{stats.total}</span> : null}
+            </TabsTrigger>
+            <TabsTrigger value="review" className="text-xs px-2.5 h-6">
+              Review
+              {stats?.needsReview ? (
+                <span className="ml-1 text-orange-600 font-medium">{stats.needsReview}</span>
+              ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs px-2.5 h-6">
+              New
+              {stats?.pending ? (
+                <span className="ml-1 text-yellow-600 font-medium">{stats.pending}</span>
+              ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="done" className="text-xs px-2.5 h-6">Done</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         <div className="flex-1" />
 
-        {/* Primary actions */}
         {stats?.pending && stats.pending > 0 ? (
-          <Button onClick={() => processAll.mutate()} disabled={processAll.isPending} size="sm" className="h-9">
+          <Button onClick={() => processAll.mutate()} disabled={processAll.isPending} size="sm" variant="default" className="h-8 text-xs">
             {processAll.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
             ) : (
-              <Zap className="h-4 w-4 mr-2" />
+              <Zap className="h-3.5 w-3.5 mr-1.5" />
             )}
             Process {stats.pending}
           </Button>
         ) : null}
 
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={() => syncAll.mutate({ maxResults: 50 })}
           disabled={syncAll.isPending}
           size="sm"
-          className="border h-9"
+          className="h-8 text-xs"
         >
           {syncAll.isPending ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
           ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
           )}
           Sync
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="border h-9 w-9 p-0">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="border w-52">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => setIsSyncDialogOpen(true)}>
               <Calendar className="h-4 w-4 mr-2" />
               Sync older emails
@@ -346,15 +361,15 @@ export default function Emails() {
                   Clear all emails
                 </DropdownMenuItem>
               </AlertDialogTrigger>
-              <AlertDialogContent className="border">
+              <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Clear All Emails?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete all {stats?.total || 0} synced emails. This action cannot be undone.
+                    This will permanently delete all {stats?.total || 0} synced emails.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => clearAll.mutate()}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -368,41 +383,15 @@ export default function Emails() {
         </DropdownMenu>
       </div>
 
-      {/* Status tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as InboxTab)}>
-        <TabsList className="h-9">
-          <TabsTrigger value="all" className="text-sm">
-            All
-            {stats?.total ? <span className="ml-1.5 text-xs text-muted-foreground">{stats.total}</span> : null}
-          </TabsTrigger>
-          <TabsTrigger value="review" className="text-sm">
-            Needs Review
-            {stats?.needsReview ? (
-              <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
-                {stats.needsReview}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="pending" className="text-sm">
-            Unprocessed
-            {stats?.pending ? (
-              <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px] bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">
-                {stats.pending}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="done" className="text-sm">Approved</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {/* Two-pane inbox */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(300px,380px)_1fr] gap-3 min-h-0">
-        <Card className="border overflow-hidden flex flex-col">
-          <div className="px-3 py-2 border-b bg-muted/30 flex items-center justify-between shrink-0">
-            <span className="text-xs font-medium text-muted-foreground">
-              {emailsLoading ? "Loading..." : `${emails?.length || 0} email${(emails?.length || 0) !== 1 ? "s" : ""}`}
+      {/* Two-pane layout: list (narrow) + reading pane (wide) */}
+      <div className="flex-1 flex min-h-0">
+        {/* Email list — fixed narrow width */}
+        <div className="w-80 xl:w-96 border-r flex flex-col shrink-0">
+          <div className="px-3 py-1.5 border-b flex items-center justify-between bg-muted/30">
+            <span className="text-[11px] font-medium text-muted-foreground">
+              {emailsLoading ? "Loading..." : `${emails?.length || 0} emails`}
             </span>
-            {emailsLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+            {emailsLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
           </div>
           <div className="flex-1 min-h-0">
             <EmailList
@@ -412,16 +401,17 @@ export default function Emails() {
               isLoading={emailsLoading}
             />
           </div>
-        </Card>
+        </div>
 
-        <Card className="border overflow-hidden">
+        {/* Reading pane — takes all remaining space */}
+        <div className="flex-1 min-w-0">
           <EmailDetailPanel emailId={selectedEmailId} />
-        </Card>
+        </div>
       </div>
 
       {/* Sync Options Dialog */}
       <Dialog open={isSyncDialogOpen} onOpenChange={setIsSyncDialogOpen}>
-        <DialogContent className="border sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Sync Older Emails</DialogTitle>
             <DialogDescription>
@@ -432,10 +422,10 @@ export default function Emails() {
             <div className="space-y-2">
               <Label>Date Range</Label>
               <Select value={syncDateRange} onValueChange={setSyncDateRange}>
-                <SelectTrigger className="border">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border">
+                <SelectContent>
                   <SelectItem value="1week">Last Week</SelectItem>
                   <SelectItem value="2weeks">Last 2 Weeks</SelectItem>
                   <SelectItem value="1month">Last Month</SelectItem>
@@ -450,10 +440,10 @@ export default function Emails() {
             <div className="space-y-2">
               <Label>Email Limit</Label>
               <Select value={syncMaxResults} onValueChange={setSyncMaxResults}>
-                <SelectTrigger className="border">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border">
+                <SelectContent>
                   <SelectItem value="50">50 emails</SelectItem>
                   <SelectItem value="100">100 emails</SelectItem>
                   <SelectItem value="200">200 emails</SelectItem>
@@ -461,16 +451,13 @@ export default function Emails() {
                   <SelectItem value="1000">1,000 emails</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Larger limits may take longer to sync and process.
-              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSyncDialogOpen(false)} className="border">
+            <Button variant="outline" onClick={() => setIsSyncDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSyncAll} disabled={syncAll.isPending} className="border">
+            <Button onClick={handleSyncAll} disabled={syncAll.isPending}>
               {syncAll.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

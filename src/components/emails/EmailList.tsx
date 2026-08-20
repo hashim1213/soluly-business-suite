@@ -37,14 +37,6 @@ const categoryDot: Record<EmailCategory, string> = {
   other: "bg-gray-400",
 };
 
-const categoryLabels: Record<EmailCategory, string> = {
-  ticket: "Ticket",
-  feature_request: "Feature",
-  customer_quote: "Quote",
-  feedback: "Feedback",
-  other: "Other",
-};
-
 function formatEmailDate(dateStr: string): string {
   const date = new Date(dateStr);
   if (isToday(date)) return format(date, "h:mm a");
@@ -56,78 +48,66 @@ export function EmailList({ emails, selectedId, onSelect, isLoading }: EmailList
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (emails.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <Mail className="h-10 w-10 text-muted-foreground/60 mb-3" />
-        <h3 className="font-medium mb-1">No emails found</h3>
-        <p className="text-sm text-muted-foreground">
-          Try adjusting your filters or sync your accounts.
-        </p>
+      <div className="flex flex-col items-center justify-center h-full text-center px-6">
+        <Mail className="h-8 w-8 text-muted-foreground/40 mb-2" />
+        <p className="text-sm text-muted-foreground">No emails found</p>
       </div>
     );
   }
 
   return (
     <ScrollArea className="h-full">
-      <div className="divide-y divide-border/60">
-        {emails.map((email) => {
-          const isSelected = selectedId === email.id;
-          // "Unread" feel: anything not yet reviewed reads bolder
-          const needsAttention = email.status === "pending" || email.review_status === "pending";
+      {emails.map((email) => {
+        const isSelected = selectedId === email.id;
+        const needsAttention = email.status === "pending" || email.review_status === "pending";
 
-          return (
-            <button
-              key={email.id}
-              onClick={() => onSelect(email.id)}
-              className={cn(
-                "w-full text-left px-3 py-2.5 transition-colors relative",
-                isSelected ? "bg-accent" : "hover:bg-accent/50"
-              )}
-            >
-              {isSelected && <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary" />}
-
-              <div className="flex items-baseline justify-between gap-2">
-                <span
-                  className={cn(
-                    "truncate text-sm",
-                    needsAttention ? "font-semibold" : "font-medium text-muted-foreground"
-                  )}
-                >
-                  {email.sender_name || email.sender_email}
-                </span>
-                <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
-                  {formatEmailDate(email.received_at)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-2 mt-0.5">
-                <span
-                  className={cn(
-                    "truncate text-sm flex-1",
-                    needsAttention ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
-                  {email.subject}
-                </span>
-                {email.category && (
-                  <span className="flex items-center gap-1 shrink-0" title={categoryLabels[email.category]}>
-                    <span className={cn("h-2 w-2 rounded-full", categoryDot[email.category])} />
-                    <span className="text-[11px] text-muted-foreground hidden xl:inline">
-                      {categoryLabels[email.category]}
-                    </span>
-                  </span>
+        return (
+          <button
+            key={email.id}
+            onClick={() => onSelect(email.id)}
+            className={cn(
+              "w-full text-left px-3 py-2 border-b border-border/40 transition-colors",
+              isSelected
+                ? "bg-accent border-l-2 border-l-primary"
+                : "hover:bg-accent/50 border-l-2 border-l-transparent"
+            )}
+          >
+            <div className="flex items-baseline justify-between gap-2 mb-0.5">
+              <span
+                className={cn(
+                  "truncate text-[13px] leading-tight",
+                  needsAttention ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
                 )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+              >
+                {email.sender_name || email.sender_email}
+              </span>
+              <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
+                {formatEmailDate(email.received_at)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {email.category && (
+                <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", categoryDot[email.category])} />
+              )}
+              <span
+                className={cn(
+                  "truncate text-[13px] leading-tight",
+                  needsAttention ? "text-foreground/80" : "text-muted-foreground/70"
+                )}
+              >
+                {email.subject}
+              </span>
+            </div>
+          </button>
+        );
+      })}
     </ScrollArea>
   );
 }
