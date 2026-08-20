@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/supabase-functions";
 import { toast } from "sonner";
 
 export interface ImapCredentials {
@@ -18,12 +18,10 @@ export interface ImapCredentials {
 export function useTestImapConnection() {
   return useMutation({
     mutationFn: async (credentials: ImapCredentials) => {
-      const { data, error } = await supabase.functions.invoke("imap-email", {
-        body: { action: "test", ...credentials },
+      return invokeEdgeFunction<{ totalMessages: number }>("imap-email", {
+        action: "test",
+        ...credentials,
       });
-      if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Connection test failed");
-      return data as { totalMessages: number };
     },
   });
 }
@@ -36,12 +34,10 @@ export function useAddImapAccount() {
 
   return useMutation({
     mutationFn: async (credentials: ImapCredentials) => {
-      const { data, error } = await supabase.functions.invoke("imap-email", {
-        body: { action: "add", ...credentials },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Failed to add account");
-      return data as { accountId: string; email: string; totalMessages: number };
+      return invokeEdgeFunction<{ accountId: string; email: string; totalMessages: number }>(
+        "imap-email",
+        { action: "add", ...credentials }
+      );
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["email_accounts"] });
@@ -69,17 +65,15 @@ export function useSyncImapAccount() {
       maxResults?: number;
       fromDate?: Date;
     }) => {
-      const { data, error } = await supabase.functions.invoke("imap-email", {
-        body: {
+      return invokeEdgeFunction<{ newEmails: number; processedForAI: number; totalMessages: number }>(
+        "imap-email",
+        {
           action: "sync",
           accountId,
           maxResults,
           fromDate: fromDate?.toISOString(),
-        },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Sync failed");
-      return data;
+        }
+      );
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["emails"] });

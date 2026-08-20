@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, CheckCircle, Plug } from "lucide-react";
 import { useTestImapConnection, useAddImapAccount } from "@/hooks/useImapEmail";
+import { toast } from "sonner";
 
 interface AddImapAccountDialogProps {
   open: boolean;
@@ -56,16 +57,21 @@ export function AddImapAccountDialog({ open, onOpenChange }: AddImapAccountDialo
     try {
       await testConnection.mutateAsync(credentials);
       setTested(true);
-    } catch {
+    } catch (e) {
       setTested(false);
+      toast.error(e instanceof Error ? e.message : "Connection test failed");
     }
   };
 
   const handleAdd = async () => {
-    await addAccount.mutateAsync(credentials);
-    setForm(emptyForm);
-    setTested(false);
-    onOpenChange(false);
+    try {
+      await addAccount.mutateAsync(credentials);
+      setForm(emptyForm);
+      setTested(false);
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to add account");
+    }
   };
 
   return (

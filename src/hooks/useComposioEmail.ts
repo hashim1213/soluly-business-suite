@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/supabase-functions";
 import { toast } from "sonner";
 
 export interface EmailProvider {
@@ -21,12 +21,11 @@ export function useEmailProviders() {
   return useQuery({
     queryKey: ["composio_email_providers"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("composio-email", {
-        body: { action: "list_providers" },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Failed to load providers");
-      return data.providers as EmailProvider[];
+      const result = await invokeEdgeFunction<{ providers: EmailProvider[] }>(
+        "composio-email",
+        { action: "list_providers" }
+      );
+      return result.providers;
     },
     staleTime: 1000 * 60 * 60,
   });
@@ -39,22 +38,21 @@ export function useEmailProviders() {
 export function useConnectEmailProvider() {
   return useMutation({
     mutationFn: async (toolkit: string) => {
-      const { data, error } = await supabase.functions.invoke("composio-email", {
-        body: {
+      const result = await invokeEdgeFunction<{ redirectUrl: string; connectedAccountId: string }>(
+        "composio-email",
+        {
           action: "connect",
           toolkit,
           callbackUrl: getCallbackUrl(),
-        },
-      });
+        }
+      );
 
-      if (error) throw new Error(error.message);
-      if (!data?.success || !data?.redirectUrl) {
-        throw new Error(data?.error || "Failed to create connect link");
+      if (!result.redirectUrl) {
+        throw new Error("Failed to create connect link");
       }
 
-      // Remember the pending connection so the callback page can finalize it
-      sessionStorage.setItem("composio_pending_connection", data.connectedAccountId);
-      window.location.href = data.redirectUrl;
+      sessionStorage.setItem("composio_pending_connection", result.connectedAccountId);
+      window.location.href = result.redirectUrl;
     },
     onError: (error) => {
       toast.error(`Failed to connect: ${error.message}`);
@@ -71,12 +69,10 @@ export function useFinalizeEmailConnection() {
 
   return useMutation({
     mutationFn: async (connectedAccountId: string) => {
-      const { data, error } = await supabase.functions.invoke("composio-email", {
-        body: { action: "finalize", connectedAccountId },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Failed to finalize connection");
-      return data as { accountId: string; email: string; provider: string };
+      return invokeEdgeFunction<{ accountId: string; email: string; provider: string }>(
+        "composio-email",
+        { action: "finalize", connectedAccountId }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email_accounts"] });
@@ -100,17 +96,15 @@ export function useSyncComposioAccount() {
       maxResults?: number;
       fromDate?: Date;
     }) => {
-      const { data, error } = await supabase.functions.invoke("composio-email", {
-        body: {
+      return invokeEdgeFunction<{ newEmails: number }>(
+        "composio-email",
+        {
           action: "sync",
           accountId,
           maxResults,
           fromDate: fromDate?.toISOString(),
-        },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Sync failed");
-      return data;
+        }
+      );
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["emails"] });
@@ -137,11 +131,7 @@ export function useDisconnectComposioAccount() {
 
   return useMutation({
     mutationFn: async (accountId: string) => {
-      const { data, error } = await supabase.functions.invoke("composio-email", {
-        body: { action: "disconnect", accountId },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Failed to disconnect");
+      await invokeEdgeFunction("composio-email", { action: "disconnect", accountId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email_accounts"] });

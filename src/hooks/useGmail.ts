@@ -147,13 +147,18 @@ export function useSyncAllGmailAccounts() {
             },
           });
 
-          if (error || !data?.success) {
+          if (error) {
+            console.warn(`Sync failed for account ${account.id} (${fn}):`, error.message);
+            failed++;
+          } else if (!data?.success) {
+            console.warn(`Sync returned failure for account ${account.id} (${fn}):`, data?.error);
             failed++;
           } else {
             synced++;
             totalNewEmails += data.newEmails || 0;
           }
-        } catch {
+        } catch (e) {
+          console.warn(`Sync exception for account ${account.id}:`, e);
           failed++;
         }
       }
