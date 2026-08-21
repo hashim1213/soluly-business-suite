@@ -510,10 +510,11 @@ serve(async (req) => {
       }
     }
 
-    // Build full URL
-    const appUrl = Deno.env.get("APP_URL") || "https://app.soluly.com";
+    // Build full URL using subdomain routing
+    const baseDomain = Deno.env.get("APP_BASE_DOMAIN") || "soluly.com";
+    const orgOrigin = org?.slug ? `https://${org.slug}.${baseDomain}` : `https://app.${baseDomain}`;
     const entityPath = getEntityUrl(entityType, entityDisplayId);
-    const fullEntityUrl = entityPath ? `${appUrl}/org/${org?.slug || ""}${entityPath}` : "";
+    const fullEntityUrl = entityPath ? `${orgOrigin}${entityPath}` : "";
 
     // Generate email content
     const emailHtml = generateEmailHtml(
