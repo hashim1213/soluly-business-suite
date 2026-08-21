@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Mail,
   RefreshCw,
@@ -118,16 +118,15 @@ export default function Emails() {
   const [syncDateRange, setSyncDateRange] = useState("1month");
   const [syncMaxResults, setSyncMaxResults] = useState("100");
 
-  const filters: EmailFilters = {
+  const filters: EmailFilters = useMemo(() => ({
     fromDate: getFromDate(dateRange),
-    toDate: new Date(),
     search: appliedSearch || undefined,
     emailAccountId: accountFilter,
     category: categoryFilter,
     ...(activeTab === "review" ? { status: "processed" as const, reviewStatus: "pending" as const } : {}),
     ...(activeTab === "pending" ? { status: "pending" as const } : {}),
     ...(activeTab === "done" ? { reviewStatus: "approved" as const } : {}),
-  };
+  }), [dateRange, appliedSearch, accountFilter, categoryFilter, activeTab]);
 
   const { data: emails, isLoading: emailsLoading } = useEmails(filters);
   const { data: stats } = useEmailStats();
