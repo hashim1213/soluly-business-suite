@@ -19,6 +19,7 @@ import {
   Upload,
   FileText,
   SlidersHorizontal,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,7 +65,7 @@ import { EmailAccountsSettings } from "@/components/settings/EmailAccountsSettin
 import { PipelineStagesSettings } from "@/components/settings/PipelineStagesSettings";
 import { DealGroupsSettings } from "@/components/settings/DealGroupsSettings";
 import { DropdownOptionsSettings } from "@/components/settings/DropdownOptionsSettings";
-import { useInvitations, useCreateInvitation, useDeleteInvitation } from "@/hooks/useInvitations";
+import { useInvitations, useCreateInvitation, useDeleteInvitation, useResendInvitation } from "@/hooks/useInvitations";
 import { useUpdateOrganization, useOrganizationStats, useCurrentOrganization } from "@/hooks/useOrganization";
 import { Textarea } from "@/components/ui/textarea";
 import { useUploadOrgLogo, useRemoveOrgLogo } from "@/hooks/useOrgLogo";
@@ -84,6 +85,7 @@ export default function Settings() {
 
   const createInvitation = useCreateInvitation();
   const deleteInvitation = useDeleteInvitation();
+  const resendInvitation = useResendInvitation();
   const updateOrganization = useUpdateOrganization();
   const uploadOrgLogo = useUploadOrgLogo();
   const removeOrgLogo = useRemoveOrgLogo();
@@ -245,10 +247,8 @@ export default function Settings() {
     }
   };
 
-  // Copy invite link - use app.soluly.com for production
   const copyInviteLink = (token: string) => {
-    const baseUrl = import.meta.env.PROD ? "https://app.soluly.com" : window.location.origin;
-    const link = `${baseUrl}/invite/${token}`;
+    const link = `${window.location.origin}/invite/${token}`;
     navigator.clipboard.writeText(link);
     toast.success("Invite link copied to clipboard");
   };
@@ -1217,6 +1217,16 @@ export default function Settings() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    title="Resend invitation email"
+                                    onClick={() => resendInvitation.mutate(inv.id)}
+                                    disabled={resendInvitation.isPending}
+                                  >
+                                    <RefreshCw className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    title="Copy invite link"
                                     onClick={() => copyInviteLink(inv.token)}
                                   >
                                     <Copy className="h-4 w-4" />
@@ -1224,6 +1234,7 @@ export default function Settings() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    title="Cancel invitation"
                                     onClick={() => deleteInvitation.mutate(inv.id)}
                                     className="text-destructive hover:text-destructive"
                                   >

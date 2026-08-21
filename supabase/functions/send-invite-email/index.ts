@@ -109,11 +109,8 @@ serve(async (req) => {
     const role = invitation.role as { name: string } | null;
     const inviter = invitation.inviter as { name: string } | null;
 
-    // Build invite URL on the org's subdomain
-    const baseDomain = Deno.env.get("APP_BASE_DOMAIN") || "soluly.com";
-    const inviteUrl = org?.slug
-      ? `https://${org.slug}.${baseDomain}/invite/${invitation.token}`
-      : `https://${baseDomain}/invite/${invitation.token}`;
+    const appUrl = Deno.env.get("APP_URL") || "https://soluly.vercel.app";
+    const inviteUrl = `${appUrl}/invite/${invitation.token}`;
 
     // Format expiry date
     const expiryDate = new Date(invitation.expires_at).toLocaleDateString("en-US", {
