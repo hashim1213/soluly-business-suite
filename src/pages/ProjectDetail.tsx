@@ -22,7 +22,7 @@ import { useContacts } from "@/hooks/useContacts";
 import { ProjectAccessManager } from "@/components/projects/ProjectAccessManager";
 import { ProjectTeamTab } from "@/components/projects/ProjectTeamTab";
 import { ProjectBoard } from "@/components/projects/ProjectBoard";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow, format, differenceInDays } from "date-fns";
 import { Loader2, Save } from "lucide-react";
 import {
   ArrowLeft,
@@ -59,6 +59,8 @@ import {
   Wrench,
   RefreshCw,
   LayoutGrid,
+  BarChart3,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1091,6 +1093,43 @@ export default function ProjectDetail() {
   // Project value is the total invoiced amount
   const projectValue = `$${totalInvoiced.toLocaleString()}`;
 
+  // KPI computations
+  const taskCompletionPct = useMemo(() => {
+    if (!tasks || tasks.length === 0) return 0;
+    return Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100);
+  }, [tasks]);
+
+  const milestoneCompletionPct = useMemo(() => {
+    if (!milestones || milestones.length === 0) return 0;
+    return Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100);
+  }, [milestones]);
+
+  const budgetUsedPct = useMemo(() => {
+    if (!dbProject?.budget || dbProject.budget === 0) return 0;
+    return Math.round((totalCosts / dbProject.budget) * 100);
+  }, [totalCosts, dbProject?.budget]);
+
+  const timelineAdherencePct = useMemo(() => {
+    if (!dbProject?.start_date || !dbProject?.end_date) return 100;
+    const totalDays = differenceInDays(new Date(dbProject.end_date), new Date(dbProject.start_date));
+    const daysElapsed = differenceInDays(new Date(), new Date(dbProject.start_date));
+    const expectedProgress = totalDays > 0 ? Math.min((daysElapsed / totalDays) * 100, 100) : 0;
+    const actualProgress = dbProject.progress || 0;
+    if (expectedProgress <= 0) return 100;
+    return Math.min(Math.round((actualProgress / expectedProgress) * 100), 100);
+  }, [dbProject?.start_date, dbProject?.end_date, dbProject?.progress]);
+
+  const projectHealthScore = useMemo(() => {
+    return Math.round(
+      (timelineAdherencePct * 0.3) +
+      (taskCompletionPct * 0.25) +
+      (milestoneCompletionPct * 0.25) +
+      (Math.max(0, 100 - Math.max(0, budgetUsedPct - 100)) * 0.2)
+    );
+  }, [timelineAdherencePct, taskCompletionPct, milestoneCompletionPct, budgetUsedPct]);
+
+  const billableRatio = totalHours > 0 ? Math.round((billableHours / totalHours) * 100) : 0;
+
   // Total team members
   const totalTeamMembers = internalTeam.length + externalTeam.length;
 
@@ -1543,8 +1582,8 @@ export default function ProjectDetail() {
             Contracts
           </TabsTrigger>
           <TabsTrigger value="costs" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Wallet className="h-4 w-4 mr-1" />
-            Costs
+            <BarChart3 className="h-4 w-4 mr-1" />
+            KPIs
           </TabsTrigger>
           <TabsTrigger value="team" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Briefcase className="h-4 w-4 mr-1" />
@@ -2679,8 +2718,61 @@ export default function ProjectDetail() {
           </div>
         </TabsContent>
 
-        {/* Costs Tab */}
+        {/* KPIs Tab */}
         <TabsContent value="costs" className="space-y-6">
+          {/* Project Health Score */}
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Target className="h-4 w-4" />
+                Project Health
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="grid gap-4 md:grid-cols-5">
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className={`text-2xl font-bold ${projectHealthScore >= 75 ? "text-emerald-600" : projectHealthScore >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                    {projectHealthScore}%
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Health Score</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="text-2xl font-bold">{timelineAdherencePct}%</div>
+                  <div className="text-xs text-muted-foreground mt-1">On Schedule</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="text-2xl font-bold">{taskCompletionPct}%</div>
+                  <div className="text-xs text-muted-foreground mt-1">Tasks Done</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="text-2xl font-bold">{milestoneCompletionPct}%</div>
+                  <div className="text-xs text-muted-foreground mt-1">Milestones</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className={`text-2xl font-bold ${budgetUsedPct > 100 ? "text-red-600" : budgetUsedPct > 80 ? "text-amber-600" : "text-emerald-600"}`}>
+                    {budgetUsedPct}%
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Budget Used</div>
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3 mt-4 pt-4 border-t">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Billable Rate</span>
+                  <span className="font-semibold">{billableRatio}%</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Hours Logged</span>
+                  <span className="font-semibold">{totalHours.toFixed(1)}h</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Billable Hours</span>
+                  <span className="font-semibold">{billableHours.toFixed(1)}h</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Financial KPIs */}
           <div className="grid gap-4 md:grid-cols-4">
             <Card className="border border-border shadow-sm">
               <CardContent className="p-4">
