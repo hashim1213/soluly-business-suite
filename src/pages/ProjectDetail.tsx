@@ -1094,22 +1094,16 @@ export default function ProjectDetail() {
   const projectValue = `$${totalInvoiced.toLocaleString()}`;
 
   // KPI computations
-  const taskCompletionPct = useMemo(() => {
-    if (!tasks || tasks.length === 0) return 0;
-    return Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100);
-  }, [tasks]);
+  const taskCompletionPct = (!tasks || tasks.length === 0) ? 0
+    : Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100);
 
-  const milestoneCompletionPct = useMemo(() => {
-    if (!milestones || milestones.length === 0) return 0;
-    return Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100);
-  }, [milestones]);
+  const milestoneCompletionPct = (!milestones || milestones.length === 0) ? 0
+    : Math.round((milestones.filter(m => m.completed).length / milestones.length) * 100);
 
-  const budgetUsedPct = useMemo(() => {
-    if (!dbProject?.budget || dbProject.budget === 0) return 0;
-    return Math.round((totalCosts / dbProject.budget) * 100);
-  }, [totalCosts, dbProject?.budget]);
+  const budgetUsedPct = (!dbProject?.budget || dbProject.budget === 0) ? 0
+    : Math.round((totalCosts / dbProject.budget) * 100);
 
-  const timelineAdherencePct = useMemo(() => {
+  const timelineAdherencePct = (() => {
     if (!dbProject?.start_date || !dbProject?.end_date) return 100;
     const totalDays = differenceInDays(new Date(dbProject.end_date), new Date(dbProject.start_date));
     const daysElapsed = differenceInDays(new Date(), new Date(dbProject.start_date));
@@ -1117,16 +1111,14 @@ export default function ProjectDetail() {
     const actualProgress = dbProject.progress || 0;
     if (expectedProgress <= 0) return 100;
     return Math.min(Math.round((actualProgress / expectedProgress) * 100), 100);
-  }, [dbProject?.start_date, dbProject?.end_date, dbProject?.progress]);
+  })();
 
-  const projectHealthScore = useMemo(() => {
-    return Math.round(
-      (timelineAdherencePct * 0.3) +
-      (taskCompletionPct * 0.25) +
-      (milestoneCompletionPct * 0.25) +
-      (Math.max(0, 100 - Math.max(0, budgetUsedPct - 100)) * 0.2)
-    );
-  }, [timelineAdherencePct, taskCompletionPct, milestoneCompletionPct, budgetUsedPct]);
+  const projectHealthScore = Math.round(
+    (timelineAdherencePct * 0.3) +
+    (taskCompletionPct * 0.25) +
+    (milestoneCompletionPct * 0.25) +
+    (Math.max(0, 100 - Math.max(0, budgetUsedPct - 100)) * 0.2)
+  );
 
   const billableRatio = totalHours > 0 ? Math.round((billableHours / totalHours) * 100) : 0;
 
