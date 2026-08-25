@@ -361,6 +361,7 @@ export default function ProjectDetail() {
     billable: true,
   });
   const [newTodoDueDate, setNewTodoDueDate] = useState("");
+  const [newTodoStartDate, setNewTodoStartDate] = useState("");
   const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = useState(false);
   const [maintenanceSettings, setMaintenanceSettings] = useState({
     has_maintenance: false,
@@ -609,12 +610,14 @@ export default function ProjectDetail() {
         title: newTodo,
         priority: newTodoPriority as "high" | "medium" | "low",
         assignee_id: newTodoAssignee || undefined,
+        start_date: newTodoStartDate || undefined,
         due_date: newTodoDueDate || undefined,
       });
       setNewTodo("");
       setNewTodoDescription("");
       setNewTodoPriority("medium");
       setNewTodoAssignee("");
+      setNewTodoStartDate("");
       setNewTodoDueDate("");
       setIsTaskDialogOpen(false);
     } catch (error) {
@@ -2220,15 +2223,27 @@ export default function ProjectDetail() {
                               </Select>
                             </div>
                           </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="task-due">Due Date</Label>
-                            <Input
-                              id="task-due"
-                              type="date"
-                              value={newTodoDueDate}
-                              onChange={(e) => setNewTodoDueDate(e.target.value)}
-                              className="border"
-                            />
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="task-start">Start Date</Label>
+                              <Input
+                                id="task-start"
+                                type="date"
+                                value={newTodoStartDate}
+                                onChange={(e) => setNewTodoStartDate(e.target.value)}
+                                className="border"
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="task-due">Due Date</Label>
+                              <Input
+                                id="task-due"
+                                type="date"
+                                value={newTodoDueDate}
+                                onChange={(e) => setNewTodoDueDate(e.target.value)}
+                                className="border"
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="flex justify-end gap-3 border-t border-border pt-4">
@@ -2245,56 +2260,89 @@ export default function ProjectDetail() {
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="space-y-2">
-                    {tasks?.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`flex items-center gap-3 p-3 border border-border ${
-                          task.completed ? "bg-muted/50" : "bg-background"
-                        }`}
-                      >
-                        <Checkbox
-                          checked={task.completed}
-                          onCheckedChange={() => toggleTodo(task.id, task.completed)}
-                          className="border"
-                        />
-                        <div className="flex-1">
-                          <span className={`${task.completed ? "line-through text-muted-foreground" : ""}`}>
-                            {task.title}
-                          </span>
-                          <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                            {task.assignee?.profiles?.full_name && (
-                              <span>Assigned to {task.assignee.profiles.full_name}</span>
-                            )}
-                            {task.due_date && (
-                              <>
-                                {task.assignee?.profiles?.full_name && <span>•</span>}
+                    {tasks?.map((task) => {
+                      const isOverdue = task.due_date && !task.completed && new Date(task.due_date + "T00:00:00") < new Date();
+                      return (
+                        <div
+                          key={task.id}
+                          className={`flex items-center gap-3 p-3 rounded-md border ${
+                            task.completed ? "bg-muted/50 border-border" : isOverdue ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900" : "bg-background border-border"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={task.completed}
+                            onCheckedChange={() => toggleTodo(task.id, task.completed)}
+                            className="border"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className={`${task.completed ? "line-through text-muted-foreground" : ""}`}>
+                              {task.title}
+                            </span>
+                            <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
+                              {task.assignee?.profiles?.full_name && (
+                                <span className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {task.assignee.profiles.full_name}
+                                </span>
+                              )}
+                              {task.start_date && (
                                 <span className="flex items-center gap-1">
                                   <CalendarIcon className="h-3 w-3" />
-                                  Due: {new Date(task.due_date + "T00:00:00").toLocaleDateString()}
+                                  Start: {new Date(task.start_date + "T00:00:00").toLocaleDateString()}
                                 </span>
-                              </>
-                            )}
+                              )}
+                              {task.due_date && (
+                                <span className={`flex items-center gap-1 ${isOverdue ? "text-red-600 font-medium" : ""}`}>
+                                  <Clock className="h-3 w-3" />
+                                  Due: {new Date(task.due_date + "T00:00:00").toLocaleDateString()}
+                                  {isOverdue && " (overdue)"}
+                                </span>
+                              )}
+                            </div>
                           </div>
+                          <Badge className={ticketPriorityStyles[task.priority as keyof typeof ticketPriorityStyles] || "bg-slate-400 text-black"}>
+                            {task.priority}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
+                            onClick={() => deleteTodo(task.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Badge className={ticketPriorityStyles[task.priority as keyof typeof ticketPriorityStyles] || "bg-slate-400 text-black"}>
-                          {task.priority}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 border border-transparent hover:border-destructive hover:text-destructive"
-                          onClick={() => deleteTodo(task.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {(!tasks || tasks.length === 0) && (
-                      <div className="text-center py-8 text-muted-foreground border border-dashed border-border">
+                      <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-md">
                         No tasks yet. Add one to get started!
                       </div>
                     )}
                   </div>
+
+                  {/* Inline quick-add */}
+                  <form
+                    className="mt-3 flex items-center gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const input = e.currentTarget.querySelector("input") as HTMLInputElement;
+                      if (input?.value.trim()) {
+                        createTask.mutateAsync({
+                          project_id: dbProject!.id,
+                          title: input.value.trim(),
+                          priority: "medium",
+                        }).then(() => { input.value = ""; });
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Input
+                      placeholder="Quick add task... (press Enter)"
+                      className="border h-8 text-sm"
+                      autoComplete="off"
+                    />
+                  </form>
                 </CardContent>
               </Card>
             </div>
@@ -2325,6 +2373,32 @@ export default function ProjectDetail() {
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Remaining</span>
                         <span className="font-semibold">{totalTodos - completedTodos}</span>
+                      </div>
+                    </div>
+                    <div className="border-t border-border pt-4 space-y-3">
+                      <div className="text-sm font-medium">Status</div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-red-600">Overdue</span>
+                        <span className="font-semibold text-red-600">
+                          {tasks?.filter(t => !t.completed && t.due_date && new Date(t.due_date + "T00:00:00") < new Date()).length || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-amber-600">Due This Week</span>
+                        <span className="font-semibold">
+                          {tasks?.filter(t => {
+                            if (t.completed || !t.due_date) return false;
+                            const due = new Date(t.due_date + "T00:00:00");
+                            const now = new Date();
+                            const weekEnd = new Date(now);
+                            weekEnd.setDate(weekEnd.getDate() + 7);
+                            return due >= now && due <= weekEnd;
+                          }).length || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">No Due Date</span>
+                        <span className="font-semibold">{tasks?.filter(t => !t.completed && !t.due_date).length || 0}</span>
                       </div>
                     </div>
                     <div className="border-t border-border pt-4 space-y-3">

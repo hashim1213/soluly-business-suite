@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench, Archive, Search, LayoutGrid, List, ArrowUp, ArrowDown, ArrowUpDown, CheckSquare, Square, Trash2, X } from "lucide-react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
@@ -184,7 +185,7 @@ const generateProjectPDF = async (project: Project, tickets: any[]) => {
 };
 
 export default function Projects() {
-  const { navigateOrg } = useOrgNavigation();
+  const { navigateOrg, getOrgPath } = useOrgNavigation();
   const canViewAmounts = useCanViewAmounts();
   const { data: projects, isLoading, error } = useProjects();
   const { data: tickets } = useTickets();
@@ -1123,8 +1124,14 @@ export default function Projects() {
                     />
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium leading-tight">{project.name}</div>
-                    <div className="font-mono text-xs text-muted-foreground">{project.display_id}</div>
+                    <Link
+                      to={getOrgPath(`/projects/${project.display_id}`)}
+                      className="block"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="font-medium leading-tight hover:underline">{project.name}</div>
+                      <div className="font-mono text-xs text-muted-foreground">{project.display_id}</div>
+                    </Link>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{project.client_name}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
