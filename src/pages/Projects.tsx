@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench, Archive, Search, LayoutGrid, List, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Plus, MoreVertical, Users, Ticket, Loader2, Check, ChevronsUpDown, UserPlus, Calendar, FileText, Edit, Download, Wrench, Archive, Search, LayoutGrid, List, ArrowUp, ArrowDown, ArrowUpDown, CheckSquare, Square, Trash2, X } from "lucide-react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
@@ -226,6 +227,7 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<keyof Project>("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
 
   const setViewMode = (mode: "table" | "cards") => {
     setViewModeState(mode);
@@ -318,6 +320,70 @@ export default function Projects() {
       toast.success(`${project.display_id} moved to ${status.replace("_", " ")}`);
     } catch {
       // Error toast handled by the hook
+    }
+  };
+
+  // Bulk selection
+  const toggleProjectSelection = (projectId: string) => {
+    setSelectedProjects(prev => {
+      const next = new Set(prev);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedProjects.size === filteredProjects.length) {
+      setSelectedProjects(new Set());
+    } else {
+      setSelectedProjects(new Set(filteredProjects.map(p => p.id)));
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status: ProjectStatus) => {
+    if (selectedProjects.size === 0) return;
+    try {
+      const promises = Array.from(selectedProjects).map(id =>
+        updateProject.mutateAsync({ id, status })
+      );
+      await Promise.all(promises);
+      toast.success(`Updated ${selectedProjects.size} project(s)`);
+      setSelectedProjects(new Set());
+    } catch {
+      toast.error("Failed to update some projects");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProjects.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedProjects.size} project(s)? This cannot be undone.`)) return;
+    try {
+      const promises = Array.from(selectedProjects).map(id =>
+        deleteProject.mutateAsync(id)
+      );
+      await Promise.all(promises);
+      toast.success(`Deleted ${selectedProjects.size} project(s)`);
+      setSelectedProjects(new Set());
+    } catch {
+      toast.error("Failed to delete some projects");
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    if (selectedProjects.size === 0) return;
+    try {
+      const promises = Array.from(selectedProjects).map(id =>
+        updateProject.mutateAsync({ id, status: "completed" as ProjectStatus })
+      );
+      await Promise.all(promises);
+      toast.success(`Archived ${selectedProjects.size} project(s)`);
+      setSelectedProjects(new Set());
+    } catch {
+      toast.error("Failed to archive some projects");
     }
   };
 
@@ -966,10 +1032,69 @@ export default function Projects() {
           </CardContent>
         </Card>
       ) : viewMode === "table" ? (
-        <Card className="border border-border shadow-sm overflow-hidden">
+        <>
+          {selectedProjects.size > 0 && (
+            <div className="flex items-center gap-2 mb-3 p-2 bg-muted rounded-md border">
+              <span className="text-sm font-medium mr-2">
+                {selectedProjects.size} selected
+              </span>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Set Status
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => handleBulkStatusUpdate("pending")}>
+                    Pending
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleBulkStatusUpdate("active")}>
+                    Active
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleBulkStatusUpdate("on_hold")}>
+                    On Hold
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleBulkStatusUpdate("completed")}>
+                    Completed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleBulkStatusUpdate("cancelled")}>
+                    Cancelled
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button variant="outline" size="sm" onClick={handleBulkArchive}>
+                <Archive className="h-4 w-4 mr-1" />
+                Archive
+              </Button>
+
+              <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto"
+                onClick={() => setSelectedProjects(new Set())}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Cancel
+              </Button>
+            </div>
+          )}
+          <Card className="border border-border shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                <TableHead className="w-10" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={filteredProjects.length > 0 && selectedProjects.size === filteredProjects.length}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
                 <SortableHead label="Project" sortId="name" />
                 <SortableHead label="Client" sortId="client_name" className="hidden md:table-cell" />
                 <SortableHead label="Status" sortId="status" />
@@ -984,9 +1109,15 @@ export default function Projects() {
               {filteredProjects.map((project) => (
                 <TableRow
                   key={project.id}
-                  className="cursor-pointer"
+                  className={cn("cursor-pointer", selectedProjects.has(project.id) && "bg-muted/50")}
                   onClick={() => navigateOrg(`/projects/${project.display_id}`)}
                 >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedProjects.has(project.id)}
+                      onCheckedChange={() => toggleProjectSelection(project.id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div className="font-medium leading-tight">{project.name}</div>
                     <div className="font-mono text-xs text-muted-foreground">{project.display_id}</div>
@@ -1057,6 +1188,7 @@ export default function Projects() {
             </TableBody>
           </Table>
         </Card>
+        </>
       ) : (
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
           {filteredProjects.map((project) => (

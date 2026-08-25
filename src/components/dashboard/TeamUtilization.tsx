@@ -87,8 +87,8 @@ export function TeamUtilization() {
         {memberUtilization.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground text-sm">No active team members</div>
         ) : (
-          <div className="divide-y">
-            {memberUtilization.slice(0, 8).map(member => (
+          <div className="divide-y max-h-[400px] overflow-y-auto">
+            {memberUtilization.map(member => (
               <div key={member.id} className="px-3 py-2.5 hover:bg-accent/30 transition-colors">
                 <div className="flex items-center gap-2.5">
                   <Avatar className="h-7 w-7">

@@ -32,8 +32,7 @@ export function TeamWorkload() {
         percentage,
       };
     })
-    .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 8) || [];
+    .sort((a, b) => b.percentage - a.percentage) || [];
 
   const getInitials = (name: string) =>
     name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -59,7 +58,7 @@ export function TeamWorkload() {
         ) : workload.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground text-sm">No active team members</div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y max-h-[400px] overflow-y-auto">
             {workload.map((member) => {
               const cap = getCapacityLabel(member.percentage);
               return (

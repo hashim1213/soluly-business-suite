@@ -84,6 +84,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useTickets, useCreateTicket, useUpdateTicket, useDeleteTicket, TicketWithProject } from "@/hooks/useTickets";
 import { useDropdownOptions } from "@/hooks/useDropdownOptions";
@@ -233,6 +234,49 @@ export default function Tickets() {
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterProject, setFilterProject] = useState<string>("all");
   const [showClosedTickets, setShowClosedTickets] = useState<boolean>(false);
+
+  // Saved filters
+  type SavedFilter = { name: string; assignee: string; status: string; priority: string; project: string; sprint: string; category: string };
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => {
+    try {
+      const stored = localStorage.getItem("soluly-saved-ticket-filters");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+  const [saveFilterName, setSaveFilterName] = useState("");
+
+  const saveCurrentFilter = () => {
+    if (!saveFilterName.trim()) return;
+    const filter: SavedFilter = {
+      name: saveFilterName.trim(),
+      assignee: filterAssignee,
+      status: filterStatus,
+      priority: filterPriority,
+      project: filterProject,
+      sprint: sprintFilter,
+      category: activeTab,
+    };
+    const updated = [...savedFilters.filter(f => f.name !== filter.name), filter];
+    setSavedFilters(updated);
+    localStorage.setItem("soluly-saved-ticket-filters", JSON.stringify(updated));
+    setSaveFilterName("");
+    toast.success(`Filter "${filter.name}" saved`);
+  };
+
+  const loadSavedFilter = (filter: SavedFilter) => {
+    setFilterAssignee(filter.assignee);
+    setFilterStatus(filter.status);
+    setFilterPriority(filter.priority);
+    setFilterProject(filter.project);
+    setSprintFilter(filter.sprint);
+    setActiveTab(filter.category);
+  };
+
+  const deleteSavedFilter = (name: string) => {
+    const updated = savedFilters.filter(f => f.name !== name);
+    setSavedFilters(updated);
+    localStorage.setItem("soluly-saved-ticket-filters", JSON.stringify(updated));
+  };
 
   const initialTicketState = {
     title: "",
@@ -500,6 +544,21 @@ export default function Tickets() {
       setSelectedTickets(new Set());
     } catch (error) {
       toast.error("Failed to assign some tickets");
+    }
+  };
+
+  const handleBulkPriorityUpdate = async (priority: string) => {
+    if (selectedTickets.size === 0) return;
+
+    try {
+      const promises = Array.from(selectedTickets).map(id =>
+        updateTicket.mutateAsync({ id, priority })
+      );
+      await Promise.all(promises);
+      toast.success(`Updated priority for ${selectedTickets.size} ticket(s)`);
+      setSelectedTickets(new Set());
+    } catch (error) {
+      toast.error("Failed to update priority for some tickets");
     }
   };
 
@@ -1279,6 +1338,55 @@ export default function Tickets() {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <Separator />
+
+                      {/* Saved Filters */}
+                      <div className="space-y-2">
+                        <Label>Saved Filters</Label>
+                        {savedFilters.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {savedFilters.map(f => (
+                              <div key={f.name} className="flex items-center gap-0.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 text-xs"
+                                  onClick={() => loadSavedFilter(f)}
+                                >
+                                  {f.name}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => deleteSavedFilter(f.name)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-1">
+                          <Input
+                            placeholder="Filter name..."
+                            value={saveFilterName}
+                            onChange={(e) => setSaveFilterName(e.target.value)}
+                            className="h-7 text-xs"
+                            onKeyDown={(e) => e.key === "Enter" && saveCurrentFilter()}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs shrink-0"
+                            onClick={saveCurrentFilter}
+                            disabled={!saveFilterName.trim()}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </PopoverContent>
@@ -1350,6 +1458,28 @@ export default function Tickets() {
                           {sprint.status === "active" ? " · Active" : ""}
                         </DropdownMenuItem>
                       ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="border">
+                        Priority
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleBulkPriorityUpdate("critical")}>
+                        Critical
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkPriorityUpdate("high")}>
+                        High
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkPriorityUpdate("medium")}>
+                        Medium
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkPriorityUpdate("low")}>
+                        Low
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
