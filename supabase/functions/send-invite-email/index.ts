@@ -57,19 +57,20 @@ serve(async (req) => {
     });
   }
 
-  // Get user's organization
-  const { data: teamMember, error: memberError } = await supabaseClient
+  // Get user's organizations
+  const { data: teamMembers, error: memberError } = await supabaseClient
     .from("team_members")
     .select("organization_id")
-    .eq("auth_user_id", user.id)
-    .single();
+    .eq("auth_user_id", user.id);
 
-  if (memberError || !teamMember) {
+  if (memberError || !teamMembers || teamMembers.length === 0) {
     return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  const userOrgIds = teamMembers.map(m => m.organization_id);
 
   try {
     const { invitationId } = (await req.json()) as InviteEmailRequest;
@@ -81,7 +82,7 @@ serve(async (req) => {
       });
     }
 
-    // Fetch invitation details (with org validation)
+    // Fetch invitation details (validate user belongs to the invitation's org)
     const { data: invitation, error: invError } = await supabaseClient
       .from("invitations")
       .select(`
@@ -89,12 +90,13 @@ serve(async (req) => {
         email,
         token,
         expires_at,
+        organization_id,
         organization:organizations(name, slug),
         role:roles(name),
         inviter:team_members!invitations_invited_by_fkey(name)
       `)
       .eq("id", invitationId)
-      .eq("organization_id", teamMember.organization_id)
+      .in("organization_id", userOrgIds)
       .is("accepted_at", null)
       .single();
 

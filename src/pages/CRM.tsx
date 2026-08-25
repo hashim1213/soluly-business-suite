@@ -1048,7 +1048,6 @@ export default function CRM() {
                             contact_id: "",
                             contact_name: "",
                             contact_email: "",
-                            company_name: "",
                           });
                         } else {
                           const selectedContact = contacts?.find((c) => c.id === contactId);

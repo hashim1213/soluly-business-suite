@@ -461,8 +461,8 @@ export default function Projects() {
   };
 
   const handleCreateProject = async () => {
-    if (!newProject.name || !newProject.client) {
-      toast.error("Please fill in all required fields");
+    if (!newProject.name) {
+      toast.error("Please fill in the project name");
       return;
     }
 
@@ -470,7 +470,7 @@ export default function Projects() {
       const project = await createProject.mutateAsync({
         name: newProject.name,
         description: newProject.description || null,
-        client_name: newProject.client,
+        client_name: newProject.client || null,
         client_email: newProject.clientEmail || null,
         value: parseFloat(newProject.value.replace(/[$,]/g, "")) || 0,
         budget: parseFloat(newProject.budget.replace(/[$,]/g, "")) || 0,
@@ -732,7 +732,7 @@ export default function Projects() {
 
               {/* Contact Selection */}
               <div className="grid gap-2">
-                <Label>Client Contact *</Label>
+                <Label>Client Contact</Label>
                 <Popover open={contactPopoverOpen} onOpenChange={setContactPopoverOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -752,87 +752,10 @@ export default function Projects() {
                       <CommandInput placeholder="Search contacts..." />
                       <CommandList>
                         <CommandEmpty>
-                          {isAddingNewContact ? (
-                            <div className="p-2 space-y-2">
-                              <Input
-                                placeholder="Enter contact name"
-                                value={newContactName}
-                                onChange={(e) => setNewContactName(e.target.value)}
-                                className="border"
-                                autoFocus
-                              />
-                              <Input
-                                placeholder="Email (optional)"
-                                type="email"
-                                value={newProject.clientEmail}
-                                onChange={(e) => setNewProject({ ...newProject, clientEmail: e.target.value })}
-                                className="border"
-                              />
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={handleAddNewContact}
-                                  disabled={createContact.isPending}
-                                  className="flex-1"
-                                >
-                                  {createContact.isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    "Add Contact"
-                                  )}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setIsAddingNewContact(false);
-                                    setNewContactName("");
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="p-2 text-center">
-                              <p className="text-sm text-muted-foreground mb-2">No contacts found</p>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setIsAddingNewContact(true)}
-                                className="w-full"
-                              >
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                Add New Contact
-                              </Button>
-                            </div>
-                          )}
+                          <div className="p-2 text-sm text-muted-foreground text-center">
+                            No contacts found
+                          </div>
                         </CommandEmpty>
-                        {contacts && contacts.length > 0 && (
-                          <CommandGroup heading="Existing Contacts">
-                            {contacts.map((contact) => (
-                              <CommandItem
-                                key={contact.id}
-                                value={contact.name}
-                                onSelect={() => handleSelectContact(contact)}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedContactId === contact.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex flex-col">
-                                  <span>{contact.name}</span>
-                                  {contact.email && (
-                                    <span className="text-xs text-muted-foreground">{contact.email}</span>
-                                  )}
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        )}
-                        <CommandSeparator />
                         <CommandGroup>
                           <CommandItem
                             onSelect={() => setIsAddingNewContact(true)}
@@ -842,8 +765,77 @@ export default function Projects() {
                             Add New Contact
                           </CommandItem>
                         </CommandGroup>
+                        {contacts && contacts.length > 0 && (
+                          <>
+                            <CommandSeparator />
+                            <CommandGroup heading="Existing Contacts">
+                              {contacts.map((contact) => (
+                                <CommandItem
+                                  key={contact.id}
+                                  value={contact.name}
+                                  onSelect={() => handleSelectContact(contact)}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedContactId === contact.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span>{contact.name}</span>
+                                    {contact.email && (
+                                      <span className="text-xs text-muted-foreground">{contact.email}</span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </>
+                        )}
                       </CommandList>
                     </Command>
+                    {isAddingNewContact && (
+                      <div className="p-3 border-t space-y-2">
+                        <Input
+                          placeholder="Contact name"
+                          value={newContactName}
+                          onChange={(e) => setNewContactName(e.target.value)}
+                          className="border"
+                          autoFocus
+                        />
+                        <Input
+                          placeholder="Email (optional)"
+                          type="email"
+                          value={newProject.clientEmail}
+                          onChange={(e) => setNewProject({ ...newProject, clientEmail: e.target.value })}
+                          className="border"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={handleAddNewContact}
+                            disabled={createContact.isPending}
+                            className="flex-1"
+                          >
+                            {createContact.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Add Contact"
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setIsAddingNewContact(false);
+                              setNewContactName("");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </PopoverContent>
                 </Popover>
               </div>

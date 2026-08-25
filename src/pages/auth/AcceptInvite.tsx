@@ -34,7 +34,7 @@ export default function AcceptInvite() {
   const [successOrg, setSuccessOrg] = useState<{ name: string; slug: string } | null>(null);
   const [isExistingUser, setIsExistingUser] = useState(false);
 
-  // Fetch invitation details
+  // Fetch invitation details using SECURITY DEFINER RPC (bypasses RLS)
   useEffect(() => {
     const fetchInvitation = async () => {
       if (!token) {
@@ -43,37 +43,18 @@ export default function AcceptInvite() {
         return;
       }
 
-      // Fetch invitation directly via REST API to avoid any Supabase client
-      // session/auth issues on cross-subdomain navigation. The RLS policy
-      // allows anon SELECT on unaccepted invitations.
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
       try {
-        const res = await fetch(
-          `${supabaseUrl}/rest/v1/invitations?select=id,email,expires_at,organization:organizations(name,slug),role:roles(name)&token=eq.${token}&accepted_at=is.null`,
-          {
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-            },
-          }
-        );
+        const { data, error: rpcError } = await supabase.rpc("get_invitation_by_token", {
+          p_token: token,
+        });
 
-        if (!res.ok) {
+        if (rpcError || !data) {
           setError("This invitation is invalid or has already been used");
           setIsLoading(false);
           return;
         }
 
-        const rows = await res.json();
-        if (!rows || rows.length === 0) {
-          setError("This invitation is invalid or has already been used");
-          setIsLoading(false);
-          return;
-        }
-
-        setInvitation(rows[0] as Invitation);
+        setInvitation(data as Invitation);
 
         if (user) {
           setIsExistingUser(true);

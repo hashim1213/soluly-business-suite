@@ -131,16 +131,15 @@ export function useCreateInvitation() {
       if (error) throw error;
 
       // Send invitation email via Edge Function
-      try {
-        await supabase.functions.invoke("send-invite-email", {
-          body: { invitationId: data.id },
-          headers: {
-            [CSRF_HEADER]: getCsrfToken(),
-          },
-        });
-      } catch (emailError) {
-        console.warn("Failed to send invite email:", emailError);
-        // Don't fail the invitation creation if email fails
+      const { error: emailError } = await supabase.functions.invoke("send-invite-email", {
+        body: { invitationId: data.id },
+        headers: {
+          [CSRF_HEADER]: getCsrfToken(),
+        },
+      });
+
+      if (emailError) {
+        console.warn("Failed to send invite email:", emailError.message);
       }
 
       return data as InvitationWithRole;
@@ -191,15 +190,15 @@ export function useResendInvitation() {
       if (error) throw error;
 
       // Resend invitation email via Edge Function
-      try {
-        await supabase.functions.invoke("send-invite-email", {
-          body: { invitationId: data.id },
-          headers: {
-            [CSRF_HEADER]: getCsrfToken(),
-          },
-        });
-      } catch (emailError) {
-        console.warn("Failed to send invite email:", emailError);
+      const { error: emailError } = await supabase.functions.invoke("send-invite-email", {
+        body: { invitationId: data.id },
+        headers: {
+          [CSRF_HEADER]: getCsrfToken(),
+        },
+      });
+
+      if (emailError) {
+        console.warn("Failed to resend invite email:", emailError.message);
       }
 
       return data as Invitation;
