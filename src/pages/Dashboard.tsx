@@ -9,6 +9,8 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { TasksList } from "@/components/dashboard/TasksList";
 import { SprintOverview } from "@/components/dashboard/SprintOverview";
+import { ProjectKPIs } from "@/components/dashboard/ProjectKPIs";
+import { TeamUtilization } from "@/components/dashboard/TeamUtilization";
 import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer";
 import { useProjects } from "@/hooks/useProjects";
 import { useTickets } from "@/hooks/useTickets";
@@ -282,6 +284,8 @@ export default function Dashboard() {
     recentActivity: { component: RecentActivity, permission: true },
     tasksList: { component: TasksList, permission: canViewProjects },
     sprintOverview: { component: SprintOverview, permission: canViewTickets },
+    projectKPIs: { component: ProjectKPIs, permission: canViewProjects },
+    teamUtilization: { component: TeamUtilization, permission: canViewTeam },
   };
 
   if (isLoading) {

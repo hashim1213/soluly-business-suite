@@ -29,7 +29,9 @@ export type WidgetType =
   | "quickActions"
   | "recentActivity"
   | "tasksList"
-  | "sprintOverview";
+  | "sprintOverview"
+  | "projectKPIs"
+  | "teamUtilization";
 
 export interface DashboardLayout {
   statsCards: StatCardType[];
@@ -80,11 +82,13 @@ export const AVAILABLE_WIDGETS: WidgetConfig[] = [
   { id: "recentActivity", title: "Recent Activity", description: "Latest activity across the system", category: "projects" },
   { id: "tasksList", title: "My Tasks", description: "Your assigned tasks", category: "tasks" },
   { id: "sprintOverview", title: "Active Sprint", description: "Current sprint progress", category: "tickets" },
+  { id: "projectKPIs", title: "Project KPIs", description: "Health scores, budget tracking, utilization & billable rates", category: "projects" },
+  { id: "teamUtilization", title: "Team Utilization", description: "Weekly hours, utilization % and billable ratio per member", category: "team" },
 ];
 
 const DEFAULT_LAYOUT: DashboardLayout = {
   statsCards: ["activeProjects", "openTickets", "featureRequests", "pipelineValue"],
-  widgets: ["recentTickets", "projectsOverview"],
+  widgets: ["projectKPIs", "recentTickets", "projectsOverview"],
 };
 
 const STORAGE_KEY = "dashboard_preferences";

@@ -234,7 +234,7 @@ export default function Tickets() {
   const [filterProject, setFilterProject] = useState<string>("all");
   const [showClosedTickets, setShowClosedTickets] = useState<boolean>(false);
 
-  const [newTicket, setNewTicket] = useState({
+  const initialTicketState = {
     title: "",
     description: "",
     category: "feature" as TicketCategory,
@@ -248,7 +248,14 @@ export default function Tickets() {
     due_date: "",
     estimated_hours: "",
     labels: "" as string,
-  });
+  };
+  const [newTicket, setNewTicket] = useState(initialTicketState);
+
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setNewTicket(initialTicketState);
+    }
+  }, [isDialogOpen]);
 
   const [editForm, setEditForm] = useState({
     category: "feature" as TicketCategory,
