@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
+import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, parseISO, isAfter, isBefore } from "date-fns";
@@ -31,6 +33,7 @@ interface ProjectHealth {
 export function ProjectKPIs() {
   const { organization } = useAuth();
   const canViewAmounts = useCanViewAmounts();
+  const { getOrgPath } = useOrgNavigation();
   const { data: projects } = useProjects();
   const { data: teamMembers } = useTeamMembers();
 
@@ -326,7 +329,7 @@ export function ProjectKPIs() {
               <div key={project.id} className="flex items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium truncate">{project.name}</span>
+                    <Link to={getOrgPath(`/projects/${project.displayId}`)} className="text-sm font-medium truncate hover:underline">{project.name}</Link>
                     <Badge
                       variant="secondary"
                       className={`text-[10px] px-1.5 py-0 h-4 ${
