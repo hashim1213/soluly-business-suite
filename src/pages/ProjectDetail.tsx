@@ -2186,6 +2186,8 @@ export default function ProjectDetail() {
                               value={newTodo}
                               onChange={(e) => setNewTodo(e.target.value)}
                               className="border"
+                              autoFocus
+                              autoComplete="off"
                             />
                           </div>
                           <div className="grid grid-cols-2 gap-4">

@@ -796,6 +796,8 @@ export default function Tickets() {
                   value={newTicket.title}
                   onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
                   className="border"
+                  autoFocus
+                  autoComplete="off"
                 />
               </div>
               <div className="grid gap-2">
