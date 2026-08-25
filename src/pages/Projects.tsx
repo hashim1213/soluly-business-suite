@@ -579,6 +579,10 @@ export default function Projects() {
       setSelectedTemplate("blank");
       setSelectedContactId(null);
       setIsDialogOpen(false);
+
+      if (project?.display_id) {
+        navigateOrg(`/projects/${project.display_id}`);
+      }
     } catch (error) {
       // Error is handled by the hook
     }
