@@ -139,7 +139,7 @@ export function AppSidebar() {
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
-      <SidebarContent className="p-1.5">
+      <SidebarContent className="p-1.5" role="navigation" aria-label="Main navigation">
         {visibleMainItems.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 px-2.5 mb-0.5">
