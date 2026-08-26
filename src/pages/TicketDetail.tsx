@@ -31,6 +31,7 @@ import {
 import { toast } from "sonner";
 import { useTicketByDisplayId, useUpdateTicket, useDeleteTicket } from "@/hooks/useTickets";
 import { useProjects } from "@/hooks/useProjects";
+import { useTicketDependencies } from "@/hooks/useTicketDependencies";
 import { CommentsSection } from "@/components/comments/CommentsSection";
 import { formatDistanceToNow } from "date-fns";
 import { ticketStatusStyles, ticketPriorityStyles } from "@/lib/styles";
@@ -54,6 +55,7 @@ export default function TicketDetail() {
   const { navigateOrg } = useOrgNavigation();
   const { data: ticket, isLoading, error } = useTicketByDisplayId(ticketId);
   const { data: projects } = useProjects();
+  const { data: dependencies } = useTicketDependencies(ticket?.id);
   const updateTicket = useUpdateTicket();
   const deleteTicket = useDeleteTicket();
 
@@ -385,6 +387,39 @@ export default function TicketDetail() {
                 <span className="text-muted-foreground">Updated:</span>
                 <span className="font-medium">{formatDistanceToNow(new Date(ticket.updated_at), { addSuffix: true })}</span>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="border-b border-border">
+              <CardTitle>Dependencies</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              {dependencies?.blocks && dependencies.blocks.length > 0 ? (
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase mb-2">Blocks</div>
+                  {dependencies.blocks.map((dep) => (
+                    <div key={dep.id} className="flex items-center gap-2 text-sm py-1">
+                      <Badge variant="outline" className="text-xs">{dep.blocked_ticket?.display_id}</Badge>
+                      <span className="truncate">{dep.blocked_ticket?.title}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {dependencies?.blockedBy && dependencies.blockedBy.length > 0 ? (
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase mb-2">Blocked By</div>
+                  {dependencies.blockedBy.map((dep) => (
+                    <div key={dep.id} className="flex items-center gap-2 text-sm py-1">
+                      <Badge variant="outline" className="text-xs">{dep.blocking_ticket?.display_id}</Badge>
+                      <span className="truncate">{dep.blocking_ticket?.title}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {(!dependencies?.blocks?.length && !dependencies?.blockedBy?.length) && (
+                <p className="text-sm text-muted-foreground">No dependencies. Use the ticket system to link related tickets (blocks, relates to, duplicates).</p>
+              )}
             </CardContent>
           </Card>
         </div>
