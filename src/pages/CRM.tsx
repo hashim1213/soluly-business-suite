@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { useCanViewAmounts } from "@/components/HiddenAmount";
 import {
@@ -25,6 +25,12 @@ import {
   Edit,
   User,
   Briefcase,
+  TrendingUp,
+  AlertTriangle,
+  BarChart3,
+  Percent,
+  Timer,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -342,6 +348,116 @@ export default function CRM() {
   const activeDeals = filteredQuotes.filter(
     (q) => isOpenStatus(pipelineStages, q.status)
   ).length;
+
+  // Enterprise CRM Analytics
+  const crmAnalytics = useMemo(() => {
+    const allDeals = quotes || [];
+    const wonDeals = allDeals.filter((q) => isWonStatus(pipelineStages, q.status));
+    const lostDeals = allDeals.filter((q) => {
+      const stage = pipelineStages.find(s => s.key === q.status);
+      return stage?.stageCategory === "lost";
+    });
+    const closedDeals = [...wonDeals, ...lostDeals];
+    const openDeals = allDeals.filter((q) => isOpenStatus(pipelineStages, q.status));
+
+    const winRate = closedDeals.length > 0
+      ? Math.round((wonDeals.length / closedDeals.length) * 100)
+      : 0;
+
+    const avgDealSize = wonDeals.length > 0
+      ? wonDeals.reduce((sum, q) => sum + q.value, 0) / wonDeals.length
+      : 0;
+
+    const avgCloseTime = wonDeals.length > 0
+      ? Math.round(wonDeals.reduce((sum, q) => {
+          const created = new Date(q.created_at).getTime();
+          const updated = new Date(q.updated_at || q.created_at).getTime();
+          return sum + (updated - created) / (1000 * 60 * 60 * 24);
+        }, 0) / wonDeals.length)
+      : 0;
+
+    // Weighted pipeline (deal value * stage probability)
+    const weightedPipeline = openDeals.reduce((sum, q) => {
+      const stage = pipelineStages.find(s => s.key === q.status);
+      const probability = (stage?.winProgress || 10) / 100;
+      return sum + (q.value * probability);
+    }, 0);
+
+    // Stale deals (no activity in 14+ days)
+    const now = Date.now();
+    const staleDeals = openDeals.filter((q) => {
+      const lastActivity = q.last_activity || q.updated_at || q.created_at;
+      const daysSince = (now - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24);
+      return daysSince > 14;
+    });
+
+    // At-risk deals (close date passed or very stale)
+    const atRiskDeals = openDeals.filter((q) => {
+      if (q.valid_until && new Date(q.valid_until).getTime() < now) return true;
+      const lastActivity = q.last_activity || q.updated_at || q.created_at;
+      const daysSince = (now - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24);
+      return daysSince > 30;
+    });
+
+    // Deal velocity (avg days per stage for open deals)
+    const dealVelocity = openDeals.length > 0
+      ? Math.round(openDeals.reduce((sum, q) => {
+          const created = new Date(q.created_at).getTime();
+          return sum + (now - created) / (1000 * 60 * 60 * 24);
+        }, 0) / openDeals.length)
+      : 0;
+
+    // Lead conversion rate
+    const convertedLeads = clients?.length || 0;
+    const totalLeadPool = (leads?.length || 0) + convertedLeads;
+    const leadConversionRate = totalLeadPool > 0
+      ? Math.round((convertedLeads / totalLeadPool) * 100)
+      : 0;
+
+    // Monthly revenue trend (last 6 months of won deals)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const recentWonDeals = wonDeals.filter(q => new Date(q.updated_at || q.created_at) >= sixMonthsAgo);
+    const monthlyRevenue: { month: string; revenue: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthKey = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+      const revenue = recentWonDeals
+        .filter(q => {
+          const qDate = new Date(q.updated_at || q.created_at);
+          return qDate.getMonth() === d.getMonth() && qDate.getFullYear() === d.getFullYear();
+        })
+        .reduce((sum, q) => sum + q.value, 0);
+      monthlyRevenue.push({ month: monthKey, revenue });
+    }
+
+    // Pipeline by stage (for funnel)
+    const pipelineFunnel = pipelineStages
+      .filter(s => s.stageCategory === "open")
+      .map(stage => ({
+        name: stage.name,
+        count: openDeals.filter(q => q.status === stage.key).length,
+        value: openDeals.filter(q => q.status === stage.key).reduce((sum, q) => sum + q.value, 0),
+        color: stage.color,
+      }));
+
+    return {
+      winRate,
+      avgDealSize,
+      avgCloseTime,
+      weightedPipeline,
+      staleDeals,
+      atRiskDeals,
+      dealVelocity,
+      leadConversionRate,
+      monthlyRevenue,
+      pipelineFunnel,
+      totalWon: wonDeals.length,
+      totalLost: lostDeals.length,
+      totalOpen: openDeals.length,
+    };
+  }, [quotes, pipelineStages, leads, clients]);
 
   // Filter leads
   const filteredLeads = leads?.filter((lead) => {
@@ -835,56 +951,82 @@ export default function CRM() {
       {/* Header */}
       <p className="text-sm text-muted-foreground">Manage your sales pipeline, leads, clients, and tasks</p>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+      {/* Enterprise Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         <Card className="border border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border border-border flex items-center justify-center bg-blue-600">
-                <Target className="h-5 w-5 text-white" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 border border-border flex items-center justify-center bg-blue-600 shrink-0">
+                <Target className="h-4 w-4 text-white" />
               </div>
-              <div>
-                <div className="text-2xl font-semibold font-mono">{formatValue(totalPipelineValue)}</div>
-                <div className="text-sm text-muted-foreground">Pipeline Value</div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold font-mono truncate">{formatValue(totalPipelineValue)}</div>
+                <div className="text-xs text-muted-foreground">Pipeline</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border border-border flex items-center justify-center bg-emerald-600">
-                <Handshake className="h-5 w-5 text-white" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 border border-border flex items-center justify-center bg-emerald-600 shrink-0">
+                <Handshake className="h-4 w-4 text-white" />
               </div>
-              <div>
-                <div className="text-2xl font-semibold font-mono">{formatValue(wonValue)}</div>
-                <div className="text-sm text-muted-foreground">Won Deals</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border border-border flex items-center justify-center bg-primary">
-                <Users className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <div className="text-2xl font-semibold">{leads?.length || 0}</div>
-                <div className="text-sm text-muted-foreground">Active Leads</div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold font-mono truncate">{formatValue(wonValue)}</div>
+                <div className="text-xs text-muted-foreground">Won</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 border border-border flex items-center justify-center bg-amber-500">
-                <Building className="h-5 w-5 text-black" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 border border-border flex items-center justify-center bg-violet-600 shrink-0">
+                <TrendingUp className="h-4 w-4 text-white" />
               </div>
-              <div>
-                <div className="text-2xl font-semibold">{clients?.length || 0}</div>
-                <div className="text-sm text-muted-foreground">Total Clients</div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold font-mono truncate">{formatValue(crmAnalytics.weightedPipeline)}</div>
+                <div className="text-xs text-muted-foreground">Forecast</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border border-border shadow-sm">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 border border-border flex items-center justify-center bg-amber-500 shrink-0">
+                <Percent className="h-4 w-4 text-black" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold">{crmAnalytics.winRate}%</div>
+                <div className="text-xs text-muted-foreground">Win Rate</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border border-border shadow-sm">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 border border-border flex items-center justify-center bg-primary shrink-0">
+                <Users className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold">{leads?.length || 0}</div>
+                <div className="text-xs text-muted-foreground">Leads</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border border-border shadow-sm">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 border border-border flex items-center justify-center bg-rose-500 shrink-0">
+                <AlertTriangle className="h-4 w-4 text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold">{crmAnalytics.atRiskDeals.length}</div>
+                <div className="text-xs text-muted-foreground">At Risk</div>
               </div>
             </div>
           </CardContent>
@@ -922,6 +1064,10 @@ export default function CRM() {
             <TabsTrigger value="contacts" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <span className="hidden sm:inline">Contacts</span>
               <span className="sm:hidden">Cont</span> ({contacts?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <BarChart3 className="h-3.5 w-3.5 mr-1 hidden sm:inline-block" />
+              Analytics
             </TabsTrigger>
           </TabsList>
         </div>
@@ -1232,6 +1378,22 @@ export default function CRM() {
                                   Close {formatDate(deal.valid_until)}
                                 </p>
                               )}
+                              {(() => {
+                                const lastActivity = deal.last_activity || deal.updated_at || deal.created_at;
+                                const daysSince = Math.round((Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24));
+                                const pastDue = deal.valid_until && new Date(deal.valid_until).getTime() < Date.now();
+                                if (pastDue) return (
+                                  <Badge variant="destructive" className="text-[10px] mt-1 px-1.5 py-0">
+                                    Past due
+                                  </Badge>
+                                );
+                                if (daysSince > 14) return (
+                                  <Badge variant="outline" className="text-[10px] mt-1 px-1.5 py-0 border-amber-400 text-amber-600">
+                                    {daysSince}d inactive
+                                  </Badge>
+                                );
+                                return null;
+                              })()}
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -2561,6 +2723,250 @@ export default function CRM() {
                 </Card>
               </div>
             </>
+          )}
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Key Metrics Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="border border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Percent className="h-4 w-4 text-emerald-600" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Win Rate</span>
+                </div>
+                <div className="text-3xl font-bold">{crmAnalytics.winRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">{crmAnalytics.totalWon} won / {crmAnalytics.totalWon + crmAnalytics.totalLost} closed</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-4 w-4 text-blue-600" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Avg Deal Size</span>
+                </div>
+                <div className="text-3xl font-bold font-mono">{formatValue(crmAnalytics.avgDealSize)}</div>
+                <p className="text-xs text-muted-foreground mt-1">Based on {crmAnalytics.totalWon} closed-won deals</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Timer className="h-4 w-4 text-amber-600" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Avg Close Time</span>
+                </div>
+                <div className="text-3xl font-bold">{crmAnalytics.avgCloseTime} <span className="text-base font-normal text-muted-foreground">days</span></div>
+                <p className="text-xs text-muted-foreground mt-1">From creation to close-won</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="h-4 w-4 text-violet-600" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Lead Conversion</span>
+                </div>
+                <div className="text-3xl font-bold">{crmAnalytics.leadConversionRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">{clients?.length || 0} clients from {(leads?.length || 0) + (clients?.length || 0)} total</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Weighted Pipeline Forecast & Funnel */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Weighted Pipeline Forecast
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold font-mono mb-4">{formatValue(crmAnalytics.weightedPipeline)}</div>
+                <p className="text-sm text-muted-foreground mb-4">Expected revenue weighted by stage probability</p>
+                <div className="space-y-3">
+                  {crmAnalytics.pipelineFunnel.map((stage) => {
+                    const stageObj = pipelineStages.find(s => s.name === stage.name);
+                    const probability = stageObj?.winProgress || 10;
+                    return (
+                      <div key={stage.name} className="flex items-center gap-3">
+                        <div className="w-24 text-sm font-medium truncate">{stage.name}</div>
+                        <div className="flex-1">
+                          <Progress value={probability} className="h-2" />
+                        </div>
+                        <div className="text-xs text-muted-foreground w-10 text-right">{probability}%</div>
+                        <div className="text-sm font-mono w-20 text-right">{formatValue(stage.value * probability / 100)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Pipeline Funnel
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {crmAnalytics.pipelineFunnel.map((stage, idx) => {
+                    const maxCount = Math.max(...crmAnalytics.pipelineFunnel.map(s => s.count), 1);
+                    const widthPct = Math.max(20, (stage.count / maxCount) * 100);
+                    return (
+                      <div key={stage.name} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium">{stage.name}</span>
+                          <span className="text-muted-foreground">{stage.count} deals · {formatValue(stage.value)}</span>
+                        </div>
+                        <div
+                          className="h-8 rounded flex items-center px-3"
+                          style={{
+                            width: `${widthPct}%`,
+                            backgroundColor: stage.color || "#6366f1",
+                            opacity: 1 - (idx * 0.15),
+                          }}
+                        >
+                          <span className="text-xs font-medium text-white">{stage.count}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {crmAnalytics.pipelineFunnel.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">No open deals in pipeline</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Revenue Trend & Deal Health */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Revenue Trend (6 months)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-end gap-2 h-40">
+                  {crmAnalytics.monthlyRevenue.map((m) => {
+                    const maxRev = Math.max(...crmAnalytics.monthlyRevenue.map(r => r.revenue), 1);
+                    const heightPct = Math.max(4, (m.revenue / maxRev) * 100);
+                    return (
+                      <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
+                        <div className="text-xs text-muted-foreground font-mono">
+                          {m.revenue > 0 ? formatValue(m.revenue) : "-"}
+                        </div>
+                        <div
+                          className="w-full bg-emerald-500 rounded-t transition-all"
+                          style={{ height: `${heightPct}%` }}
+                        />
+                        <div className="text-xs text-muted-foreground">{m.month}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  Deal Health & Risk
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                    <div>
+                      <p className="text-sm font-medium text-red-700 dark:text-red-400">At Risk Deals</p>
+                      <p className="text-xs text-red-600/70 dark:text-red-400/70">Past close date or 30+ days inactive</p>
+                    </div>
+                    <div className="text-2xl font-bold text-red-700 dark:text-red-400">{crmAnalytics.atRiskDeals.length}</div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                    <div>
+                      <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Stale Deals</p>
+                      <p className="text-xs text-amber-600/70 dark:text-amber-400/70">No activity in 14+ days</p>
+                    </div>
+                    <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{crmAnalytics.staleDeals.length}</div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                    <div>
+                      <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Deal Velocity</p>
+                      <p className="text-xs text-blue-600/70 dark:text-blue-400/70">Avg days in pipeline for open deals</p>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">{crmAnalytics.dealVelocity}d</div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                    <div>
+                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Healthy Deals</p>
+                      <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">Active within last 14 days</p>
+                    </div>
+                    <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{crmAnalytics.totalOpen - crmAnalytics.staleDeals.length}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* At-Risk Deals List */}
+          {crmAnalytics.atRiskDeals.length > 0 && (
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2 text-red-600">
+                  <AlertTriangle className="h-4 w-4" />
+                  Deals Requiring Attention ({crmAnalytics.atRiskDeals.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead>Deal</TableHead>
+                        <TableHead>Company</TableHead>
+                        <TableHead>Value</TableHead>
+                        <TableHead>Stage</TableHead>
+                        <TableHead>Last Activity</TableHead>
+                        <TableHead>Risk Reason</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {crmAnalytics.atRiskDeals.slice(0, 10).map((deal) => {
+                        const lastActivity = deal.last_activity || deal.updated_at || deal.created_at;
+                        const daysSince = Math.round((Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24));
+                        const pastDue = deal.valid_until && new Date(deal.valid_until).getTime() < Date.now();
+                        const stage = pipelineStages.find(s => s.key === deal.status);
+                        return (
+                          <TableRow key={deal.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}>
+                            <TableCell className="font-medium">{deal.title}</TableCell>
+                            <TableCell>{deal.company_name}</TableCell>
+                            <TableCell className="font-mono">{formatValue(deal.value)}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" style={{ borderColor: stage?.color, color: stage?.color }}>
+                                {stage?.name || deal.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{daysSince}d ago</TableCell>
+                            <TableCell>
+                              <Badge variant="destructive" className="text-xs">
+                                {pastDue ? "Past close date" : `${daysSince}d inactive`}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
       </Tabs>
