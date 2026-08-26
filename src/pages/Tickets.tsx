@@ -1393,6 +1393,29 @@ export default function Tickets() {
               </Popover>
             </div>
 
+            {/* Saved Filters Quick-Access Bar */}
+            {savedFilters.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground font-medium">Saved Filters:</span>
+                {savedFilters.map(f => (
+                  <Button
+                    key={f.name}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => loadSavedFilter(f)}
+                  >
+                    {f.name}
+                  </Button>
+                ))}
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearFilters}>
+                    Clear All
+                  </Button>
+                )}
+              </div>
+            )}
+
             {/* Batch Actions Bar */}
             {selectedTickets.size > 0 && (
               <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary rounded">
@@ -1506,6 +1529,9 @@ export default function Tickets() {
         </CardHeader>
 
         <CardContent className="p-0">
+          <p className="text-xs text-muted-foreground px-4 pt-2 pb-1">
+            Select tickets using checkboxes for bulk operations (status, assign, priority, sprint, delete) • Use Filters button for advanced filtering & saved filter presets • Click column headers to sort
+          </p>
           {filteredTickets.length === 0 ? (
             <div className="text-center py-12">
               <Inbox className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

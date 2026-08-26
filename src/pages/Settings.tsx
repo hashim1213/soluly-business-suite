@@ -318,7 +318,7 @@ export default function Settings() {
             {canManageOrg && <TabsTrigger value="billing" className="text-xs sm:text-sm">Billing</TabsTrigger>}
             {canManageUsers && <TabsTrigger value="team" className="text-xs sm:text-sm">Team</TabsTrigger>}
             {canManageRoles && <TabsTrigger value="roles" className="text-xs sm:text-sm">Roles</TabsTrigger>}
-            {hasPermission("emails", "edit") && <TabsTrigger value="email-accounts" className="text-xs sm:text-sm">Email</TabsTrigger>}
+            {hasPermission("emails", "edit") && <TabsTrigger value="email-accounts" className="text-xs sm:text-sm">Integrations</TabsTrigger>}
             <TabsTrigger value="notifications" className="text-xs sm:text-sm">Notifs</TabsTrigger>
           </TabsList>
         </div>
@@ -1261,7 +1261,7 @@ export default function Settings() {
           </TabsContent>
         )}
 
-        {/* Email Accounts Tab */}
+        {/* Integrations Tab */}
         {hasPermission("emails", "edit") && (
           <TabsContent value="email-accounts" className="space-y-6">
             <Card className="border border-border shadow-sm">
@@ -1271,12 +1271,15 @@ export default function Settings() {
                     <Mail className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle>Email Accounts</CardTitle>
-                    <CardDescription>Connect email accounts to sync and categorize incoming emails</CardDescription>
+                    <CardTitle>Integrations & Connected Accounts</CardTitle>
+                    <CardDescription>Connect email providers (Gmail, Outlook, IMAP) to auto-sync emails, auto-create tickets, and auto-categorize incoming messages</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connected integrations enable automatic email-to-ticket conversion, real-time sync, and smart categorization. Supported providers: Gmail (OAuth), Microsoft Outlook (OAuth), and any IMAP-compatible email server.
+                </p>
                 <EmailAccountsSettings />
               </CardContent>
             </Card>
