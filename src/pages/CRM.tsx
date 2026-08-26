@@ -442,6 +442,62 @@ export default function CRM() {
         color: stage.color,
       }));
 
+    // Quarterly forecast projections
+    const currentQuarterMonth = Math.floor(new Date().getMonth() / 3) * 3;
+    const quarterStart = new Date(new Date().getFullYear(), currentQuarterMonth, 1);
+    const quarterEnd = new Date(new Date().getFullYear(), currentQuarterMonth + 3, 0);
+    const daysInQuarter = Math.ceil((quarterEnd.getTime() - quarterStart.getTime()) / (1000 * 60 * 60 * 24));
+    const daysElapsed = Math.ceil((now - quarterStart.getTime()) / (1000 * 60 * 60 * 24));
+    const quarterProgress = Math.min(100, Math.round((daysElapsed / daysInQuarter) * 100));
+    const quarterWon = wonDeals.filter(q => new Date(q.updated_at || q.created_at) >= quarterStart);
+    const quarterRevenue = quarterWon.reduce((sum, q) => sum + q.value, 0);
+    const projectedQuarterRevenue = daysElapsed > 0 ? Math.round(quarterRevenue * (daysInQuarter / daysElapsed)) : 0;
+    const bestCaseQuarter = quarterRevenue + weightedPipeline;
+    const quarterLabel = `Q${Math.floor(currentQuarterMonth / 3) + 1} ${new Date().getFullYear()}`;
+
+    // Deal aging cohorts
+    const agingCohorts = [
+      { label: "0–7 days", min: 0, max: 7 },
+      { label: "8–14 days", min: 8, max: 14 },
+      { label: "15–30 days", min: 15, max: 30 },
+      { label: "31–60 days", min: 31, max: 60 },
+      { label: "60+ days", min: 61, max: Infinity },
+    ].map(cohort => {
+      const deals = openDeals.filter(q => {
+        const age = (now - new Date(q.created_at).getTime()) / (1000 * 60 * 60 * 24);
+        return age >= cohort.min && age <= cohort.max;
+      });
+      return { ...cohort, count: deals.length, value: deals.reduce((s, q) => s + q.value, 0) };
+    });
+
+    // Stage conversion rates (deals that moved from one stage to next)
+    const stageProgression = pipelineStages
+      .filter(s => s.stageCategory === "open")
+      .map((stage, idx, arr) => {
+        const inStage = allDeals.filter(q => q.status === stage.key).length;
+        const advanced = idx < arr.length - 1
+          ? allDeals.filter(q => {
+              const qStageIdx = arr.findIndex(s => s.key === q.status);
+              return qStageIdx > idx;
+            }).length
+          : wonDeals.length;
+        const enteredOrAll = inStage + advanced + lostDeals.filter(q => {
+          const qStage = pipelineStages.find(s => s.key === q.status);
+          return qStage && arr.indexOf(qStage) >= idx;
+        }).length;
+        return {
+          name: stage.name,
+          color: stage.color,
+          conversionRate: enteredOrAll > 0 ? Math.round((advanced / enteredOrAll) * 100) : 0,
+          avgDaysInStage: inStage > 0
+            ? Math.round(openDeals.filter(q => q.status === stage.key).reduce((s, q) => {
+                return s + (now - new Date(q.updated_at || q.created_at).getTime()) / (1000 * 60 * 60 * 24);
+              }, 0) / inStage)
+            : 0,
+          dealsInStage: inStage,
+        };
+      });
+
     return {
       winRate,
       avgDealSize,
@@ -456,6 +512,13 @@ export default function CRM() {
       totalWon: wonDeals.length,
       totalLost: lostDeals.length,
       totalOpen: openDeals.length,
+      quarterLabel,
+      quarterRevenue,
+      projectedQuarterRevenue,
+      bestCaseQuarter,
+      quarterProgress,
+      agingCohorts,
+      stageProgression,
     };
   }, [quotes, pipelineStages, leads, clients]);
 
@@ -2772,6 +2835,39 @@ export default function CRM() {
             </Card>
           </div>
 
+          {/* Quarterly Forecast */}
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Target className="h-4 w-4 text-indigo-600" />
+                {crmAnalytics.quarterLabel} Forecast
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 uppercase">Closed Won</p>
+                  <div className="text-2xl font-bold font-mono text-emerald-700 dark:text-emerald-400">{formatValue(crmAnalytics.quarterRevenue)}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase">Run-rate Projection</p>
+                  <div className="text-2xl font-bold font-mono text-blue-700 dark:text-blue-400">{formatValue(crmAnalytics.projectedQuarterRevenue)}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800">
+                  <p className="text-xs font-medium text-violet-700 dark:text-violet-400 uppercase">Best Case (Won + Pipe)</p>
+                  <div className="text-2xl font-bold font-mono text-violet-700 dark:text-violet-400">{formatValue(crmAnalytics.bestCaseQuarter)}</div>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Quarter progress</span>
+                  <span>{crmAnalytics.quarterProgress}%</span>
+                </div>
+                <Progress value={crmAnalytics.quarterProgress} className="h-2" />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Weighted Pipeline Forecast & Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="border border-border shadow-sm">
@@ -2915,6 +3011,70 @@ export default function CRM() {
             </Card>
           </div>
 
+          {/* Deal Aging & Stage Progression */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-orange-500" />
+                  Deal Aging Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {crmAnalytics.agingCohorts.map((cohort) => {
+                    const maxCount = Math.max(...crmAnalytics.agingCohorts.map(c => c.count), 1);
+                    const widthPct = Math.max(8, (cohort.count / maxCount) * 100);
+                    const isOld = cohort.min >= 31;
+                    return (
+                      <div key={cohort.label} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className={cn("font-medium", isOld && "text-amber-600 dark:text-amber-400")}>{cohort.label}</span>
+                          <span className="text-muted-foreground">{cohort.count} deals · {formatValue(cohort.value)}</span>
+                        </div>
+                        <div
+                          className={cn("h-6 rounded flex items-center px-2 transition-all", isOld ? "bg-amber-500" : "bg-blue-500")}
+                          style={{ width: `${widthPct}%` }}
+                        >
+                          <span className="text-xs font-medium text-white">{cohort.count}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ChevronRight className="h-4 w-4 text-indigo-500" />
+                  Stage Conversion & Velocity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {crmAnalytics.stageProgression.map((stage) => (
+                    <div key={stage.name} className="flex items-center gap-3 p-2 rounded-lg border border-border">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: stage.color || "#6366f1" }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{stage.name}</div>
+                        <div className="text-xs text-muted-foreground">{stage.dealsInStage} deals · avg {stage.avgDaysInStage}d in stage</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-bold">{stage.conversionRate}%</div>
+                        <div className="text-xs text-muted-foreground">pass rate</div>
+                      </div>
+                    </div>
+                  ))}
+                  {crmAnalytics.stageProgression.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No stage data available</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* At-Risk Deals List */}
           {crmAnalytics.atRiskDeals.length > 0 && (
             <Card className="border border-border shadow-sm">
@@ -2935,6 +3095,7 @@ export default function CRM() {
                         <TableHead>Stage</TableHead>
                         <TableHead>Last Activity</TableHead>
                         <TableHead>Risk Reason</TableHead>
+                        <TableHead>Suggested Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -2943,6 +3104,11 @@ export default function CRM() {
                         const daysSince = Math.round((Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24));
                         const pastDue = deal.valid_until && new Date(deal.valid_until).getTime() < Date.now();
                         const stage = pipelineStages.find(s => s.key === deal.status);
+                        const suggestedAction = pastDue
+                          ? "Renegotiate timeline or close"
+                          : daysSince > 60 ? "Escalate or mark lost"
+                          : daysSince > 30 ? "Schedule follow-up call"
+                          : "Send check-in email";
                         return (
                           <TableRow key={deal.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigateOrg(`/quotes/${deal.display_id}`)}>
                             <TableCell className="font-medium">{deal.title}</TableCell>
@@ -2958,6 +3124,9 @@ export default function CRM() {
                               <Badge variant="destructive" className="text-xs">
                                 {pastDue ? "Past close date" : `${daysSince}d inactive`}
                               </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">{suggestedAction}</span>
                             </TableCell>
                           </TableRow>
                         );
