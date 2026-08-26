@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTicketsByProject, useUpdateTicket, TicketWithProject } from "@/hooks/useTickets";
 import { useWorkflowStatuses, useInitializeWorkflow, WorkflowStatus } from "@/hooks/useWorkflowStatuses";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useOrgNavigation } from "@/hooks/useOrgNavigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Plus, Zap, BookOpen, CircleDot, Layers, Bug, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, Zap, BookOpen, CircleDot, Layers, Bug, Clock, AlertTriangle } from "lucide-react";
 
 type TicketType = "epic" | "story" | "task" | "subtask" | "bug";
 const typeIcons: Record<TicketType, typeof Zap> = {
@@ -45,32 +44,12 @@ export function ProjectBoard({ projectId }: ProjectBoardProps) {
 
   const isLoading = ticketsLoading || statusesLoading;
 
-  // If no workflow statuses exist, show setup prompt
-  if (!isLoading && (!statuses || statuses.length === 0)) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-16 h-16 rounded-[3px] bg-primary/10 flex items-center justify-center mb-4">
-          <Layers className="h-8 w-8 text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold mb-2">Set Up Project Workflow</h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-md">
-          Configure workflow columns to track tickets through your project's process.
-          Default columns: To Do, In Progress, In Review, Done.
-        </p>
-        <Button
-          onClick={() => initializeWorkflow.mutate({ projectId })}
-          disabled={initializeWorkflow.isPending}
-        >
-          {initializeWorkflow.isPending ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Plus className="h-4 w-4 mr-2" />
-          )}
-          Initialize Workflow
-        </Button>
-      </div>
-    );
-  }
+  // Auto-initialize workflow statuses if none exist
+  useEffect(() => {
+    if (!isLoading && (!statuses || statuses.length === 0) && !initializeWorkflow.isPending) {
+      initializeWorkflow.mutate({ projectId });
+    }
+  }, [isLoading, statuses, projectId]);
 
   if (isLoading) {
     return (
@@ -117,7 +96,16 @@ export function ProjectBoard({ projectId }: ProjectBoardProps) {
   };
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Drag tickets between columns to update status. {statuses?.length || 0} workflow stages configured.
+        </p>
+        <Badge variant="outline" className="text-xs">
+          Customizable Workflow
+        </Badge>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
       {statuses?.map((status) => {
         const columnTickets = getColumnTickets(status);
         return (
@@ -204,6 +192,7 @@ export function ProjectBoard({ projectId }: ProjectBoardProps) {
           </div>
         );
       })}
+    </div>
     </div>
   );
 }

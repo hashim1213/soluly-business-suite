@@ -88,7 +88,7 @@ export const AVAILABLE_WIDGETS: WidgetConfig[] = [
 
 const DEFAULT_LAYOUT: DashboardLayout = {
   statsCards: ["activeProjects", "openTickets", "featureRequests", "pipelineValue"],
-  widgets: ["projectsOverview", "projectKPIs", "recentTickets"],
+  widgets: ["projectsOverview", "projectKPIs", "teamUtilization", "recentTickets"],
 };
 
 const STORAGE_KEY = "dashboard_preferences";

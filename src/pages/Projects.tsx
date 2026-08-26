@@ -1090,6 +1090,9 @@ export default function Projects() {
               </Button>
             </div>
           )}
+          <p className="text-xs text-muted-foreground mb-2">
+            Select projects using checkboxes for bulk operations (status change, archive, delete)
+          </p>
           <Card className="border border-border shadow-sm overflow-hidden">
           <Table>
             <TableHeader>

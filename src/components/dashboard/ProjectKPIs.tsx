@@ -103,7 +103,7 @@ export function ProjectKPIs() {
   });
 
   const activeProjects = useMemo(
-    () => projects?.filter(p => p.status === "active") || [],
+    () => projects?.filter(p => p.status === "active" || p.status === "pending" || p.status === "in_progress") || [],
     [projects]
   );
 
